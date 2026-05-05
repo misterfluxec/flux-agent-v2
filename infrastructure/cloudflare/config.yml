@@ -1,0 +1,11 @@
+tunnel: fluxagent-v2
+credentials-file: /root/.cloudflared/cert.json
+
+ingress:
+  - hostname: app.labodegaec.com
+    service: http://localhost:4000
+  - hostname: api.labodegaec.com
+    service: http://localhost:9000
+  - hostname: wa.labodegaec.com
+    service: http://localhost:8081
+  - service: http_status:404

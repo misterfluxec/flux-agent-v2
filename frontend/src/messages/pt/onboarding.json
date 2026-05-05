@@ -1,0 +1,8 @@
+{
+  "steps": { "identity": "Identidade", "knowledge": "Conhecimento", "behavior": "Comportamiento", "connect": "Conectar", "complete": "Pronto" },
+  "identity": { "title": "Dê vida ao seu Agente", "description": "Defina nome e personalidade para conectar com clientes.", "name_label": "Nome do Agente", "name_placeholder": "Ex: Yanua, BotVendas", "tone_label": "Tom de comunicação", "tone_profesional": "Profissional", "tone_amigable": "Amigável", "tone_tecnico": "Técnico", "tone_divertido": "Divertido", "next": "Continuar" },
+  "knowledge": { "title": "Conecte Conhecimento", "description": "Escolha como alimentar seu agente com informações.", "source_manual": "Upload Manual", "source_sheets": "Google Sheets", "source_website": "Site", "source_db": "Banco de Dados", "back": "Voltar", "next": "Continuar" },
+  "behavior": { "title": "Defina Comportamento", "description": "Selecione o fluxo ideal para seu negócio.", "behavior_sales": "Vendas Ativas", "behavior_support": "Suporte Técnico", "behavior_bookings": "Reservas", "behavior_custom": "Personalizado", "back": "Voltar", "next": "Continuar" },
+  "connect": { "title": "Conecte Canal", "description": "Escolha onde seus clientes falarão com o agente.", "channel_wa": "WhatsApp", "channel_tg": "Telegram", "channel_web": "Chat Web", "phone_label": "Número WhatsApp", "phone_hint": "Inclua código do país. Ex: +55", "back": "Voltar", "next": "Finalizar" },
+  "complete": { "title": "Tudo Pronto!", "description": "Seu agente está sendo configurado. Pronto em segundos.", "start": "Ir ao Painel", "loading": "Configurando ambiente..." }
+}

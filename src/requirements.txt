@@ -1,0 +1,56 @@
+# =============================================================================
+# FLUXAGENT V2 — DEPENDENCIAS DEL BACKEND
+# =============================================================================
+# Versiones fijas para garantizar reproducibilidad.
+# Actualizar con: uv pip compile requirements.in -o requirements.txt
+# Dimensión embeddings: 768 (nomic-embed-text via Ollama)
+# =============================================================================
+
+# --- Framework Web ---
+fastapi==0.115.0
+uvicorn[standard]==0.34.0
+
+# --- Base de Datos ---
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0            # Driver async para PostgreSQL
+pgvector==0.3.6            # Soporte de vectores en SQLAlchemy
+
+# --- Configuración ---
+pydantic==2.10.4
+pydantic-settings==2.7.0  # Carga .env en BaseSettings
+
+# --- Redis ---
+redis==5.2.1               # Cliente async de Redis
+
+# --- HTTP Client (para llamadas a Ollama) ---
+httpx==0.28.1
+
+# --- Autenticación ---
+python-jose[cryptography]==3.3.0   # JWT tokens
+passlib[bcrypt]==1.7.4             # Hash de contraseñas
+
+# --- Procesamiento de archivos (RAG) ---
+pandas==2.2.3
+pypdf==5.1.0               # Lectura de PDFs
+openpyxl==3.1.5            # Lectura de Excel
+python-multipart==0.0.20   # Subida de archivos en FastAPI
+
+# --- Utilidades ---
+python-dateutil==2.9.0
+aiofiles==24.1.0
+psutil==6.0.0
+email-validator>=2.1.1
+
+# --- Multimedia (Fase 2) ---
+requests==2.32.3
+faster-whisper==1.0.3
+Pillow==10.4.0
+edge-tts==6.1.12
+pyttsx3==2.90
+
+# --- Métricas ---
+prometheus-client==0.21.0
+
+# --- Tareas Programadas ---
+APScheduler==3.10.4        # Cron jobs para reset automático de cuotas
+apscheduler==3.10.4

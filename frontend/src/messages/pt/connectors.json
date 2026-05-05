@@ -1,0 +1,12 @@
+{
+  "title": "Conectores",
+  "add_connector": "Adicionar Conector",
+  "shopify": "Shopify", "woocommerce": "WooCommerce", "webchat": "Chat Web",
+  "status_active": "Ativo", "status_error": "Erro", "status_pending": "Pendente", "status_syncing": "Sincronizando",
+  "products_synced": "Produtos sincronizados", "last_sync": "Última sincronização",
+  "config": "Configurar", "sync_now": "Sincronizar agora",
+  "web_widget_title": "Widget de Chat Web",
+  "web_widget_desc": "Copie este código e cole antes de </body> em seu site. O chat será ativado automaticamente.",
+  "copy": "Copiar código",
+  "widget_note": "Certifique-se de que seu site permite scripts externos. O widget se adapta automaticamente ao tema claro/escuro da sua web."
+}

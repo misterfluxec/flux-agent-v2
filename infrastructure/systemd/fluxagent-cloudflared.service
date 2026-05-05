@@ -1,0 +1,15 @@
+[Unit]
+Description=Cloudflare Tunnel for FluxAgent V2
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/local/bin/cloudflared tunnel --config /home/mister/flux-agent-v2/infrastructure/cloudflare/config.yml run
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target

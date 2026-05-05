@@ -1,0 +1,6 @@
+{
+  "assign_human": "Atribuir a Humano",
+  "assign_to_human": "Atribuir a Agente Humano",
+  "assign_desc": "Você está prestes a transferir o controle desta conversa para {agent}. O bot irá pausar automaticamente para este chat.",
+  "assigning": "Transferindo..."
+}

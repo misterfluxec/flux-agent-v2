@@ -1,0 +1,169 @@
+# =============================================================================
+# FLUXAGENT V2 — DOCKER COMPOSE MAESTRO (v2.2 Production-Ready)
+# =============================================================================
+# Mejoras: Healthchecks encadenados, límites de recursos i7, Ollama integrado.
+# =============================================================================
+
+version: '3.9'
+
+services:
+  # --- DATABASE (PostgreSQL + pgvector) ---
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: fluxagent-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME:-fluxagent_v2}
+      POSTGRES_USER: ${DB_USER:-fluxadmin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-fluxsecure2026}
+      TZ: America/Guayaquil
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/01-init-db.sql:ro
+    ports:
+      - "${DB_PORT:-5434}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-fluxadmin} -d ${DB_NAME:-fluxagent_v2}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    networks:
+      - fluxagent-net
+
+  # --- CACHE & QUEUES (Redis) ---
+  redis:
+    image: redis:7-alpine
+    container_name: fluxagent-redis
+    restart: always
+    command: >
+      redis-server
+        --appendonly yes
+        --maxmemory 512mb
+        --maxmemory-policy allkeys-lru
+        --requirepass ${REDIS_PASSWORD:-redisflux2026}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6381}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redisflux2026}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - fluxagent-net
+
+  # --- AI ENGINE (Ollama) ---
+  ollama:
+    image: ollama/ollama:latest
+    container_name: fluxagent-ollama
+    restart: always
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_NUM_THREADS=6 # Optimizado para i7
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:11434/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 12G # Límite para modelos grandes (qwen2.5)
+    networks:
+      - fluxagent-net
+
+  # --- BACKEND (FastAPI) ---
+  backend:
+    build:
+      context: ./src
+      dockerfile: Dockerfile
+    container_name: fluxagent-backend
+    restart: always
+    ports:
+      - "${BACKEND_PORT:-9000}:8000"
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-fluxadmin}:${DB_PASSWORD:-fluxsecure2026}@postgres:5432/${DB_NAME:-fluxagent_v2}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redisflux2026}@redis:6379/0
+      JWT_SECRET: ${JWT_SECRET:-cambiar_en_produccion_jwt_secret}
+      OLLAMA_BASE_URL: http://ollama:11434
+      APP_ENV: ${APP_ENV:-production}
+      TZ: America/Guayaquil
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ./src:/app
+      - ./data/media:/app/data/media
+      - ./data/logs:/app/logs
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '3.0'
+    networks:
+      - fluxagent-net
+
+  # --- FRONTEND (Next.js) ---
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: fluxagent-web
+    restart: always
+    ports:
+      - "4000:3000" # Mapeo al puerto 4000 que usa el usuario
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:9000/api/v1}
+    depends_on:
+      - backend
+    networks:
+      - fluxagent-net
+
+  # --- TTS CLEANUP (Cron) ---
+  tts-cleanup:
+    build:
+      context: .
+      dockerfile: Dockerfile.cleanup
+    container_name: fluxagent-tts-cleanup
+    volumes:
+      - ./data/media/tts_cache:/app/data/media/tts_cache
+      - ./data/logs:/app/logs
+    environment:
+      - TTS_CACHE_DIR=/app/data/media/tts_cache
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    restart: always
+    networks:
+      - fluxagent-net
+
+volumes:
+  postgres_data:
+    name: fluxagent_postgres_data
+  redis_data:
+    name: fluxagent_redis_data
+  ollama_data:
+    name: fluxagent_ollama_data
+
+networks:
+  fluxagent-net:
+    driver: bridge

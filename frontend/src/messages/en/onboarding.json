@@ -1,0 +1,8 @@
+{
+  "steps": { "identity": "Identity", "knowledge": "Knowledge", "behavior": "Behavior", "connect": "Connect", "complete": "Done" },
+  "identity": { "title": "Bring your Agent to Life", "description": "Define its name and personality to connect with customers.", "name_label": "Agent Name", "name_placeholder": "Eg: Yanua, SalesBot", "tone_label": "Communication Tone", "tone_profesional": "Professional", "tone_amigable": "Friendly", "tone_tecnico": "Technical", "tone_divertido": "Fun", "next": "Continue" },
+  "knowledge": { "title": "Connect Knowledge", "description": "Choose how to feed your agent with product info.", "source_manual": "Manual Upload", "source_sheets": "Google Sheets", "source_website": "Website", "source_db": "Database", "back": "Back", "next": "Continue" },
+  "behavior": { "title": "Define Behavior", "description": "Select the workflow that fits your business.", "behavior_sales": "Active Sales", "behavior_support": "Tech Support", "behavior_bookings": "Bookings", "behavior_custom": "Custom", "back": "Back", "next": "Continue" },
+  "connect": { "title": "Connect Channel", "description": "Choose where customers will talk to your agent.", "channel_wa": "WhatsApp", "channel_tg": "Telegram", "channel_web": "Web Chat", "phone_label": "WhatsApp Number", "phone_hint": "Include country code. Eg: +1", "back": "Back", "next": "Finish" },
+  "complete": { "title": "All Set!", "description": "Your agent is being configured. Ready in seconds.", "start": "Go to Dashboard", "loading": "Setting up environment..." }
+}

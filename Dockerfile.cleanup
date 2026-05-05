@@ -1,0 +1,21 @@
+FROM python:3.11-slim
+
+# Instalar cron (no viene en slim)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    cron \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copiar script de cleanup
+COPY scripts/cleanup_tts_cache.py /app/scripts/
+
+# Configurar cron
+RUN echo "0 */6 * * * /usr/bin/python3 /app/scripts/cleanup_tts_cache.py >> /app/logs/tts_cleanup.log 2>&1" > /etc/cron.d/tts-cron && \
+    chmod 0644 /etc/cron.d/tts-cron && \
+    crontab /etc/cron.d/tts-cron
+
+# Crear directorios
+RUN mkdir -p /app/logs /app/data/media/tts_cache
+
+CMD ["cron", "-f"]
