@@ -38,6 +38,7 @@ from routers.quota_router import router as quota_router
 from routers.oauth_sync_router import router as oauth_sync_router
 from routers.sync_router import router as sync_router
 from routers.upload_router import router as upload_router
+from routers.sales_agent_router import router as sales_router
 # Nota: chat_router no tiene un APIRouter registrado, provee la función lógica a webhooks
 
 from core.metrics import start_metrics_server
@@ -190,6 +191,7 @@ app.include_router(quota_router)
 app.include_router(oauth_sync_router)
 app.include_router(sync_router)
 app.include_router(upload_router)
+app.include_router(sales_router, prefix="/api/v1")
 
 
 @app.exception_handler(Exception)
