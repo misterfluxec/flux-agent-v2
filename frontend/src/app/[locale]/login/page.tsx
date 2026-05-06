@@ -95,7 +95,7 @@ export default function LoginPage() {
       </button>
 
       {/* Main Login Card */}
-      <div className="w-full max-w-[440px] relative z-10 animate-in fade-in zoom-in-95 duration-700">
+      <div className="w-full max-w-md relative z-10 animate-in fade-in zoom-in-95 duration-700">
         <div className="bg-card/40 backdrop-blur-2xl border border-white/10 dark:border-white/5 rounded-[40px] p-10 md:p-12 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)]">
           
           {/* Header & Branding */}
