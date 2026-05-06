@@ -25,19 +25,23 @@ async def chat_with_agent(request: ChatRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.websocket("/voice/stream")
-async def voice_stream_endpoint(websocket: WebSocket):
+async def voice_stream_endpoint(websocket: WebSocket, tenant_id: Optional[str] = None, token: Optional[str] = None):
     """Endpoint WebSocket para voz en tiempo real (Pipecat)"""
     await websocket.accept()
     
-    # Simular obtención de config del tenant (en prod, validar token JWT)
-    tenant_config = {"is_premium": True} 
+    # Default config: Open Source pipeline (Standard Tier)
+    tenant_config = {
+        "is_premium": False,  # Por defecto, usar pipeline open-source
+        "locale": "es",       # Detectar desde Accept-Language o perfil de usuario
+        "ollama_url": "http://localhost:11434/v1",
+    }
     
     try:
         service = VoicePipelineService(tenant_config)
         await service.process_audio_stream(websocket)
-    except NotImplementedError as e:
-        await websocket.send_json({"error": str(e)})
-        await websocket.close()
     except Exception as e:
-        await websocket.send_json({"error": f"Error en pipeline de voz: {str(e)}"})
-        await websocket.close()
+        try:
+            await websocket.send_json({"error": f"Error en pipeline de voz: {str(e)}"})
+            await websocket.close()
+        except:
+            pass

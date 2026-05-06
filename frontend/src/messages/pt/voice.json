@@ -1,0 +1,16 @@
+{
+  "page_title": "Teste de Voz - FluxAgent",
+  "page_description": "Conecte-se e fale com seu agente de vendas por voz.",
+  "title": "Teste de Voz",
+  "connected": "Conectado",
+  "disconnected": "Desconectado",
+  "connecting": "Conectando...",
+  "start_recording": "Falar",
+  "stop_recording": "Parar",
+  "latency": "Latência",
+  "connection_error": "Erro de conexão. Verifique se o servidor está em execução.",
+  "setup_error": "Não foi possível acessar o microfone. Verifique as permissões do navegador.",
+  "format_note": "Formato: PCM 16-bit, 16kHz, Mono (Base64 JSON)",
+  "latency_note": "Latência esperada: 2-4s em hardware local (STT+LLM+TTS)",
+  "mobile_note": "No celular: toque na tela para ativar o áudio se não for reproduzido"
+}

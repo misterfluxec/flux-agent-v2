@@ -1,39 +1,26 @@
-from langchain.agents import AgentExecutor, create_openai_functions_agent
-from langchain.memory import ConversationBufferMemory
-from langchain.schema import HumanMessage, SystemMessage, AIMessage
-from langchain_openai import ChatOpenAI
 from typing import List, Dict, Any
 import os
 
 from .conversation_state import ConversationState, SalesStage, StageAnalyzer
-from .tools.sales_tools import SALES_TOOLS
+# from .tools.sales_tools import SALES_TOOLS
 
 class SalesAgent:
     def __init__(self, session_id: str, is_premium: bool = False):
         self.session_id = session_id
         self.is_premium = is_premium
         
-        # Configuración del Modelo
-        model_name = "gpt-4o" if is_premium else "gpt-3.5-turbo" # O modelo local si es open source puro
-        self.llm = ChatOpenAI(model=model_name, temperature=0.7)
+        # Model
+        self.llm = None
         
-        # Estado inicial
+        # State
         self.state = ConversationState(session_id=session_id)
         
-        # Memoria
-        self.memory = ConversationBufferMemory(
-            memory_key="chat_history", 
-            return_messages=True
-        )
+        # Memory
+        self.memory = None
         
-        # Agente
-        self.agent = create_openai_functions_agent(self.llm, SALES_TOOLS, self._get_system_prompt())
-        self.executor = AgentExecutor(
-            agent=self.agent,
-            tools=SALES_TOOLS,
-            memory=self.memory,
-            verbose=True
-        )
+        # Agent
+        self.agent = None
+        self.executor = None
 
     def _get_system_prompt(self) -> str:
         base_prompt = StageAnalyzer.get_system_prompt(self.state.current_stage)
@@ -60,10 +47,9 @@ class SalesAgent:
             # Actualizar prompt dinámico si cambia etapa (requiere reiniciar agente en LangChain clásico o usar PromptTemplate dinámico)
             # Para simplificar, actualizamos el system message en memoria si fuera necesario
             
-        # 2. Ejecutar agente
+        # 2. Mock Agent
         try:
-            response = await self.executor.ainvoke({"input": user_message})
-            output_text = response["output"]
+            output_text = f"Mock response for: {user_message}"
             
             # 3. Extraer datos (simulado, se puede mejorar con OutputParser)
             if "me llamo" in user_message.lower():

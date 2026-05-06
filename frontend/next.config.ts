@@ -10,6 +10,14 @@ const nextConfig: NextConfig = {
   images: {
     domains: ['localhost', 'api.labodegaec.com'],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://127.0.0.1:8002/api/:path*', // Proxy to FastAPI Backend
+      },
+    ];
+  },
 };
 
 export default withNextIntl(nextConfig);

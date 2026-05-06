@@ -28,5 +28,22 @@
   "common": {
     "loading": "Loading...",
     "search": "Search..."
+  },
+  "voice": {
+    "page_title": "Voice Test",
+    "page_description": "Test the real-time voice agent",
+    "title": "Real-Time Voice Test",
+    "description": "Talk to your agent powered by Pipecat and FastAPI.",
+    "latency": "Round-Trip Latency",
+    "connecting": "Connecting to voice server...",
+    "connected": "Connected. Start speaking.",
+    "disconnected": "Disconnected. Click 'Speak' to connect.",
+    "start_recording": "Speak",
+    "stop_recording": "Stop",
+    "setup_error": "Error setting up microphone.",
+    "connection_error": "Error connecting to the server.",
+    "format_note": "Audio processed in PCM 16-bit 16kHz Mono.",
+    "latency_note": "Using base64 streaming over WebSocket.",
+    "mobile_note": "Best experience on Chrome/Edge desktop browsers."
   }
 }
