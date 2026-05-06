@@ -13,6 +13,13 @@ function formatTimeAgo(dateStr: string | null): string {
 export function DataHubMetrics() {
   const { data, isLoading, refetch } = useIngestionStats();
 
+  const staticCount = data?.static_sources ?? 0;
+  const dynamicCount = data?.dynamic_sources ?? 0;
+  const totalSources = staticCount + dynamicCount;
+
+  const staticPercentage = totalSources > 0 ? (staticCount / totalSources) * 100 : 0;
+  const dynamicPercentage = totalSources > 0 ? (dynamicCount / totalSources) * 100 : 0;
+
   if (isLoading) return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
       {Array(4).fill(0).map((_, i) => (
@@ -24,8 +31,8 @@ export function DataHubMetrics() {
   const metrics = [
     { 
       label: 'IA Brain Capacity', 
-      value: `${((data?.total_tokens || 0) / 1000).toFixed(1)}K`, 
-      sub: `${data?.total_chunks || 0} fragmentos indexados`, 
+      value: `${((data?.total_tokens ?? 0) / 1000).toFixed(1)}K`, 
+      sub: `${data?.total_chunks ?? 0} fragmentos indexados`, 
       icon: Brain, 
       color: 'text-fuchsia-400', 
       bg: 'bg-fuchsia-500/10', 
@@ -34,7 +41,7 @@ export function DataHubMetrics() {
     },
     { 
       label: 'Catálogo Activo', 
-      value: data?.active_products || 0, 
+      value: data?.active_products ?? 0, 
       sub: 'productos/servicios en RAG', 
       icon: Database, 
       color: 'text-indigo-400', 
@@ -43,74 +50,52 @@ export function DataHubMetrics() {
       gradient: 'from-indigo-500/20 to-transparent'
     },
     { 
-      label: 'Salud de Sync', 
-      value: `${data?.success_rate || 0}%`, 
-      sub: `${data?.active_sources || 0} fuentes activas`, 
+      label: 'Salud de Sincronización', 
+      value: `${data?.success_rate ?? 0}%`, 
+      sub: `${data?.active_sources ?? 0} fuentes activas`, 
       icon: Activity, 
-      color: (data?.success_rate || 0) > 90 ? 'text-emerald-400' : 'text-amber-400', 
-      bg: (data?.success_rate || 0) > 90 ? 'bg-emerald-500/10' : 'bg-amber-500/10', 
-      border: (data?.success_rate || 0) > 90 ? 'border-emerald-500/20' : 'border-amber-500/20',
-      gradient: (data?.success_rate || 0) > 90 ? 'from-emerald-500/20 to-transparent' : 'from-amber-500/20 to-transparent'
+      color: 'text-emerald-400', 
+      bg: 'bg-emerald-500/10', 
+      border: 'border-emerald-500/20',
+      gradient: 'from-emerald-500/20 to-transparent'
     },
     { 
-      label: 'Latencia de Ingesta', 
-      value: `${data?.avg_index_time_seconds || 0}s`, 
-      sub: `Última: ${formatTimeAgo(data?.last_sync_at || null)}`, 
+      label: 'Último Entrenamiento', 
+      value: formatTimeAgo(data?.last_sync_at ?? null), 
+      sub: `${data?.avg_index_time_seconds ?? 0}s promedio/carga`, 
       icon: Clock, 
-      color: 'text-cyan-400', 
-      bg: 'bg-cyan-500/10', 
-      border: 'border-cyan-500/20',
-      gradient: 'from-cyan-500/20 to-transparent'
+      color: 'text-amber-400', 
+      bg: 'bg-amber-500/10', 
+      border: 'border-amber-500/20',
+      gradient: 'from-amber-500/20 to-transparent'
     }
   ];
 
   return (
-    <div className="space-y-6 mb-8">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
-          <Activity className="w-4 h-4" />
-          Métricas de Inteligencia
-        </h2>
-        <button 
-          onClick={refetch} 
-          className="p-2 hover:bg-white/5 rounded-xl transition-all duration-300 text-gray-500 hover:text-white"
-          title="Actualizar métricas"
-        >
-          <RefreshCw className="w-4 h-4" />
-        </button>
-      </div>
-
+    <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {metrics.map((m, i) => (
-          <div key={i} className={`relative overflow-hidden bg-black/40 backdrop-blur-xl border ${m.border} rounded-2xl p-5 hover:border-white/20 transition-all duration-500 group shadow-2xl`}>
-            {/* Ambient Background Gradient */}
-            <div className={`absolute inset-0 bg-gradient-to-br ${m.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-700`} />
+        {metrics.map((metric, index) => (
+          <div 
+            key={index}
+            className={`relative group overflow-hidden bg-gray-900/40 backdrop-blur-md rounded-2xl border ${metric.border} p-5 transition-all hover:scale-[1.02] hover:bg-gray-900/60`}
+          >
+            <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${metric.gradient} blur-3xl -mr-16 -mt-16 opacity-50`} />
             
-            <div className="flex items-start justify-between mb-4 relative z-10">
-              <div className={`p-2.5 rounded-xl backdrop-blur-md border ${m.border} ${m.bg} shadow-inner group-hover:scale-110 transition-transform`}>
-                <m.icon className={`w-5 h-5 ${m.color}`} />
+            <div className="flex items-start justify-between">
+              <div className={`p-3 rounded-xl ${metric.bg} border ${metric.border}`}>
+                <metric.icon className={`w-6 h-6 ${metric.color}`} />
               </div>
-              {m.label === 'IA Brain Capacity' && (
-                <div className="flex gap-0.5">
-                  {[1,2,3,4,5].map(dot => (
-                    <div key={dot} className={`w-1 h-3 rounded-full ${dot <= 3 ? 'bg-fuchsia-500' : 'bg-white/10'}`} />
-                  ))}
-                </div>
-              )}
             </div>
-            
-            <div className="relative z-10">
-              <div className="flex items-baseline gap-1">
-                <p className="text-3xl font-bold text-white tracking-tight">{m.value}</p>
-                {m.label === 'Latencia de Ingesta' && <span className="text-xs text-cyan-400/60 font-medium">avg</span>}
-              </div>
-              <p className="text-sm font-medium text-gray-500 mt-1">{m.sub}</p>
+
+            <div className="mt-4">
+              <p className="text-sm font-medium text-gray-400">{metric.label}</p>
+              <h3 className={`text-2xl font-bold mt-1 ${metric.color}`}>{metric.value}</h3>
+              <p className="text-xs text-gray-500 mt-1">{metric.sub}</p>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Premium Source Mix Banner */}
       <div className="bg-gradient-to-r from-indigo-600/10 via-purple-600/10 to-transparent border border-indigo-500/20 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 backdrop-blur-sm">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
@@ -126,19 +111,18 @@ export function DataHubMetrics() {
           <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden flex">
             <div 
               className="h-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)] transition-all duration-1000" 
-              style={{ width: `${(data?.static_sources || 0) / ((data?.total_sources || 1)) * 100}%` }} 
+              style={{ width: `${staticPercentage}%` }} 
             />
             <div 
               className="h-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)] transition-all duration-1000" 
-              style={{ width: `${(data?.dynamic_sources || 0) / ((data?.total_sources || 1)) * 100}%` }} 
+              style={{ width: `${dynamicPercentage}%` }} 
             />
           </div>
           <div className="flex justify-between mt-2">
-            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-tighter">Estáticos ({data?.static_sources || 0})</span>
-            <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-tighter">Dinámicos ({data?.dynamic_sources || 0})</span>
+            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-tighter">Estáticos ({staticCount})</span>
+            <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-tighter">Dinámicos ({dynamicCount})</span>
           </div>
         </div>
-
         <div className="hidden lg:block text-right">
           <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Estado del RAG</p>
           <p className="text-xs font-medium text-emerald-400">Optimizado & Listo</p>

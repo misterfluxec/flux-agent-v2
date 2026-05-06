@@ -5,14 +5,32 @@ import { useTranslations, useLocale } from 'next-intl';
 import Link from 'next/link';
 import '../landing_web.css';
 
+function useLandingContent() {
+  const t = useTranslations('landing');
+  return {
+    nav: t.raw('nav'),
+    auth: t.raw('auth'),
+    hero: t.raw('hero'),
+    market: t.raw('market'),
+    features: t.raw('features'),
+    chat: t.raw('chat'),
+    comparison: t.raw('comparison.rows'),
+    plans: Object.values(t.raw('plans')),
+    marketAlternatives: t.raw('marketAlternatives.items'),
+    stats: t.raw('stats.items'),
+    footer: t.raw('footer'),
+    final_cta: t.raw('final_cta')
+  };
+}
+
 export default function LandingPage() {
   const locale = useLocale();
-  const t = useTranslations('landing');
+  const content = useLandingContent();
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeFeature, setActiveFeature] = useState(0);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([
-    { sender: 'agent', text: t('chat_welcome') }
+    { sender: 'agent', text: content.chat.welcome }
   ]);
   const [chatInput, setChatInput] = useState('');
 
@@ -33,193 +51,52 @@ export default function LandingPage() {
     setChatInput('');
 
     setTimeout(() => {
-      const agentResponses = [
-        '¡Excelente pregunta! Puedo ayudarte a configurar tu primer agente de IA en minutos.',
-        'Con FluxAgent V2 puedes ahorrar hasta 3X comparado con otras soluciones. ¿Te gustaría ver una comparativa?',
-        'Nuestra prueba gratuita de 7 días te permite probar todas las funcionalidades sin compromiso.',
-        '¿Tienes un ERP específico? Puedo explicarte cómo funciona nuestra integración nativa.',
-        'El plan Conexión Humana incluye notas de voz ultra-realistas para atender a tus clientes las 24/7.'
-      ];
+      const agentResponses = content.chat.responses;
       const randomResponse = agentResponses[Math.floor(Math.random() * agentResponses.length)];
       setChatMessages(prev => [...prev, { sender: 'agent', text: randomResponse }]);
     }, 1500);
   };
 
-  const features = [
-    {
-      icon: (
-        <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-        </svg>
-      ),
-      title: t('feat_title_1'),
-      description: t('feat_desc_1'),
-      highlight: t('feat_high_1')
-    },
-    {
-      icon: (
-        <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
-      ),
-      title: t('feat_title_2'),
-      description: t('feat_desc_2'),
-      highlight: t('feat_high_2')
-    },
-    {
-      icon: (
-        <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-      title: t('feat_title_3'),
-      description: t('feat_desc_3'),
-      highlight: t('feat_high_3')
-    },
-    {
-      icon: (
-        <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-        </svg>
-      ),
-      title: t('feat_title_4'),
-      description: t('feat_desc_4'),
-      highlight: t('feat_high_4')
-    }
+  const featureIcons = [
+    <svg key="1" className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>,
+    <svg key="2" className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
+    <svg key="3" className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+    <svg key="4" className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
   ];
 
-  const comparisonData = [
-    {
-      benefit: 'Modelo de Pago',
-      competitor: 'Recargas por charla',
-      ventacore: 'Suscripción de Abundancia'
-    },
-    {
-      benefit: 'Capacidad Mensajes',
-      competitor: '1,000 - 2,000',
-      ventacore: '3,000 - 15,000',
-      highlight: true
-    },
-    {
-      benefit: 'Sentidos de la IA',
-      competitor: 'Solo Texto',
-      ventacore: 'Ve, Oye y Habla nativamente'
-    }
+  const featuresData = content.features.items.map((feat: any, idx: number) => ({
+    ...feat,
+    icon: featureIcons[idx]
+  }));
+
+  const planIcons = ['🛡️', '🎙️', '🧠'];
+  const plansData = content.plans.map((plan: any, idx: number) => ({
+    ...plan,
+    icon: planIcons[idx]
+  }));
+
+  const footerIcons = [
+    <svg key="f1" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>,
+    <svg key="f2" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>,
+    <svg key="f3" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
+    <svg key="f4" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
   ];
 
-  const plans = [
-    {
-      name: t('plan_name_1'),
-      icon: '🛡️',
-      price: '45',
-      period: '/mes',
-      tagline: t('plan_tag_1'),
-      features: [
-        '3,000 mensajes / mes',
-        'Entrenamiento RAG Ilimitado',
-        'Respuestas de Texto Ultra-rápidas'
-      ],
-      recommended: false,
-      cta: 'Seleccionar Estabilidad'
-    },
-    {
-      name: t('plan_name_2'),
-      icon: '🎙️',
-      price: '85',
-      period: '/mes',
-      tagline: t('plan_tag_2'),
-      features: [
-        '7,000 mensajes / mes',
-        'Escucha Notas de Voz (STT)',
-        'Responde con Voz Humana (TTS)'
-      ],
-      recommended: true,
-      cta: 'Activar Conexión Humana'
-    },
-    {
-      name: t('plan_name_3'),
-      icon: '🧠',
-      price: '160',
-      period: '/mes',
-      tagline: t('plan_tag_3'),
-      features: [
-        '15,000 mensajes / mes',
-        'Visión IA: Lee fotos y catálogos',
-        'Razonamiento Multimodal Completo'
-      ],
-      recommended: false,
-      cta: 'Elegir Paz Mental'
-    }
+  const footerItemIcons = [
+    ['🇬🇧', '📍', '🏢'],
+    ['🇬🇧', '🌎', '🔒'],
+    ['🌎', '📡'],
+    ['⚡', '🎧', '⚡', '🧠']
   ];
 
-  const marketAlternatives = [
-    { name: 'GPT-4 Turbo', category: 'Nube Pública', price: '~$0.03/mensaje', limit: 'Limitado por API' },
-    { name: 'Claude 3', category: 'Nube Pública', price: '~$0.025/mensaje', limit: 'Limitado por API' },
-    { name: 'Amazon Lex', category: 'Nube Pública', price: '~$0.04/mensaje', limit: 'Limitado por API' },
-    { name: 'IBM Watson', category: 'Enterprise Cloud', price: 'Desde $0.06/mensaje', limit: 'Costo escalable' }
-  ];
-
-  const stats = [
-    { value: '3-15K', label: 'Mensajes incluídos' },
-    { value: '7 Días', label: 'Prueba gratuita' },
-    { value: '< 500ms', label: 'Latencia ultra-baja' },
-    { value: '100%', label: 'Soberanía de datos' }
-  ];
-
-  const footerSections = [
-    {
-      icon: (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-        </svg>
-      ),
-      title: 'Sede Principal',
-      content: [
-        { icon: '🇬🇧', text: 'FluxAgent V2' },
-        { icon: '📍', text: '20-22 Wenlock Road, London, England, N1 7GU' },
-        { icon: '🏢', text: 'London Tech Hub - Ep centro europeo de innovación en IA' }
-      ]
-    },
-    {
-      icon: (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-        </svg>
-      ),
-      title: 'Cumplimiento y Gobernanza',
-      content: [
-        { icon: '🇬🇧', text: 'Data Protection Act 2018 + GDPR' },
-        { icon: '🌎', text: 'Soberanía de datos para Latinoamérica' },
-        { icon: '🔒', text: 'Infraestructura empresarial privada' }
-      ]
-    },
-    {
-      icon: (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-      ),
-      title: 'Distribución Autorizada',
-      content: [
-        { icon: '🌎', text: 'Operación exclusiva para Latinoamérica' },
-        { icon: '📡', text: 'Canal de distribución oficial: FluxAgent Latam' }
-      ]
-    },
-    {
-      icon: (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-      ),
-      title: 'Fortaleza Tecnológica',
-      content: [
-        { icon: '⚡', text: 'Infraestructura Edge Computing dedicada' },
-        { icon: '🎧', text: 'Procesamiento de Voz en tiempo real' },
-        { icon: '⚡', text: 'Latencia <500ms - Costo cero por escala' },
-        { icon: '🧠', text: 'Memoria Inteligente RAG' }
-      ]
-    }
-  ];
+  const footerData = content.footer.sections.map((section: any, sectionIdx: number) => ({
+    ...section,
+    icon: footerIcons[sectionIdx],
+    content: section.content.map((text: string, itemIdx: number) => ({
+      text,
+      icon: footerItemIcons[sectionIdx][itemIdx]
+    }))
+  }));
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white overflow-x-hidden">
@@ -241,29 +118,29 @@ export default function LandingPage() {
             </div>
 
             <div className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-gray-400 hover:text-white transition-colors text-sm font-medium">{t('nav_features')}</a>
-              <a href="#comparativa" className="text-gray-400 hover:text-white transition-colors text-sm font-medium">{t('nav_comparison')}</a>
-              <a href="#pricing" className="text-gray-400 hover:text-white transition-colors text-sm font-medium">{t('nav_pricing')}</a>
-              <a href="#tech" className="text-gray-400 hover:text-white transition-colors text-sm font-medium">{t('nav_tech')}</a>
+              <a href="#features" className="text-gray-400 hover:text-white transition-colors text-sm font-medium">{content.nav.features}</a>
+              <a href="#comparativa" className="text-gray-400 hover:text-white transition-colors text-sm font-medium">{content.nav.comparison}</a>
+              <a href="#pricing" className="text-gray-400 hover:text-white transition-colors text-sm font-medium">{content.nav.pricing}</a>
+              <a href="#tech" className="text-gray-400 hover:text-white transition-colors text-sm font-medium">{content.nav.tech}</a>
             </div>
 
             <div className="flex items-center gap-4">
-              <Link href={`/${locale}/login`} className="text-gray-400 hover:text-white transition-colors text-sm font-medium hidden sm:block">{t('login')}</Link>
+              <Link href={`/${locale}/login`} className="text-gray-400 hover:text-white transition-colors text-sm font-medium hidden sm:block">{content.auth.login}</Link>
               <Link href={`/${locale}/register`} className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-purple-500 rounded-full text-sm font-semibold hover:shadow-lg hover:shadow-purple-500/25 transition-all hover:scale-105">
-                {t('free_trial')}
+                {content.auth.free_trial}
               </Link>
               
               <div className="flex items-center gap-1.5 ml-2 pl-4 border-l border-white/10">
                 {['en', 'es', 'pt'].map((lang) => (
-                  <a 
+                  <Link 
                     key={lang} 
-                    href={lang === 'en' ? '/' : `/${lang}`}
+                    href={`/${lang}`}
                     className={`px-2 py-1 rounded-md text-[10px] font-black uppercase transition-all ${
                       locale === lang ? 'bg-white/10 text-white border border-white/10' : 'text-gray-500 hover:text-gray-300'
                     }`}
                   >
                     {lang}
-                  </a>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -277,31 +154,31 @@ export default function LandingPage() {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8 animate-fade-in">
             <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-            <span className="text-sm text-gray-300">{t('hero_badge')}</span>
+            <span className="text-sm text-gray-300">{content.hero.badge}</span>
           </div>
 
           {/* Main Headline */}
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 animate-fade-in-delay">
             <span className="bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
-              {t('hero_title_1')}
+              {content.hero.title_1}
             </span>
             <br />
             <span className="bg-gradient-to-r from-purple-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent">
-              {t('hero_title_2')}
+              {content.hero.title_2}
             </span>
           </h1>
 
           {/* Subheadline */}
           <p className="text-xl md:text-2xl text-gray-400 mb-10 max-w-3xl mx-auto leading-relaxed animate-fade-in-delay-2">
-            {t('hero_subtitle_1')}
+            {content.hero.subtitle_1}
             <br className="hidden md:block" />
-            <span className="text-white font-medium">{t('hero_subtitle_2')}</span>
+            <span className="text-white font-medium">{content.hero.subtitle_2}</span>
           </p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-delay-3">
             <Link href={`/${locale}/register`} className="group px-8 py-4 bg-gradient-to-r from-purple-600 to-purple-500 rounded-xl font-bold text-lg hover:shadow-2xl hover:shadow-purple-500/30 transition-all hover:scale-105 flex items-center justify-center gap-2">
-              {t('cta_activate')}
+              {content.hero.cta_activate}
               <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
@@ -310,7 +187,7 @@ export default function LandingPage() {
 
           {/* Stats Bar */}
           <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-6 animate-fade-in-delay-4">
-            {stats.map((stat, index) => (
+            {content.stats.map((stat: any, index: number) => (
               <div key={index} className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-purple-500/30 transition-all group">
                 <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent mb-2">
                   {stat.value}
@@ -327,10 +204,10 @@ export default function LandingPage() {
       {/* Market Alternatives Section */}
       <section className="py-20 bg-white/5 border-y border-white/10">
         <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-center text-sm font-semibold tracking-widest text-purple-400 uppercase mb-4">{t('market_title')}</h2>
-          <p className="text-center text-gray-400 mb-12">{t('market_subtitle')}</p>
+          <h2 className="text-center text-sm font-semibold tracking-widest text-purple-400 uppercase mb-4">{content.market.title}</h2>
+          <p className="text-center text-gray-400 mb-12">{content.market.subtitle}</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {marketAlternatives.map((alt, index) => (
+            {content.marketAlternatives.map((alt: any, index: number) => (
               <div key={index} className="p-6 rounded-2xl bg-red-500/5 border border-red-500/20 hover:border-red-500/40 transition-all">
                 <div className="text-lg font-bold text-red-400 mb-1">{alt.name}</div>
                 <div className="text-xs text-gray-500 mb-2">{alt.category}</div>
@@ -344,7 +221,7 @@ export default function LandingPage() {
               <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              <span className="text-green-400 font-medium">{t('fluxagent_value')}</span>
+              <span className="text-green-400 font-medium">{content.market.fluxagent_value}</span>
             </div>
           </div>
         </div>
@@ -354,19 +231,19 @@ export default function LandingPage() {
       <section id="features" className="py-24 px-6 relative">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <span className="text-purple-400 text-sm font-semibold tracking-widest uppercase mb-4 block">{t('features_badge')}</span>
+            <span className="text-purple-400 text-sm font-semibold tracking-widest uppercase mb-4 block">{content.features.badge}</span>
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              {t('features_title_1')}
+              {content.features.title_1}
               <br />
-              <span className="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">{t('features_title_2')}</span>
+              <span className="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">{content.features.title_2}</span>
             </h2>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-              {t('features_subtitle')}
+              {content.features.subtitle}
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
-            {features.map((feature, index) => (
+            {featuresData.map((feature: any, index: number) => (
               <div
                 key={index}
                 className={`p-8 rounded-3xl border transition-all duration-300 cursor-pointer group ${
@@ -426,7 +303,7 @@ export default function LandingPage() {
                 </tr>
               </thead>
               <tbody>
-                {comparisonData.map((row, index) => (
+                {content.comparison.map((row: any, index: number) => (
                   <tr key={index} className={`border-b border-white/5 ${row.highlight ? 'bg-green-500/5' : ''}`}>
                     <td className="p-6 font-medium">{row.benefit}</td>
                     <td className={`p-6 ${row.highlight ? 'text-red-400' : 'text-gray-400'}`}>{row.competitor}</td>
@@ -461,7 +338,7 @@ export default function LandingPage() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {plans.map((plan, index) => (
+            {plansData.map((plan: any, index: number) => (
               <div
                 key={index}
                 className={`relative p-8 rounded-3xl transition-all duration-300 ${
@@ -490,7 +367,7 @@ export default function LandingPage() {
                 </div>
 
                 <ul className="space-y-4 mb-8">
-                  {plan.features.map((feature, fIndex) => (
+                  {plan.features.map((feature: string, fIndex: number) => (
                     <li key={fIndex} className="flex items-start gap-3 text-gray-300">
                       <svg className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -520,17 +397,15 @@ export default function LandingPage() {
       <section className="py-24 px-6 relative">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            Es hora de automatizar y
+            {content.final_cta.title_1}
             <br />
-            <span className="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">escalar tu negocio</span>
+            <span className="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">{content.final_cta.title_2}</span>
           </h2>
-          <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto">
-            Crea tu cuenta ahora y pon a trabajar a tu clon digital.
-            <br />
-            7 días gratis, cancela cuando quieras.
+          <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto whitespace-pre-line">
+            {content.final_cta.subtitle}
           </p>
           <Link href={`/${locale}/register`} className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl font-bold text-lg hover:shadow-2xl hover:shadow-purple-500/30 transition-all hover:scale-105">
-            🚀 Crear Cuenta Gratis
+            {content.final_cta.button}
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>
@@ -543,7 +418,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto">
           {/* Main Footer Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-            {footerSections.map((section, index) => (
+            {footerData.map((section: any, index: number) => (
               <div key={index} className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-purple-500/30 transition-all">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="p-2 rounded-lg bg-purple-500/20 text-purple-400">
@@ -552,7 +427,7 @@ export default function LandingPage() {
                   <h3 className="text-lg font-bold text-white">{section.title}</h3>
                 </div>
                 <ul className="space-y-3">
-                  {section.content.map((item, itemIndex) => (
+                  {section.content.map((item: any, itemIndex: number) => (
                     <li key={itemIndex} className="flex items-start gap-2 text-sm text-gray-400">
                       <span className="flex-shrink-0 mt-0.5">{item.icon}</span>
                       <span>{item.text}</span>
@@ -571,7 +446,7 @@ export default function LandingPage() {
               <Link href={`/${locale}/login`} className="hover:text-white transition-colors flex items-center gap-1">Portal</Link>
             </div>
             <div className="text-sm text-gray-500">
-              {t('footer_rights')}
+              {content.footer.rights}
             </div>
           </div>
         </div>

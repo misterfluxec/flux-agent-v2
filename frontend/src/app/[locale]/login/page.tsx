@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Eye, EyeOff, Zap, Shield, Activity, Sun, Moon, ArrowRight, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "https://api.labodega
 export default function LoginPage() {
   const router = useRouter();
   const locale = useLocale();
+  const t = useTranslations('auth.login');
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
@@ -52,8 +53,8 @@ export default function LoginPage() {
 
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
-        toast.error("Acceso Denegado", {
-          description: (err as { detail?: string }).detail ?? "Verifica tus credenciales e intenta de nuevo.",
+        toast.error(t('error_denied'), {
+          description: (err as { detail?: string }).detail ?? t('error_denied_desc'),
         });
         setLoading(false);
         return;
@@ -62,9 +63,9 @@ export default function LoginPage() {
       const data = await resp.json() as any;
       localStorage.setItem("flux_token", data.access_token);
       localStorage.setItem("flux_tenant_id", data.usuario.tenant_id);
-      router.push("/dashboard");
+      router.push(`/${locale}/dashboard`);
     } catch {
-      toast.error("Error Crítico", { description: "No se pudo establecer conexión con el núcleo." });
+      toast.error(t('error_critical'), { description: t('error_critical_desc') });
       setLoading(false);
     }
   }
@@ -102,13 +103,13 @@ export default function LoginPage() {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-[22px] bg-gradient-to-br from-primary to-blue-700 shadow-lg shadow-primary/30 mb-6 group transition-transform hover:scale-105 duration-500">
               <Zap className="w-8 h-8 text-white fill-white/20 group-hover:animate-pulse" />
             </div>
-            <h1 className="text-3xl font-black tracking-tight mb-2 bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
-              FluxAgent V2
+            <h1 className="text-3xl font-black tracking-tight mb-2 bg-gradient-to-br from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+              {t('title')}
             </h1>
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full border border-primary/20">
                <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
                <p className="text-[10px] font-black uppercase tracking-widest text-primary">
-                 Central de Inteligencia
+                 {t('subtitle')}
                </p>
             </div>
           </div>
@@ -119,7 +120,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <label className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/70 ml-1">
-                Identificador de Usuario
+                {t('email_label')}
               </label>
               <div className="relative group">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
@@ -128,7 +129,7 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="nombre@empresa.com"
+                  placeholder={t('email_placeholder')}
                   className="h-14 pl-12 bg-background/50 border-border/50 rounded-2xl focus:ring-primary/20 focus:border-primary/50 transition-all font-medium"
                 />
               </div>
@@ -137,10 +138,10 @@ export default function LoginPage() {
             <div className="space-y-2">
               <div className="flex justify-between items-center px-1">
                 <label className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/70">
-                  Clave de Acceso
+                  {t('password_label')}
                 </label>
                 <button type="button" className="text-[10px] font-bold text-primary hover:underline">
-                  ¿Olvidaste tu clave?
+                  {t('password_forgot')}
                 </button>
               </div>
               <div className="relative group">
@@ -150,7 +151,7 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
+                  placeholder={t('password_placeholder')}
                   className="h-14 pl-12 pr-12 bg-background/50 border-border/50 rounded-2xl focus:ring-primary/20 focus:border-primary/50 transition-all font-medium"
                 />
                 <button
@@ -171,11 +172,11 @@ export default function LoginPage() {
               {loading ? (
                 <div className="flex items-center gap-3">
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Autenticando...</span>
+                  <span>{t('authenticating')}</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <span>Acceder al Sistema</span>
+                  <span>{t('submit')}</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </div>
               )}
@@ -186,24 +187,24 @@ export default function LoginPage() {
           <div className="mt-10 pt-8 border-t border-border/50">
             <div className="flex flex-col items-center gap-4">
               <p className="text-xs text-muted-foreground">
-                ¿Nuevo en la plataforma?{" "}
+                {t('new_user')}{" "}
                 <button 
                   onClick={() => router.push(`/${locale}/register`)}
                   className="text-primary font-black hover:underline"
                 >
-                  Crea tu cuenta gratis
+                  {t('create_account')}
                 </button>
               </p>
               
               <div className="flex items-center gap-6 px-4 py-2 bg-muted/50 rounded-xl border border-border/50">
                 <div className="flex items-center gap-2">
                   <Shield className="w-3.5 h-3.5 text-primary" />
-                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Secure Access</span>
+                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{t('secure_access')}</span>
                 </div>
                 <div className="w-px h-3 bg-border" />
                 <div className="flex items-center gap-2">
                   <Activity className="w-3.5 h-3.5 text-green-500" />
-                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Systems OK</span>
+                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{t('systems_ok')}</span>
                 </div>
               </div>
             </div>
@@ -212,7 +213,7 @@ export default function LoginPage() {
         
         {/* Version & Credits */}
         <p className="text-center mt-8 text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.3em]">
-          FluxAgent Engine v2.4.0 — Enterprise Grade AI
+          {t('footer_version')}
         </p>
       </div>
     </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useLocale, useTranslations } from 'next-intl';
 import { Eye, EyeOff, Zap, Shield, Activity, Sun, Moon, Building2, User, Palette, Globe2, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,8 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "https://api.labodega
 
 function RegisterContent() {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations('auth.register');
   const searchParams = useSearchParams();
   
   const tipoParam = searchParams.get("tipo") || "individual";
@@ -82,8 +85,8 @@ function RegisterContent() {
 
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
-        toast.error("Error al registrarse", {
-          description: (err as { detail?: string }).detail ?? "Revisa los datos e intenta de nuevo.",
+        toast.error(t('error'), {
+          description: (err as { detail?: string }).detail ?? t('error_desc'),
         });
         setLoading(false);
         return;
@@ -91,7 +94,7 @@ function RegisterContent() {
 
       const data = await resp.json();
 
-      toast.success("¡Registro Exitoso!", { description: "Preparando tu espacio de trabajo..." });
+      toast.success(t('success'), { description: t('success_desc') });
 
       localStorage.setItem("flux_token", data.access_token);
       localStorage.setItem("flux_tenant_id", data.usuario.tenant_id);
@@ -102,10 +105,10 @@ function RegisterContent() {
       localStorage.setItem("flux_empresa", data.usuario.nombre_empresa || "");
 
       setTimeout(() => {
-        router.push("/dashboard");
+        router.push(`/${locale}/dashboard`);
       }, 1500);
     } catch {
-      toast.error("Error de conexión", { description: "No se pudo conectar con el servidor." });
+      toast.error(t('conn_error'), { description: t('conn_error_desc') });
       setLoading(false);
     }
   }
@@ -115,40 +118,35 @@ function RegisterContent() {
   const isDark = theme === "dark";
 
   const planes = [
-    { id: "starter", nombre: "Starter", precio: 0, desc: "Para comenzar" },
-    { id: "pro", nombre: "Pro", precio: 49, desc: "Más funcionalidades" },
-    { id: "enterprise", nombre: "Enterprise", precio: 199, desc: "Marca blanca" },
+    { id: "starter", nombre: t('plans.starter.name'), precio: 0, desc: t('plans.starter.desc') },
+    { id: "pro", nombre: t('plans.pro.name'), precio: 49, desc: t('plans.pro.desc') },
+    { id: "enterprise", nombre: t('plans.enterprise.name'), precio: 199, desc: t('plans.enterprise.desc') },
   ];
 
   return (
-    <div className="min-h-dvh flex items-center justify-center p-4 relative" style={{ background: "var(--background)" }}>
-      <div className="grid-tactical fixed inset-0 pointer-events-none" style={{ opacity: isDark ? 0.45 : 0.6 }} />
-      <div className="fixed left-0 top-0 bottom-0 w-1" style={{ background: "var(--primary)" }} />
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4 relative overflow-hidden font-sans py-12">
+      {/* Background Effects */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full animate-pulse delay-700" />
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-soft-light pointer-events-none" />
+        <div className="grid-tactical fixed inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.07]" />
+      </div>
 
+      {/* Floating Theme Toggle */}
       <button
         onClick={toggleTheme}
-        className="fixed top-5 right-5 z-50 flex items-center gap-2 transition-all duration-200"
-        style={{
-          padding: "7px 14px",
-          border: "1px solid var(--border)",
-          background: "var(--card)",
-          color: "var(--muted-foreground)",
-          borderRadius: isDark ? "0px" : "8px",
-          fontSize: 12, fontWeight: 500,
-          cursor: "pointer",
-          boxShadow: "var(--shadow-sm)",
-        }}
+        className="fixed top-8 right-8 z-50 p-3 bg-card/50 backdrop-blur-md border border-border rounded-2xl shadow-xl hover:scale-110 transition-all active:scale-95 group"
       >
-        {isDark ? <><Sun size={13} /> <span>Modo Claro</span></> : <><Moon size={13} /> <span>Modo Oscuro</span></>}
+        {theme === 'dark' ? (
+          <Sun className="w-5 h-5 text-yellow-500 group-hover:rotate-45 transition-transform" />
+        ) : (
+          <Moon className="w-5 h-5 text-blue-600 group-hover:-rotate-12 transition-transform" />
+        )}
       </button>
 
-      <div className="w-full max-w-lg animate-entry relative z-10" style={{
-        background: "var(--card)",
-        border: "1px solid var(--border)",
-        borderRadius: isDark ? "0px" : "16px",
-        padding: "32px 28px",
-        boxShadow: isDark ? "0 0 0 1px var(--border), 0 20px 60px rgb(0 0 0 / 0.5)" : "var(--shadow-lg)",
-      }}>
+      <div className="w-full max-w-lg relative z-10 animate-in fade-in zoom-in-95 duration-700">
+        <div className="bg-card/40 backdrop-blur-2xl border border-white/10 dark:border-white/5 rounded-[40px] p-8 md:p-10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)]">
         <div style={{ marginBottom: 28 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
             <div style={{
@@ -162,17 +160,11 @@ function RegisterContent() {
               <Zap size={20} strokeWidth={2.5} />
             </div>
             <div>
-              <p style={{
-                fontSize: 10, fontWeight: 600,
-                color: "var(--muted-foreground)",
-                textTransform: "uppercase",
-                letterSpacing: isDark ? "0.2em" : "0.08em",
-                margin: 0,
-              }}>
-                {isDark ? "CREAR CUENTA" : "Onboarding"}
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground m-0">
+                {isDark ? t('badge_dark') : t('badge_light')}
               </p>
-              <h1 style={{ fontSize: 18, fontWeight: 800, color: "var(--foreground)", margin: 0 }}>
-                FluxAgent V2
+              <h1 className="text-xl md:text-2xl font-black tracking-tight mb-2 bg-gradient-to-br from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                {t('title')}
               </h1>
             </div>
           </div>
@@ -182,7 +174,7 @@ function RegisterContent() {
             paddingLeft: 14,
           }}>
             <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0 }}>
-              {isDark ? "Configura tu Agente Inteligente" : "Automatiza tus ventas hoy"}
+              {t('subtitle')}
             </p>
           </div>
         </div>
@@ -205,7 +197,7 @@ function RegisterContent() {
             }}
           >
             <User size={18} style={{ color: tipo === "individual" ? "var(--primary)" : "var(--muted-foreground)" }} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>Individual</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>{t('type_individual')}</span>
           </button>
           <button
             type="button"
@@ -224,7 +216,7 @@ function RegisterContent() {
             }}
           >
             <Building2 size={18} style={{ color: tipo === "empresa" ? "var(--primary)" : "var(--muted-foreground)" }} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>Empresa</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>{t('type_company')}</span>
           </button>
         </div>
 
@@ -234,109 +226,59 @@ function RegisterContent() {
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {tipo === "empresa" && (
             <div>
-              <label style={{
-                display: "block", marginBottom: 6,
-                fontSize: 11, fontWeight: 600,
-                color: "var(--muted-foreground)",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-              }}>
-                Nombre de tu Empresa *
+              <label className="text-[11px] font-black uppercase tracking-[0.06em] text-muted-foreground block mb-[6px]">
+                {t('company_name')}
               </label>
               <div style={{ position: "relative" }}>
                 <Building2 size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--muted-foreground)" }} />
                 <Input
                   type="text" required
                   value={empresa} onChange={e => setEmpresa(e.target.value)}
-                  placeholder="Acme Corp"
-                  style={{
-                    height: 44, fontSize: 14, paddingLeft: 38,
-                    background: "var(--input)",
-                    border: "1px solid var(--border)",
-                    color: "var(--foreground)",
-                    borderRadius: isDark ? "0px" : "10px",
-                  }}
+                  placeholder={t('company_placeholder')}
+                  className="h-14 pl-12 bg-background/50 border-border/50 rounded-2xl focus:ring-primary/20 focus:border-primary/50 transition-all font-medium"
                 />
               </div>
             </div>
           )}
 
           <div>
-            <label style={{
-              display: "block", marginBottom: 6,
-              fontSize: 11, fontWeight: 600,
-              color: "var(--muted-foreground)",
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-            }}>
-              Tu Nombre
+            <label className="text-[11px] font-black uppercase tracking-[0.06em] text-muted-foreground block mb-[6px]">
+              {t('name_label')}
             </label>
             <div style={{ position: "relative" }}>
               <User size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--muted-foreground)" }} />
               <Input
                 type="text" required
                 value={nombre} onChange={e => setNombre(e.target.value)}
-                placeholder="Juan Pérez"
-                style={{
-                  height: 44, fontSize: 14, paddingLeft: 38,
-                  background: "var(--input)",
-                  border: "1px solid var(--border)",
-                  color: "var(--foreground)",
-                  borderRadius: isDark ? "0px" : "10px",
-                }}
+                placeholder={t('name_placeholder')}
+                className="h-14 pl-12 bg-background/50 border-border/50 rounded-2xl focus:ring-primary/20 focus:border-primary/50 transition-all font-medium"
               />
             </div>
           </div>
 
           <div>
-            <label style={{
-              display: "block", marginBottom: 6,
-              fontSize: 11, fontWeight: 600,
-              color: "var(--muted-foreground)",
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-            }}>
-              Correo electrónico
+            <label className="text-[11px] font-black uppercase tracking-[0.06em] text-muted-foreground block mb-[6px]">
+              {t('email_label')}
             </label>
             <Input
               type="email" autoComplete="email" required
               value={email} onChange={e => setEmail(e.target.value)}
-              placeholder="usuario@empresa.com"
-              style={{
-                height: 44, fontSize: 14,
-                background: "var(--input)",
-                border: "1px solid var(--border)",
-                color: "var(--foreground)",
-                borderRadius: isDark ? "0px" : "10px",
-                paddingInline: 14,
-              }}
+              placeholder={t('email_placeholder')}
+              className="h-14 px-4 bg-background/50 border-border/50 rounded-2xl focus:ring-primary/20 focus:border-primary/50 transition-all font-medium"
             />
           </div>
 
           <div>
-            <label style={{
-              display: "block", marginBottom: 6,
-              fontSize: 11, fontWeight: 600,
-              color: "var(--muted-foreground)",
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-            }}>
-              Contraseña
+            <label className="text-[11px] font-black uppercase tracking-[0.06em] text-muted-foreground block mb-[6px]">
+              {t('password_label')}
             </label>
             <div style={{ position: "relative" }}>
               <Input
                 type={showPwd ? "text" : "password"}
                 required minLength={6}
                 value={password} onChange={e => setPassword(e.target.value)}
-                placeholder="Mínimo 6 caracteres"
-                style={{
-                  height: 44, fontSize: 14, paddingRight: 44,
-                  background: "var(--input)",
-                  border: "1px solid var(--border)",
-                  color: "var(--foreground)",
-                  borderRadius: isDark ? "0px" : "10px",
-                  paddingInline: 14,
-                }}
+                placeholder={t('password_placeholder')}
+                className="h-14 pl-4 pr-12 bg-background/50 border-border/50 rounded-2xl focus:ring-primary/20 focus:border-primary/50 transition-all font-medium"
               />
               <button
                 type="button"
@@ -353,14 +295,8 @@ function RegisterContent() {
           </div>
 
           <div>
-            <label style={{
-              display: "block", marginBottom: 8,
-              fontSize: 11, fontWeight: 600,
-              color: "var(--muted-foreground)",
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-            }}>
-              Plan
+            <label className="text-[11px] font-black uppercase tracking-[0.06em] text-muted-foreground block mb-2">
+              {t('plan_label')}
             </label>
             <div style={{ display: "flex", gap: 8 }}>
               {planes.map(p => (
@@ -380,7 +316,7 @@ function RegisterContent() {
                 >
                   <p style={{ fontSize: 12, fontWeight: 700, color: "var(--foreground)", margin: 0 }}>{p.nombre}</p>
                   <p style={{ fontSize: 10, color: "var(--muted-foreground)", margin: "2px 0 0" }}>
-                    {p.precio === 0 ? "Gratis" : `$${p.precio}/mes`}
+                    {p.precio === 0 ? t('free') : `$${p.precio}${t('per_month')}`}
                   </p>
                 </button>
               ))}
@@ -389,15 +325,9 @@ function RegisterContent() {
 
           {tipo === "empresa" && (
             <div>
-              <label style={{
-                display: "block", marginBottom: 8,
-                fontSize: 11, fontWeight: 600,
-                color: "var(--muted-foreground)",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-              }}>
+              <label className="text-[11px] font-black uppercase tracking-[0.06em] text-muted-foreground block mb-2">
                 <Palette size={12} style={{ display: "inline", marginRight: 4 }} />
-                Color de marca
+                {t('brand_color')}
               </label>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 <input
@@ -435,47 +365,35 @@ function RegisterContent() {
             }}>
               <p style={{ fontSize: 12, fontWeight: 600, color: "var(--primary)", margin: "0 0 6px", display: "flex", alignItems: "center", gap: 6 }}>
                 <CheckCircle size={14} />
-                Incluye Portal Corporativo
+                {t('portal_includes')}
               </p>
               <ul style={{ fontSize: 11, color: "var(--muted-foreground)", margin: 0, paddingLeft: 16 }}>
-                <li>Marca blanca completa</li>
-                <li>Logo y colores personalizados</li>
-                <li>Múltiples agentes IA</li>
-                <li>Soporte prioritario</li>
+                {t.raw('portal_features').map((f: string, i: number) => (
+                  <li key={i}>{f}</li>
+                ))}
               </ul>
             </div>
           )}
 
           <Button
             type="submit" disabled={loading}
-            style={{
-              height: 46, marginTop: 8,
-              background: "var(--primary)",
-              color: "var(--primary-foreground)",
-              fontWeight: 700,
-              fontSize: 13,
-              borderRadius: isDark ? "0px" : "10px",
-              border: "none",
-              cursor: loading ? "not-allowed" : "pointer",
-              opacity: loading ? 0.7 : 1,
-              boxShadow: isDark ? `0 0 16px var(--primary)40` : "var(--shadow-sm)",
-            }}
+            className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 group transition-all active:scale-[0.98] mt-6"
           >
             {loading
               ? <span style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "center" }}>
                   <span style={{ width: 16, height: 16, border: "2px solid currentColor", borderTopColor: "transparent", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} />
-                  Creando entorno...
+                  {t('creating_env')}
                 </span>
-              : tipo === "empresa" ? "Crear Portal Corporativo" : "Crear mi cuenta"
+              : tipo === "empresa" ? t('submit_company') : t('submit_individual')
             }
           </Button>
         </form>
 
         <div style={{ marginTop: 20, textAlign: "center" }}>
           <p style={{ fontSize: 13, color: "var(--muted-foreground)" }}>
-            ¿Ya tienes una cuenta?{" "}
-            <button onClick={() => router.push("/login")} style={{ color: "var(--primary)", fontWeight: 600, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
-              Iniciar sesión
+            {t('already_have_account')}{" "}
+            <button onClick={() => router.push(`/${locale}/login`)} style={{ color: "var(--primary)", fontWeight: 600, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+              {t('login')}
             </button>
           </p>
         </div>
@@ -492,13 +410,14 @@ function RegisterContent() {
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <Shield size={12} />
-            <span>{isDark ? "ENCRIPTACIÓN JWT" : "Datos seguros"}</span>
+            <span>{isDark ? t('jwt_encryption') : t('secure_data')}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span className="pulse-live" style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--success)", display: "inline-block" }} />
             <Activity size={11} />
-            <span>{isDark ? "AISLAMIENTO RLS" : "Multi-tenant"}</span>
+            <span>{isDark ? t('rls_isolation') : t('multi_tenant')}</span>
           </div>
+        </div>
         </div>
       </div>
     </div>

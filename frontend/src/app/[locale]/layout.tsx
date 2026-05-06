@@ -17,17 +17,19 @@ export default async function RootLayout({
   children: React.ReactNode;
   params: Promise<{ locale: string }>;
 }) {
-  const { locale } = await params;
+  const { locale: rawLocale } = await params;
+  const locale = ['en', 'es', 'pt'].includes(rawLocale) ? rawLocale : 'es';
+  
   let messages;
   try {
-    messages = await getMessages();
+    messages = await getMessages({ locale });
   } catch (error) {
     console.error('Failed to load messages:', error);
     messages = {};
   }
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning data-scroll-behavior="smooth">
       <body className={inter.className}>
         <NextIntlClientProvider messages={messages} locale={locale}>
           <Providers>{children}</Providers>
