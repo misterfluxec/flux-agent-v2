@@ -5,6 +5,7 @@
 # Nunca se deben hardcodear secretos en el código.
 # =============================================================================
 
+import os
 from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List
@@ -17,7 +18,7 @@ class Configuracion(BaseSettings):
     """
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=[".env", "../.env"],
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
@@ -47,10 +48,25 @@ class Configuracion(BaseSettings):
     # -------------------------------------------------------------------------
     # Ollama (LLM Engine)
     # -------------------------------------------------------------------------
-    ollama_base_url: str = "http://416f62ef1b28_flux-ollama:11434"
-    ollama_modelo_chat: str = "qwen2.5:3b"
-    ollama_modelo_embedding: str = "nomic-embed-text"
-    ollama_timeout: int = 120         # segundos
+    @property
+    def ollama_base_url(self) -> str:
+        """URL dinámica de Ollama basada en entorno o configuración."""
+        # Prioridad: variable de entorno > docker network > localhost
+        external_url = os.getenv("OLLAMA_BASE_URL")
+        if external_url:
+            return external_url
+        
+        # Para Docker Compose: usar nombre del contenedor
+        if os.getenv("APP_ENV") == "production":
+            return "http://ollama:11434"
+        
+        # Para desarrollo local
+        return "http://localhost:11434"
+    
+    ollama_modelo_chat: str = os.getenv("OLLAMA_CHAT_MODEL", "qwen2.5:3b")
+    ollama_modelo_embedding: str = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text")
+    ollama_timeout: int = int(os.getenv("OLLAMA_TIMEOUT", "120"))
+    ollama_max_loaded_models: int = int(os.getenv("OLLAMA_MAX_LOADED", "3"))
 
     # -------------------------------------------------------------------------
     # Autenticación JWT

@@ -20,7 +20,7 @@ from database import cerrar_db, configurar_rls, inicializar_db, obtener_sesion
 from auth import get_tenant_actual, get_tenant_actual_opcional, get_usuario_actual
 from core.plan_manager import PlanManager
 from routers.auth_router import router as auth_router
-from routers.stats_router import router as stats_router
+# from routers.stats_router import router as stats_router  # Legacy - reemplazado por analytics_router
 from routers.products_router import router as products_router
 from routers.whatsapp_router import router as whatsapp_router
 from routers.webhooks_router import router as webhooks_router
@@ -33,12 +33,16 @@ from routers.ingest_router import router as ingest_router, ws_router
 from routers.voice_router import router as voice_router
 from routers.channels_router import router as channels_router
 from routers.whatsapp_health_router import router as whatsapp_health_router
+from routers.health_router import router as health_router
 from routers.whatsapp_cloud_router import router as whatsapp_cloud_router
 from routers.quota_router import router as quota_router
 from routers.oauth_sync_router import router as oauth_sync_router
 from routers.sync_router import router as sync_router
 from routers.upload_router import router as upload_router
 from app.routers.sales_agent_router import router as sales_router
+from routers.analytics_router import router as analytics_router
+from routers.billing_router import router as billing_router
+from routers.plans_router import router as plans_router
 # Nota: chat_router no tiene un APIRouter registrado, provee la función lógica a webhooks
 
 from core.metrics import start_metrics_server
@@ -158,13 +162,10 @@ app.add_middleware(
 )
 
 
-@app.middleware("http")
-async def middleware_tiempo_respuesta(request: Request, call_next):
-    inicio = time.perf_counter()
-    respuesta = await call_next(request)
-    ms = (time.perf_counter() - inicio) * 1000
-    respuesta.headers["X-Process-Time"] = f"{ms:.2f}ms"
-    return respuesta
+from core.middleware.tenant_isolation import setup_middlewares
+
+# Configurar middlewares personalizados
+setup_middlewares(app)
 
 
 # =============================================================================
@@ -172,7 +173,7 @@ async def middleware_tiempo_respuesta(request: Request, call_next):
 # =============================================================================
 
 app.include_router(auth_router)
-app.include_router(stats_router)
+# app.include_router(stats_router)  # Legacy - reemplazado por analytics_router
 app.include_router(products_router)
 app.include_router(whatsapp_router)
 app.include_router(webhooks_router)
@@ -186,21 +187,186 @@ app.include_router(ws_router)
 app.include_router(voice_router)
 app.include_router(channels_router)
 app.include_router(whatsapp_health_router)
+app.include_router(health_router)
 app.include_router(whatsapp_cloud_router)
 app.include_router(quota_router)
 app.include_router(oauth_sync_router)
 app.include_router(sync_router)
 app.include_router(upload_router)
 app.include_router(sales_router, prefix="/api/v1")
+app.include_router(analytics_router)
+app.include_router(billing_router)
+app.include_router(plans_router)
 
 
+# =============================================================================
+# HANDLERS DE EXCEPCIONES ESPECÍFICOS
+# =============================================================================
+# Manejo granular de errores según tipo y contexto
+# Mejor experiencia para desarrolladores y usuarios
+# =============================================================================
+
+from fastapi.exceptions import RequestValidationError
+from sqlalchemy.exc import DBAPIError, IntegrityError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+# from auth import TenantNotFoundError, AuthenticationError
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    """Maneja errores HTTP 4xx conocidos"""
+    logger.warning(f"HTTP {exc.status_code} en {request.url}: {exc.detail}")
+    
+    # Mapear códigos a mensajes amigables
+    error_messages = {
+        400: "Solicitud inválida",
+        401: "No autorizado",
+        403: "Acceso denegado",
+        404: "Recurso no encontrado",
+        405: "Método no permitido",
+        429: "Demasiadas solicitudes"
+    }
+    
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": "http_error",
+            "codigo": exc.status_code,
+            "mensaje": error_messages.get(exc.status_code, exc.detail),
+            "path": str(request.url.path),
+            "timestamp": time.time()
+        }
+    )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Maneja errores de validación Pydantic"""
+    logger.warning(f"Validación fallida en {request.url}: {exc.errors()}")
+    
+    # Formatear errores para mejor UX
+    formatted_errors = []
+    for error in exc.errors():
+        field = " -> ".join(str(x) for x in error["loc"])
+        formatted_errors.append({
+            "campo": field,
+            "mensaje": error["msg"],
+            "valor": error.get("input")
+        })
+    
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={
+            "error": "validacion_fallida",
+            "mensaje": "Datos de entrada inválidos",
+            "detalles": formatted_errors,
+            "path": str(request.url.path),
+            "timestamp": time.time()
+        }
+    )
+
+@app.exception_handler(IntegrityError)
+async def db_integrity_handler(request: Request, exc: IntegrityError):
+    """Maneja errores de integridad de DB (unique constraints, FK, etc)"""
+    logger.error(f"Error de integridad DB: {exc.orig}")
+    
+    # Detectar tipo específico de error
+    error_msg = str(exc.orig).lower()
+    
+    if "unique" in error_msg:
+        detalle = "El recurso ya existe"
+        codigo = "recurso_duplicado"
+    elif "foreign key" in error_msg:
+        detalle = "Referencia inválida a otro recurso"
+        codigo = "referencia_invalida"
+    elif "not null" in error_msg:
+        detalle = "Campo requerido faltante"
+        codigo = "campo_requerido"
+    else:
+        detalle = "Conflicto de datos"
+        codigo = "conflicto_datos"
+    
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={
+            "error": codigo,
+            "mensaje": detalle,
+            "path": str(request.url.path),
+            "timestamp": time.time()
+        }
+    )
+
+@app.exception_handler(DBAPIError)
+async def db_error_handler(request: Request, exc: DBAPIError):
+    """Maneja errores genéricos de base de datos"""
+    logger.error(f"Error de base de datos: {exc.orig}", exc_info=True)
+    
+    # En producción, no exponer detalles de DB
+    if config.es_desarrollo:
+        detalle = str(exc.orig)
+    else:
+        detalle = "Error en el servicio de base de datos"
+    
+    return JSONResponse(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        content={
+            "error": "error_db",
+            "mensaje": detalle,
+            "path": str(request.url.path),
+            "timestamp": time.time()
+        }
+    )
+
+# @app.exception_handler(TenantNotFoundError)
+# async def tenant_not_found_handler(request: Request, exc: TenantNotFoundError):
+#     """Maneja errores de tenant no encontrado"""
+#     logger.warning(f"Tenant no encontrado: {exc}")
+#     return JSONResponse(
+#         status_code=status.HTTP_404_NOT_FOUND,
+#         content={
+#             "error": "tenant_no_encontrado",
+#             "mensaje": "Tenant no encontrado",
+#             "path": str(request.url.path),
+#             "timestamp": time.time()
+#         }
+#     )
+
+# @app.exception_handler(AuthenticationError)
+# async def auth_error_handler(request: Request, exc: AuthenticationError):
+#     """Maneja errores de autenticación"""
+#     logger.warning(f"Error de autenticación: {exc}")
+#     return JSONResponse(
+#         status_code=status.HTTP_401_UNAUTHORIZED,
+#         content={
+#             "error": "autenticacion_fallida",
+#             "mensaje": "Credenciales inválidas o expiradas",
+#             "path": str(request.url.path),
+#             "timestamp": time.time()
+#         }
+#     )
+
+# Mantener handler genérico SOLO para logging y fallback
 @app.exception_handler(Exception)
-async def manejador_error_global(request: Request, exc: Exception):
-    logger.error(f"Error no manejado en {request.url}: {exc}", exc_info=True)
-    detalle = str(exc) if config.es_desarrollo else "Error interno del servidor"
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    """Último recurso: loguear pero no exponer detalles"""
+    logger.critical(
+        f"ERROR NO MANEJADO en {request.method} {request.url}: "
+        f"{type(exc).__name__}: {exc}",
+        exc_info=True
+    )
+    
+    # En producción: enviar alerta a Sentry/PagerDuty aquí
+    if not config.es_desarrollo:
+        # TODO: Integrar con sistema de alertas
+        pass
+    
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"error": "error_interno", "mensaje": detalle, "path": str(request.url.path)},
+        content={
+            "error": "error_interno",
+            "mensaje": "Ocurrió un error inesperado",
+            "path": str(request.url.path),
+            "timestamp": time.time(),
+            "request_id": getattr(request.state, 'request_id', None)
+        }
     )
 
 
