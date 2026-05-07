@@ -235,11 +235,124 @@ async def create_agent(
     dias_array = datos.dias_atencion if datos.dias_atencion is not None else ["lunes", "martes", "miercoles", "jueves", "viernes"]
     canales_array = datos.canales if datos.canales is not None else ["web_chat"]
     
-    base_prompt = f"Eres '{datos.nombre}', un asistente experto en {datos.specialty or datos.area}. Tu tono de comunicación es {datos.tono}. Tu objetivo principal es {datos.agent_type}. "
-    if datos.system_prompt:
-        final_prompt = base_prompt + f"Instrucciones adicionales: {datos.system_prompt}"
-    else:
-        final_prompt = base_prompt
+    # Generar prompt completo usando plantillas pre-cargadas
+    def generate_system_prompt(datos):
+        """Generar prompt completo usando plantillas pre-cargadas."""
+        
+        base_prompts = {
+            'sales': {
+                'intro': f"Eres un vendedor experto especializado en {datos.specialty or 'ventas generales'}.",
+                'main': "Tu objetivo es guiar al cliente hacia una compra exitosa.",
+                'style': f"Eres {datos.tono}, profesional y servicial."
+            },
+            'support': {
+                'intro': f"Eres un especialista en soporte técnico especializado en {datos.specialty or 'soporte general'}.",
+                'main': "Tu objetivo es resolver problemas de manera eficiente y satisfacer al cliente.",
+                'style': f"Eres {datos.tono}, paciente y servicial."
+            },
+            'bookings': {
+                'intro': f"Eres un asistente de reservas especializado en {datos.specialty or 'gestión de reservas'}.",
+                'main': "Tu objetivo es ayudar a los clientes a programar y gestionar sus citas.",
+                'style': f"Eres {datos.tono}, organizado y amigable."
+            },
+            'custom': {
+                'intro': f"Eres {datos.nombre}, un asistente experto especializado en {datos.specialty or 'asistencia general'}.",
+                'main': "Tu objetivo es proporcionar el mejor servicio posible según las necesidades del cliente.",
+                'style': f"Eres {datos.tono}, adaptable y profesional."
+            }
+        }
+        
+        prompt_config = base_prompts.get(datos.agent_type, base_prompts['sales'])
+        
+        system_prompt = f"""
+{prompt_config['intro']}
+
+## TU ESTILO:
+{prompt_config['style']}
+
+## TU OBJETIVO:
+{prompt_config['main']}
+
+## INSTRUCCIONES ESPECÍFICAS:
+{datos.system_prompt or 'Ayuda al cliente de manera eficiente y profesional.'}
+
+## DIRECTRICES DE COMUNICACIÓN:
+- Mantén siempre un tono {datos.tono}
+- Sé claro y conciso en tus respuestas
+- Adapta tu comunicación según las necesidades del cliente
+- Ofrece soluciones prácticas y útiles
+"""
+        
+        return system_prompt.strip()
+    
+    # Generar prompt dinámico
+    final_prompt = generate_system_prompt(datos)
+    
+    # Mapear datos del frontend a la estructura unificada de la BD
+    area_mapeada = {
+        'sales': 'Ventas',
+        'support': 'Soporte', 
+        'bookings': 'Reservas',
+        'custom': 'General'
+    }.get(datos.agent_type, 'General')
+    
+    genero_mapeado = 'femenino'  # Valor por defecto consistente
+    
+    # Generar script de ventas base
+    def generate_sales_script(agent_type):
+        """Generar script de ventas según el tipo de agente."""
+        
+        scripts_base = {
+            'sales': {
+                "fases": ["contacto", "calificacion", "presentacion", "cierre", "seguimiento"],
+                "reglas": ["siempre saludar primero", "identificar necesidades", "presentar beneficios", "pedir acción"],
+                "scripts": {
+                    "contacto": "Hola, soy {nombre}. ¿En qué puedo ayudarte hoy?",
+                    "calificacion": "Para poder ayudarte mejor, ¿podrías contarme más sobre lo que buscas?",
+                    "presentacion": "Basado en lo que me comentas, te recomiendo...",
+                    "cierre": "¿Te gustaría proceder con esta opción?",
+                    "seguimiento": "Gracias por tu interés. ¿Hay algo más en lo que pueda ayudarte?"
+                },
+                "escalacion": {"enabled": True, "keywords": ["gerente", "supervisor", "queja"]}
+            },
+            'support': {
+                "fases": ["recepcion", "diagnostico", "solucion", "verificacion", "cierre"],
+                "reglas": ["escuchar activamente", "identificar problema", "ofrecer solución", "confirmar resolución"],
+                "scripts": {
+                    "recepcion": "Hola, soy {nombre}. Entiendo que necesitas ayuda con...",
+                    "diagnostico": "Vamos a identificar el problema. ¿Cuándo ocurrió?",
+                    "solucion": "Para solucionar esto, te recomiendo...",
+                    "verificacion": "¿Podrías confirmar si el problema está resuelto?",
+                    "cierre": "Gracias por tu paciencia. ¿Hay algo más en lo que pueda ayudarte?"
+                },
+                "escalacion": {"enabled": True, "keywords": ["urgente", "emergencia", "gerente"]}
+            },
+            'bookings': {
+                "fases": ["bienvenida", "disponibilidad", "confirmacion", "recordatorio", "cierre"],
+                "reglas": ["verificar disponibilidad", "confirmar detalles", "enviar recordatorio", "confirmar cita"],
+                "scripts": {
+                    "bienvenida": "Hola, soy {nombre}. ¿En qué puedo ayudarte con tu reserva?",
+                    "disponibilidad": "Voy a verificar la disponibilidad para ti...",
+                    "confirmacion": "Tengo disponibilidad en los siguientes horarios...",
+                    "recordatorio": "Te enviaré un recordatorio antes de tu cita.",
+                    "cierre": "Tu cita está confirmada. ¿Hay algo más que necesites?"
+                },
+                "escalacion": {"enabled": false, "keywords": []}
+            },
+            'custom': {
+                "fases": ["contacto", "comprension", "accion", "seguimiento"],
+                "reglas": ["escuchar activamente", "comprender necesidades", "proporcionar ayuda", "verificar satisfacción"],
+                "scripts": {
+                    "contacto": "Hola, soy {nombre}. ¿En qué puedo ayudarte?",
+                    "comprension": "Entiendo que necesitas ayuda con...",
+                    "accion": "Para ayudarte, voy a...",
+                    "seguimiento": "¿Hay algo más en lo que pueda asistirte?"
+                },
+                "escalacion": {"enabled": True, "keywords": ["ayuda adicional", "supervisor"]}
+            }
+        }
+        
+        return scripts_base.get(agent_type, scripts_base['sales'])
         
     await db.execute(
         text("""
@@ -261,9 +374,9 @@ async def create_agent(
             "id": str(nuevo_id),
             "tid": usuario.tenant_id,
             "nombre": datos.nombre.strip(),
-            "area": datos.area,
+            "area": area_mapeada,
             "desc": datos.descripcion,
-            "gen": datos.genero,
+            "gen": genero_mapeado,
             "hum": datos.humor,
             "pers": datos.personalidad,
             "idioma": datos.idioma,
@@ -280,7 +393,7 @@ async def create_agent(
             "hora_fin": parse_time(datos.horario_fin),
             "dias": dias_array,
             "msg_fuera": datos.mensaje_fuera_horario,
-            "script_ventas": json.dumps(datos.script_ventas) if datos.script_ventas else '{"fases": [], "reglas": [], "scripts": [], "escalacion": {"enabled": true, "keywords": []}, "chat_settings": {}}',
+            "script_ventas": json.dumps(datos.script_ventas) if datos.script_ventas else json.dumps(generate_sales_script(datos.agent_type)),
             "agent_type": datos.agent_type,
             "specialty": datos.specialty,
             "system_prompt": final_prompt,

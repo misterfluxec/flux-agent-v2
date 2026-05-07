@@ -167,15 +167,15 @@ async def register(
     await db.execute(
         text("""
             SELECT fn_crear_usuario(
-                CAST(:uid AS UUID), CAST(:tid AS UUID), :email, :phash, :nombre, 'admin'
+                CAST(:tid AS UUID), CAST(:uid AS UUID), :nombre, :email, :phash, 'admin'
             )
         """),
         {
-            "uid":    str(usuario_id),
             "tid":    str(tenant_id),
+            "uid":    str(usuario_id),
+            "nombre": nombre_usuario_str,
             "email":  (datos.email or "").lower().strip(),
             "phash":  password_hash,
-            "nombre": nombre_usuario_str,
         },
     )
     
