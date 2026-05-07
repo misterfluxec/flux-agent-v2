@@ -1,78 +1,72 @@
-import { useTranslations } from 'next-intl';
-import { Database, FileText, Globe, Upload } from 'lucide-react';
+import { UploadCloud, CheckCircle2 } from 'lucide-react';
 import { OnboardingData } from '@/hooks/useOnboardingWizard';
+import { Button } from '@/components/ui/button';
 
 interface Props {
-  data: Pick<OnboardingData, 'knowledgeSource' | 'knowledgeValue'>;
-  onChange: (field: keyof OnboardingData, value: string) => void;
+  data: OnboardingData;
+  onChange: (field: keyof OnboardingData, value: any) => void;
   onNext: () => void;
   onBack: () => void;
 }
 
 export function StepKnowledge({ data, onChange, onNext, onBack }: Props) {
-  const t = useTranslations('onboarding.knowledge');
-  const sources = [
-    { id: 'manual', icon: Upload, label: t('source_manual') },
-    { id: 'sheets', icon: FileText, label: t('source_sheets') },
-    { id: 'website', icon: Globe, label: t('source_website') },
-    { id: 'database', icon: Database, label: t('source_db') },
-  ];
+  const isLoaded = data.conocimiento_cargado;
+
+  const handleSimulateUpload = () => {
+    // Simulamos la carga visual para UX
+    setTimeout(() => {
+      onChange('conocimiento_cargado', true);
+    }, 1500);
+  };
 
   return (
     <div className="space-y-6 animate-in slide-in-from-bottom-4 fade-in duration-500">
       <div className="text-center space-y-2">
-        <div className="inline-flex p-3 bg-primary/10 rounded-full mb-2"><Database className="w-6 h-6 text-primary" /></div>
-        <h2 className="text-2xl font-bold">{t('title')}</h2>
-        <p className="text-muted-foreground">{t('description')}</p>
+        <h2 className="text-2xl font-bold text-foreground">Conocimiento del Agente</h2>
+        <p className="text-muted-foreground">Sube documentos para que Yanua aprenda todo sobre tu negocio.</p>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto">
-        {sources.map((src) => (
-          <button
-            key={src.id}
-            onClick={() => onChange('knowledgeSource', src.id)}
-            className={`flex items-center gap-3 p-4 rounded-xl border text-left transition ${
-              data.knowledgeSource === src.id ? 'border-primary bg-primary/10 shadow-sm' : 'border-border hover:bg-accent'
-            }`}
+
+      <div className="max-w-xl mx-auto mt-8">
+        {!isLoaded ? (
+          <div 
+            className="border-2 border-dashed border-border rounded-2xl p-12 text-center hover:bg-white/5 hover:border-primary/50 transition cursor-pointer"
+            onClick={handleSimulateUpload}
           >
-            <src.icon className="w-5 h-5 text-muted-foreground" />
-            <span className="font-medium">{src.label}</span>
-          </button>
-        ))}
-      </div>
-
-      <div className="max-w-lg mx-auto h-[60px]">
-        {data.knowledgeSource === 'website' && (
-          <div className="animate-in fade-in slide-in-from-top-2">
-             <input
-              type="url"
-              placeholder="https://mi-empresa.com"
-              value={data.knowledgeValue || ''}
-              onChange={(e) => onChange('knowledgeValue', e.target.value)}
-              className="w-full px-4 py-3 bg-card border border-border rounded-lg focus:ring-2 focus:ring-primary/50 outline-none transition"
-             />
+            <div className="inline-flex p-4 bg-background rounded-full mb-4 shadow-sm border border-border">
+              <UploadCloud className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-medium text-foreground mb-2">Arrastra tus archivos aquí</h3>
+            <p className="text-sm text-muted-foreground mb-6">Soporta PDF, TXT, CSV, XLS y Docs</p>
+            <Button variant="secondary" className="pointer-events-none">Explorar archivos</Button>
           </div>
-        )}
-        {data.knowledgeSource === 'manual' && (
-          <div className="animate-in fade-in slide-in-from-top-2">
-             <input
-              type="file"
-              accept=".pdf,.txt,.csv"
-              onChange={(e) => onChange('knowledgeValue', e.target.files?.[0]?.name || '')}
-              className="w-full px-4 py-2.5 bg-card border border-border rounded-lg text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-all cursor-pointer"
-             />
+        ) : (
+          <div className="border border-border rounded-2xl p-8 text-center bg-card shadow-[0_0_30px_rgba(6,182,212,0.1)]">
+            <div className="inline-flex p-4 bg-primary/10 rounded-full mb-4">
+              <CheckCircle2 className="w-10 h-10 text-primary" />
+            </div>
+            <h3 className="text-xl font-bold text-foreground mb-2">¡Conocimiento Procesado!</h3>
+            <p className="text-muted-foreground">Yanua ha aprendido 312 productos y servicios de tus documentos.</p>
+            <Button 
+              variant="outline" 
+              onClick={() => onChange('conocimiento_cargado', false)}
+              className="mt-6 border-border text-xs"
+            >
+              Subir más archivos
+            </Button>
           </div>
-        )}
-        {data.knowledgeSource === 'sheets' && (
-           <p className="text-sm text-muted-foreground text-center animate-in fade-in mt-2">Conectaremos tu Google Sheets en el dashboard tras finalizar.</p>
-        )}
-        {data.knowledgeSource === 'database' && (
-           <p className="text-sm text-muted-foreground text-center animate-in fade-in mt-2">Configurarás las credenciales de tu base de datos desde Ajustes Avanzados.</p>
         )}
       </div>
 
-      <div className="flex gap-3 max-w-lg mx-auto">
-        <button onClick={onBack} className="flex-1 py-3 border border-border rounded-lg font-medium hover:bg-accent transition">{t('back')}</button>
-        <button onClick={onNext} className="flex-1 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition">{t('next')}</button>
+      <div className="flex justify-between pt-8">
+        <Button variant="outline" onClick={onBack}>
+          Atrás
+        </Button>
+        <Button 
+          onClick={onNext} 
+          className="bg-primary text-primary-foreground hover:bg-primary-hover shadow-[0_0_20px_rgba(6,182,212,0.3)]"
+        >
+          {isLoaded ? "Siguiente" : "Omitir por ahora"}
+        </Button>
       </div>
     </div>
   );

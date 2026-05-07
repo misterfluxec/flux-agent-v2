@@ -2,13 +2,12 @@ import { Check } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 export function WizardStepper({ currentStep }: { currentStep: number }) {
-  const t = useTranslations('onboarding.steps');
   const steps = [
-    { num: 1, key: 'identity' },
-    { num: 2, key: 'knowledge' },
-    { num: 3, key: 'behavior' },
-    { num: 4, key: 'connect' },
-    { num: 5, key: 'complete' },
+    { num: 1, label: 'Identidad' },
+    { num: 2, label: 'Industria' },
+    { num: 3, label: 'Conocimiento' },
+    { num: 4, label: 'Canales' },
+    { num: 5, label: 'Activación' },
   ];
 
   return (
@@ -35,7 +34,7 @@ export function WizardStepper({ currentStep }: { currentStep: number }) {
             <span className={`mt-2 text-[10px] sm:text-xs font-medium hidden sm:block transition-colors ${
               s.num <= currentStep ? 'text-foreground' : 'text-muted-foreground'
             }`}>
-              {t(s.key as any)}
+              {s.label}
             </span>
           </div>
         ))}

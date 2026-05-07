@@ -3,8 +3,8 @@
 import { useOnboardingWizard, OnboardingData } from '@/hooks/useOnboardingWizard';
 import { WizardStepper } from '@/components/onboarding/WizardStepper';
 import { StepIdentity } from '@/components/onboarding/StepIdentity';
+import { StepIndustry } from '@/components/onboarding/StepIndustry';
 import { StepKnowledge } from '@/components/onboarding/StepKnowledge';
-import { StepBehavior } from '@/components/onboarding/StepBehavior';
 import { StepConnect } from '@/components/onboarding/StepConnect';
 import { StepComplete } from '@/components/onboarding/StepComplete';
 
@@ -16,14 +16,14 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-6 md:p-8 shadow-xl">
+    <div className="bg-card border border-white/5 rounded-2xl p-6 md:p-8 shadow-2xl backdrop-blur-md max-w-4xl mx-auto w-full">
       <WizardStepper currentStep={step} />
       <div className="mt-8">
         {step === 1 && <StepIdentity data={data} onChange={handleUpdate} onNext={nextStep} />}
-        {step === 2 && <StepKnowledge data={data} onChange={handleUpdate} onNext={nextStep} onBack={prevStep} />}
-        {step === 3 && <StepBehavior data={data} onChange={handleUpdate} onNext={nextStep} onBack={prevStep} />}
+        {step === 2 && <StepIndustry data={data} onChange={handleUpdate} onNext={nextStep} onBack={prevStep} />}
+        {step === 3 && <StepKnowledge data={data} onChange={handleUpdate} onNext={nextStep} onBack={prevStep} />}
         {step === 4 && <StepConnect data={data} onChange={handleUpdate} onNext={nextStep} onBack={prevStep} />}
-        {step === 5 && <StepComplete isLoading={isLoading} onSubmit={submitOnboarding} />}
+        {step === 5 && <StepComplete isLoading={isLoading} onSubmit={submitOnboarding} onBack={prevStep} />}
       </div>
     </div>
   );

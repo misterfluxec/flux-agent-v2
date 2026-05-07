@@ -29,7 +29,7 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang={locale} suppressHydrationWarning data-scroll-behavior="smooth">
+    <html lang={locale} className="dark" suppressHydrationWarning data-scroll-behavior="smooth">
       <body className={inter.className}>
         <NextIntlClientProvider messages={messages} locale={locale}>
           <Providers>{children}</Providers>

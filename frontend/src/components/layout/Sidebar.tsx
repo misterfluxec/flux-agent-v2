@@ -14,6 +14,7 @@ import {
   ChevronRight,
   AlertCircle,
   CheckCircle2,
+  Users,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -43,59 +44,52 @@ export interface MenuItem {
 export const MAIN_MENU_ITEMS: MenuItem[] = [
   {
     id: "dashboard",
-    label: "Panel",
+    label: "Inicio",
     href: "/dashboard",
     icon: LayoutDashboard,
-    description: "Resumen ejecutivo de tu agente IA",
+    description: "Resumen ejecutivo en tiempo real",
   },
   {
-    id: "agent",
-    label: "Mi Agente",
+    id: "agents",
+    label: "Agentes",
     href: "/dashboard/agent",
     icon: Bot,
-    description: "Configura identidad, personalidad y conocimiento",
-    badge: { label: "Nuevo", variant: "default" }, // Highlight para nueva UX
+    description: "Centro operativo IA",
   },
   {
     id: "conversations",
     label: "Conversaciones",
     href: "/dashboard/conversations",
     icon: MessageSquare,
-    description: "Seguimiento de clientes en tiempo real",
+    description: "Inbox inteligente",
   },
   {
-    id: "metrics",
-    label: "Métricas",
-    href: "/dashboard/metrics",
+    id: "intelligence",
+    label: "Inteligencia",
+    href: "/dashboard/analytics",
     icon: BarChart3,
-    description: "Analytics unificados: rendimiento y ROI",
+    description: "Métricas de alto nivel y consumo",
   },
   {
     id: "channels",
     label: "Canales",
     href: "/dashboard/channels",
     icon: Plug,
-    description: "Conecta WhatsApp, Telegram y Web",
+    description: "Estado vivo de integraciones",
   },
   {
-    id: "data",
-    label: "Datos",
-    href: "/dashboard/data",
-    icon: Database,
-    description: "Alimenta el conocimiento de tu agente",
+    id: "team",
+    label: "Equipo",
+    href: "/dashboard/settings/team",
+    icon: Users,
+    description: "Roles, usuarios y permisos",
   },
   {
     id: "settings",
     label: "Configuración",
     href: "/dashboard/settings",
     icon: Settings,
-    description: "Facturación, equipo y preferencias",
-    children: [
-      { label: "General", href: "/dashboard/settings", description: "Preferencias de cuenta" },
-      { label: "Facturación", href: "/dashboard/settings/billing", description: "Planes y pagos" },
-      { label: "Equipo", href: "/dashboard/settings/team", description: "Gestión de usuarios" },
-      { label: "API Keys", href: "/dashboard/settings/api-keys", description: "Acceso programático" },
-    ],
+    description: "Billing, facturación y sistema",
   },
 ];
 

@@ -1,4 +1,4 @@
-import { useTranslations } from 'next-intl';
+
 import { Send, Loader2, User, Phone, Info } from 'lucide-react';
 import { Conversation } from '@/types/conversation';
 import { useState, useRef, useEffect } from 'react';
@@ -10,7 +10,6 @@ interface Props {
 }
 
 export function ChatWindow({ conversation, onSend, isSending }: Props) {
-  const t = useTranslations('conversations');
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -33,7 +32,7 @@ export function ChatWindow({ conversation, onSend, isSending }: Props) {
         <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
            <Info className="w-8 h-8 text-primary" />
         </div>
-        <p className="text-base font-medium text-foreground">{t('select_chat')}</p>
+        <p className="text-base font-medium text-foreground">Ningún lead seleccionado</p>
         <p className="text-sm mt-1">Selecciona un lead para ver el historial.</p>
       </div>
     </div>
@@ -51,7 +50,7 @@ export function ChatWindow({ conversation, onSend, isSending }: Props) {
             <h3 className="font-semibold text-sm leading-none">{conversation.contactName}</h3>
             <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-              {conversation.contactPhone}
+              {conversation.contactPhone || 'Sin número'}
             </p>
           </div>
         </div>
@@ -91,7 +90,7 @@ export function ChatWindow({ conversation, onSend, isSending }: Props) {
         {isSending && (
           <div className="flex justify-end animate-pulse">
             <div className="bg-primary/10 border border-primary/20 text-primary px-4 py-2 rounded-2xl rounded-br-none text-xs font-medium flex items-center gap-2">
-              <Loader2 className="w-3.5 h-3.5 animate-spin" /> {t('typing')}
+              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Escribiendo...
             </div>
           </div>
         )}
@@ -110,7 +109,7 @@ export function ChatWindow({ conversation, onSend, isSending }: Props) {
                   handleSend();
                 }
               }}
-              placeholder={t('type_message')} 
+              placeholder="Escribe un mensaje para intervenir..." 
               className="w-full bg-muted/40 border border-border rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all resize-none max-h-32 min-h-[46px]"
               rows={1}
             />

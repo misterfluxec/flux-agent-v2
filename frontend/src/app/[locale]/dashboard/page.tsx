@@ -2,94 +2,32 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
-import { MessageSquare, Users, Target, Clock, TrendingUp, TrendingDown, Minus, Bot, Zap } from 'lucide-react';
-
-import { fetchAnalyticsOverview } from '@/lib/api/analytics';
-import { queryClient } from '@/lib/query-client';
-import { KPICardSkeleton, ConversationsKPI, LeadsKPI, ConversionRateKPI, SentimentKPI, ResponseTimeKPI } from '@/components/ui/kpi-card';
+import { MessageSquare, Users, Zap, Bot, ArrowRight, Sparkles, Plus, Terminal, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface StatsOverview {
   kpis: {
     total_conversaciones: number;
     leads_capturados: number;
-    sentimiento_promedio: number;
     uso_tokens: number;
   };
-  mensajes_por_dia: { fecha: string; conteo: number }[];
-  sentimiento_distribucion: { name: string; value: number; fill: string }[];
-  actividad_reciente: {
-    id: string;
-    action: string;
-    agent: string;
-    time: string;
-    status: string;
-  }[];
-}
-
-interface AnalyticsOverview {
-  total_conversations: number;
-  total_messages: number;
-  total_sales: number;
-  conversion_rate: number;
-  avg_response_time: number;
-  sentiment_score: number;
-  cache_status?: 'HIT' | 'MISS';
-  cache_ttl?: number;
 }
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [stats, setStats] = useState<StatsOverview | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchStats() {
       try {
-        // Obtenemos token del localStorage que es donde login/page.tsx lo guarda
         const token = localStorage.getItem('flux_token');
-
         if (!token) {
           router.push('/login');
           return;
         }
 
-        // Verificar si el usuario tiene agentes creados (más confiable que localStorage)
         const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:9000";
-        
-        console.log('Dashboard: Checking agents for onboarding...');
-        
-        const agentsRes = await fetch(`${BACKEND_URL}/api/v1/agents`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        console.log('Dashboard: Agents response status:', agentsRes.status);
-
-        if (agentsRes.ok) {
-          const agentsData = await agentsRes.json();
-          const hasAgents = agentsData && agentsData.length > 0;
-          
-          console.log('Dashboard: Has agents:', hasAgents, 'Agents count:', agentsData?.length);
-          
-          if (!hasAgents) {
-            // Redirigir al wizard de onboarding si no tiene agentes
-            console.log('Dashboard: Redirecting to onboarding...');
-            router.push('/onboarding');
-            return;
-          }
-          
-          // Si tiene agentes, marcar onboarding como completado
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('onboarding_complete', 'true');
-            document.cookie = "onboarding_complete=true; path=/; max-age=31536000";
-          }
-        } else {
-          console.error('Dashboard: Failed to fetch agents:', agentsRes.status);
-        }
-
         const res = await fetch(`${BACKEND_URL}/api/v1/analytics/overview`, {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -98,7 +36,13 @@ export default function DashboardPage() {
 
         if (res.ok) {
           const data = await res.json();
-          setStats(data);
+          setStats({
+            kpis: {
+              total_conversaciones: data.total_conversations || 0,
+              leads_capturados: data.total_messages || 0,
+              uso_tokens: data.uso_tokens || 0,
+            }
+          });
         }
       } catch (error) {
         console.error("Error fetching stats:", error);
@@ -111,123 +55,120 @@ export default function DashboardPage() {
   }, [router]);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <div className="flex gap-2">
-          <button 
-            onClick={() => router.push('/dashboard/agent')}
-            className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-2"
-          >
-            <Bot className="w-4 h-4" />
+    <div className="space-y-8 animate-in fade-in duration-500 pb-12">
+      {/* HEADER & YANUA COPILOT */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Inicio</h1>
+          <p className="text-muted-foreground mt-1">Centro de operaciones de tu IA comercial.</p>
+        </div>
+        <div className="flex gap-3">
+          <Button variant="outline" className="border-border hover:bg-white/5 gap-2">
+            <RefreshCw className="w-4 h-4" />
+            Sincronizar Datos
+          </Button>
+          <Button onClick={() => router.push('/dashboard/agent')} className="bg-primary text-primary-foreground hover:bg-primary-hover gap-2 shadow-[0_0_15px_rgba(6,182,212,0.3)]">
+            <Plus className="w-4 h-4" />
             Nuevo Agente
-          </button>
+          </Button>
         </div>
       </div>
 
+      {/* YANUA COPILOT BANNER */}
+      <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-card p-6 md:p-8 shadow-lg group">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none transition-all group-hover:bg-primary/20"></div>
+        <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
+          <div className="w-16 h-16 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center flex-shrink-0 shadow-[0_0_20px_rgba(6,182,212,0.4)]">
+            <Bot className="w-8 h-8 text-primary" />
+          </div>
+          <div className="flex-1 text-center md:text-left">
+            <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
+              <h2 className="text-xl font-bold text-foreground">Hola, soy Yanua ✨</h2>
+            </div>
+            <p className="text-muted-foreground text-sm md:text-base max-w-2xl">
+              Tu sistema está operando correctamente. He detectado 3 conversaciones nuevas en WhatsApp que requieren atención humana, y 12 productos que fueron consultados sin éxito en la base de conocimientos.
+            </p>
+          </div>
+          <div className="flex-shrink-0">
+            <Button className="bg-white/5 hover:bg-white/10 text-foreground border border-white/10 gap-2">
+              <Sparkles className="w-4 h-4 text-primary" />
+              Ver Insights
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* QUICK ACTIONS */}
+      <div>
+        <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wider">Acciones Rápidas</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div onClick={() => router.push('/dashboard/agent')} className="p-4 rounded-xl border border-border bg-card hover:bg-white/5 hover:border-white/20 transition cursor-pointer group flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary"><Bot className="w-5 h-5" /></div>
+              <span className="font-medium text-sm">Afinar Personalidad</span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+          </div>
+          <div onClick={() => router.push('/dashboard/data')} className="p-4 rounded-xl border border-border bg-card hover:bg-white/5 hover:border-white/20 transition cursor-pointer group flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500"><Terminal className="w-5 h-5" /></div>
+              <span className="font-medium text-sm">Añadir Conocimiento</span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+          </div>
+          <div onClick={() => router.push('/dashboard/channels')} className="p-4 rounded-xl border border-border bg-card hover:bg-white/5 hover:border-white/20 transition cursor-pointer group flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-500/10 rounded-lg text-green-500"><MessageSquare className="w-5 h-5" /></div>
+              <span className="font-medium text-sm">Configurar WhatsApp</span>
+            </div>
+            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+          </div>
+        </div>
+      </div>
+
+      {/* KPIS */}
       {loading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="rounded-xl border border-border bg-card p-6 shadow-sm h-[120px] animate-pulse flex flex-col justify-center gap-3">
+        <div className="grid gap-4 md:grid-cols-3">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="rounded-xl border border-border bg-card p-6 h-[120px] animate-pulse flex flex-col justify-center gap-3">
               <div className="h-4 bg-muted rounded w-1/2"></div>
               <div className="h-8 bg-muted rounded w-3/4"></div>
             </div>
           ))}
         </div>
       ) : stats ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {/* KPI 1: Conversaciones */}
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden">
-            <div className="absolute right-4 top-4 text-primary/10 group-hover:text-primary/20 transition-colors">
-              <MessageSquare className="w-12 h-12" />
+        <div>
+          <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wider">Métricas Clave</h3>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="rounded-xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+              <div className="absolute right-0 top-0 w-24 h-24 bg-primary/5 rounded-bl-full transition-colors group-hover:bg-primary/10"></div>
+              <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-primary" />
+                Conversaciones Activas
+              </h3>
+              <div className="text-3xl font-bold mt-2 text-foreground">{stats.kpis.total_conversaciones}</div>
             </div>
-            <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-primary" />
-              Conversaciones
-            </h3>
-            <div className="text-3xl font-bold mt-2">{stats.kpis.total_conversaciones}</div>
-            <p className="text-xs text-green-500 mt-1 flex items-center gap-1 font-medium">
-              <TrendingUp className="w-3 h-3" />
-              Actividad Estable
-            </p>
-          </div>
 
-          {/* KPI 2: Leads */}
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden">
-            <div className="absolute right-4 top-4 text-primary/10 group-hover:text-primary/20 transition-colors">
-              <Users className="w-12 h-12" />
+            <div className="rounded-xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+              <div className="absolute right-0 top-0 w-24 h-24 bg-blue-500/5 rounded-bl-full transition-colors group-hover:bg-blue-500/10"></div>
+              <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Users className="w-4 h-4 text-blue-500" />
+                Leads Capturados
+              </h3>
+              <div className="text-3xl font-bold mt-2 text-foreground">{stats.kpis.leads_capturados}</div>
             </div>
-            <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Users className="w-4 h-4 text-blue-500" />
-              Leads Capturados
-            </h3>
-            <div className="text-3xl font-bold mt-2">{stats.kpis.leads_capturados}</div>
-            <p className="text-xs text-blue-500 mt-1 flex items-center gap-1 font-medium">
-              <Minus className="w-3 h-3" />
-              Prospectos Únicos
-            </p>
-          </div>
 
-          {/* KPI 3: Tokens */}
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden">
-            <div className="absolute right-4 top-4 text-primary/10 group-hover:text-primary/20 transition-colors">
-              <Zap className="w-12 h-12" />
+            <div className="rounded-xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+              <div className="absolute right-0 top-0 w-24 h-24 bg-yellow-500/5 rounded-bl-full transition-colors group-hover:bg-yellow-500/10"></div>
+              <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Zap className="w-4 h-4 text-yellow-500" />
+                Consumo de Tokens
+              </h3>
+              <div className="text-3xl font-bold mt-2 text-foreground">{stats.kpis.uso_tokens.toLocaleString()}</div>
             </div>
-            <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Zap className="w-4 h-4 text-yellow-500" />
-              Uso de Tokens
-            </h3>
-            <div className="text-3xl font-bold mt-2">{stats.kpis.uso_tokens.toLocaleString()}</div>
-            <p className="text-xs text-yellow-600 mt-1 flex items-center gap-1 font-medium">
-              Llamadas a Ollama
-            </p>
-          </div>
-
-          {/* KPI 4: Sentimiento */}
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden">
-            <h3 className="text-sm font-medium text-muted-foreground">Sentimiento Promedio</h3>
-            <div className="text-3xl font-bold mt-2">
-              {stats.kpis.sentimiento_promedio > 0.3 ? '😊' : stats.kpis.sentimiento_promedio < -0.3 ? '😡' : '😐'}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1 font-medium">
-              {(stats.kpis.sentimiento_promedio * 100).toFixed(0)}% Score
-            </p>
           </div>
         </div>
       ) : null}
-
-      {/* Actividad Reciente */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 rounded-xl border border-border bg-card p-6 shadow-sm">
-          <h2 className="text-lg font-semibold mb-4">Métricas de Conectores (Fase 4)</h2>
-          <div className="h-[300px] flex flex-col items-center justify-center text-muted-foreground bg-muted/30 rounded-lg border border-dashed border-border">
-            <Bot className="w-8 h-8 mb-2 opacity-50" />
-            <p className="font-medium">Web Widget & Shopify</p>
-            <p className="text-sm">Configura tus canales en la pestaña superior para ver métricas de ROI.</p>
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-          <h2 className="text-lg font-semibold mb-4">Actividad Reciente</h2>
-          {stats?.actividad_reciente && stats.actividad_reciente.length > 0 ? (
-            <div className="space-y-4">
-              {stats.actividad_reciente.map((act) => (
-                <div key={act.id} className="flex items-start gap-3 border-b border-border/50 pb-3 last:border-0">
-                  <div className={`w-2 h-2 rounded-full mt-2 ${act.status === 'success' ? 'bg-green-500' : 'bg-blue-500'}`} />
-                  <div>
-                    <p className="text-sm font-medium">{act.action}</p>
-                    <p className="text-xs text-muted-foreground">Atendido por {act.agent}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <p className="text-sm">No hay actividad reciente</p>
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
