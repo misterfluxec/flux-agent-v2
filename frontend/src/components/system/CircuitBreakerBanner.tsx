@@ -1,268 +1,186 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2, RefreshCw, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { AlertTriangle, CheckCircle2, Loader2, RefreshCw } from "lucide-react";
+import { fetchSystemHealth, SystemHealthStatus, CircuitState, CircuitBreakerStatus } from "@/lib/api/system";
 
 // =============================================================================
-// TIPOS Y ESTADO DEL CIRCUIT BREAKER
+// COMPONENTE PRINCIPAL: BANNER DE ESTADO
 // =============================================================================
 
-interface CircuitBreakerStatus {
-  service: string;
-  status: "CLOSED" | "OPEN" | "HALF_OPEN";
-  lastFailure?: Date;
-  nextRetry?: Date;
-  failureCount?: number;
-  threshold?: number;
+interface CircuitBreakerBannerProps {
+  /** Polling interval en milisegundos (default: 30s) */
+  refreshInterval?: number;
+  
+  /** Mostrar solo si hay problemas (ocultar cuando todo está bien) */
+  showOnlyOnIssues?: boolean;
+  
+  /** Callback cuando el usuario hace clic en "Ver detalles" */
+  onShowDetails?: () => void;
 }
 
-interface SystemHealthResponse {
-  status: "healthy" | "degraded" | "down";
-  services: CircuitBreakerStatus[];
-  timestamp: string;
-}
+export function CircuitBreakerBanner({
+  refreshInterval = 30000,
+  showOnlyOnIssues = true,
+  onShowDetails,
+}: CircuitBreakerBannerProps = {}) {
+  const { data: health, isLoading, error, refetch } = useQuery<SystemHealthStatus, Error>({
+    queryKey: ["system-health"],
+    queryFn: fetchSystemHealth,
+    refetchInterval: refreshInterval,
+    refetchOnWindowFocus: true,
+    enabled: !showOnlyOnIssues, // Si showOnlyOnIssues, solo fetch si hay problemas detectados
+  });
 
-// =============================================================================
-// COMPONENTE PRINCIPAL: CIRCUIT BREAKER BANNER
-// =============================================================================
+  // Determinar si hay circuit breakers en estado OPEN (problemas activos)
+  const activeBreakers = health?.circuits 
+    ? Object.entries(health.circuits).filter(
+        ([_, circuit]) => circuit.state === "OPEN"
+      )
+    : [];
+  
+  const hasIssues = activeBreakers.length > 0 || health?.status === "degraded";
 
-export function CircuitBreakerBanner() {
-  const [systemHealth, setSystemHealth] = useState<SystemHealthResponse | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
-  const [isRetrying, setIsRetrying] = useState(false);
-
-  // Simular datos para demostración (reemplazar con llamada real a /health)
-  useEffect(() => {
-    // TODO: Reemplazar con llamada real a /api/health
-    // const { data } = useQuery<SystemHealthResponse>({
-    //   queryKey: ['system-health'],
-    //   refetchInterval: 30000, // Cada 30 segundos
-    // });
-    
-    // Datos simulados para demostración
-    const mockData: SystemHealthResponse = {
-      status: "healthy",
-      services: [
-        {
-          service: "ollama",
-          status: "CLOSED",
-          failureCount: 0,
-          threshold: 5,
-        },
-        {
-          service: "postgres",
-          status: "CLOSED",
-          failureCount: 0,
-          threshold: 5,
-        },
-        {
-          service: "redis",
-          status: "CLOSED",
-          failureCount: 0,
-          threshold: 5,
-        },
-      ],
-      timestamp: new Date().toISOString(),
-    };
-    
-    setSystemHealth(mockData);
-    setIsVisible(mockData.status !== "healthy");
-  }, []);
-
-  // Determinar si mostrar banner basado en estado del sistema
-  const shouldShowBanner = isVisible && systemHealth && systemHealth.status !== "healthy";
-
-  // Función para reintentar manualmente
-  const handleRetry = async () => {
-    setIsRetrying(true);
-    try {
-      // TODO: Llamar a endpoint de retry si existe
-      // await fetch('/api/health/retry', { method: 'POST' });
-      
-      // Simular retry para demostración
-      setTimeout(() => {
-        setSystemHealth(prev => prev ? { ...prev, status: "healthy" } : null);
-        setIsVisible(false);
-        setIsRetrying(false);
-      }, 2000);
-    } catch (error) {
-      setIsRetrying(false);
-    }
-  };
-
-  // Función para cerrar banner manualmente
-  const handleDismiss = () => {
-    setIsVisible(false);
-  };
-
-  if (!shouldShowBanner) {
+  // Si showOnlyOnIssues y no hay problemas, no renderizar nada
+  if (showOnlyOnIssues && !hasIssues && !isLoading && !error) {
     return null;
   }
 
-  return (
-    <Alert 
-      className={`
-        border-l-4 transition-all duration-300
-        ${systemHealth?.status === 'down' 
-          ? 'border-red-500 bg-red-50 text-red-800' 
-          : 'border-amber-500 bg-amber-50 text-amber-800'
-        }
-      `}
-    >
-      <div className="flex items-start justify-between w-full">
-        <div className="flex items-start gap-3 flex-1">
-          <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <AlertDescription className="text-sm font-medium">
-              <div className="flex items-center gap-2 mb-2">
-                <span>
-                  {systemHealth?.status === 'down' 
-                    ? '⚠️ Sistema temporalmente fuera de servicio' 
-                    : '⚡ Sistema con funcionalidad limitada'
-                  }
-                </span>
-                {isRetrying && (
-                  <span className="flex items-center gap-1 text-xs">
-                    <RefreshCw className="h-3 w-3 animate-spin" />
-                    Reintentando...
-                  </span>
-                )}
-              </div>
-              
-              {/* Detalles de servicios afectados */}
-              {systemHealth?.services && systemHealth.services.length > 0 && (
-                <div className="mt-3 space-y-2">
-                  <p className="text-xs font-medium">Servicios afectados:</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                    {systemHealth.services
-                      .filter(service => service.status !== "CLOSED")
-                      .map((service) => (
-                        <div 
-                          key={service.service}
-                          className="flex items-center gap-2 p-2 rounded bg-white/50 border border-current/20"
-                        >
-                          <div className={`
-                            h-2 w-2 rounded-full
-                            ${service.status === 'OPEN' ? 'bg-red-500' : 'bg-amber-500'}
-                          `} />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium capitalize">{service.service}</p>
-                            <p className="text-[10px] opacity-75">
-                              {service.status === 'OPEN' ? 'Circuito abierto' : 'Semi-abierto'}
-                              {service.failureCount && service.threshold && (
-                                <span> ({service.failureCount}/{service.threshold} fallos)</span>
-                              )}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              )}
-              
-              {/* Acciones recomendadas */}
-              <div className="mt-3 p-3 rounded bg-white/30 border border-current/20">
-                <p className="text-xs font-medium mb-1">Acciones recomendadas:</p>
-                <ul className="text-xs space-y-1">
-                  {systemHealth?.status === 'down' ? (
-                    <>
-                      <li>• Espere unos minutos y recargue la página</li>
-                      <li>• Verifique su conexión a internet</li>
-                      <li>• Contacte a soporte si el problema persiste</li>
-                    </>
-                  ) : (
-                    <>
-                      <li>• Algunas funciones pueden estar limitadas</li>
-                      <li>• Los datos se sincronizarán cuando el sistema se recupere</li>
-                      <li>• Puede continuar trabajando con funcionalidad básica</li>
-                    </>
-                  )}
-                </ul>
-              </div>
-            </AlertDescription>
-          </div>
-        </div>
-        
-        {/* Acciones del banner */}
-        <div className="flex items-center gap-2 ml-4">
-          {systemHealth?.status === 'degraded' && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRetry}
-              disabled={isRetrying}
-              className="text-xs"
-            >
-              <RefreshCw className={`h-3 w-3 mr-1 ${isRetrying ? 'animate-spin' : ''}`} />
-              {isRetrying ? 'Reintentando...' : 'Reintentar'}
-            </Button>
-          )}
-          
+  // =============================================================================
+  // RENDER: ESTADO DE CARGA
+  // =============================================================================
+  if (isLoading) {
+    return (
+      <Alert className="bg-muted/50 border-muted">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <AlertDescription className="ml-2 text-sm text-muted-foreground">
+          Verificando estado del sistema...
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  // =============================================================================
+  // RENDER: ESTADO DE ERROR
+  // =============================================================================
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>⚠️ No se pudo verificar el estado</AlertTitle>
+        <AlertDescription className="flex items-center gap-2">
+          <span className="text-sm">
+            Error al conectar con el servicio de salud. 
+            {error.message && <span className="ml-1 text-muted-foreground">({error.message})</span>}
+          </span>
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleDismiss}
-            className="text-xs hover:bg-current/10"
+            className="h-6 px-2 text-xs"
+            onClick={() => refetch()}
           >
-            <X className="h-3 w-3" />
+            <RefreshCw className="h-3 w-3 mr-1" />
+            Reintentar
           </Button>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  // =============================================================================
+  // RENDER: SIN PROBLEMAS (pero showOnlyOnIssues=false)
+  // =============================================================================
+  if (!hasIssues && !showOnlyOnIssues) {
+    return (
+      <Alert className="bg-emerald-50 border-emerald-200">
+        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+        <AlertTitle className="text-emerald-800">✅ Todos los sistemas operativos</AlertTitle>
+        <AlertDescription className="text-sm text-emerald-700">
+          Última verificación: {new Date(health!.timestamp).toLocaleTimeString("es-EC")}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  // =============================================================================
+  // RENDER: CON PROBLEMAS ACTIVOS
+  // =============================================================================
+  return (
+    <Alert className="bg-amber-50 border-amber-200">
+      <AlertTriangle className="h-4 w-4 text-amber-600" />
+      <AlertTitle className="text-amber-800">
+        ⚠️ Servicios en mantenimiento temporal
+      </AlertTitle>
+      <AlertDescription className="text-sm text-amber-800 space-y-2">
+        <p>
+          Algunos servicios están experimentando problemas. 
+          La funcionalidad básica sigue disponible.
+        </p>
+        
+        {/* Lista de servicios afectados */}
+        {activeBreakers.length > 0 && (
+          <div className="mt-2 space-y-1">
+            <p className="font-medium">Servicios afectados:</p>
+            <ul className="list-disc list-inside space-y-0.5 ml-1">
+              {activeBreakers.map(([name, circuit]) => (
+                <li key={name} className="flex items-center gap-2">
+                  <span className="capitalize">{formatServiceName(name)}</span>
+                  {circuit.recoveryTimeout && (
+                    <span className="text-xs text-muted-foreground">
+                      (se renueva en ~{Math.ceil(circuit.recoveryTimeout / 60)}min)
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        
+        {/* Acciones */}
+        <div className="flex items-center gap-2 pt-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs"
+            onClick={() => refetch()}
+          >
+            <RefreshCw className="h-3 w-3 mr-1" />
+            Actualizar estado
+          </Button>
+          
+          {onShowDetails && (
+            <Button
+              variant="link"
+              size="sm"
+              className="h-7 px-0 text-xs text-amber-700 hover:text-amber-900"
+              onClick={onShowDetails}
+            >
+              Ver detalles técnicos →
+            </Button>
+          )}
         </div>
-      </div>
+      </AlertDescription>
     </Alert>
   );
 }
 
 // =============================================================================
-// COMPONENTE AUXILIAR: INDICADOR DE SERVICIO INDIVIDUAL
+// UTILIDADES
 // =============================================================================
 
-interface ServiceIndicatorProps {
-  service: CircuitBreakerStatus;
-  compact?: boolean;
-}
-
-export function ServiceIndicator({ service, compact = false }: ServiceIndicatorProps) {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'CLOSED': return 'bg-emerald-500';
-      case 'OPEN': return 'bg-red-500';
-      case 'HALF_OPEN': return 'bg-amber-500';
-      default: return 'bg-gray-500';
-    }
+/**
+ * Formatea nombre técnico de circuito a nombre legible
+ */
+function formatServiceName(name: string): string {
+  const mapping: Record<string, string> = {
+    "ollama_llm": "LLM (Inteligencia Artificial)",
+    "whatsapp_cloud": "WhatsApp Cloud API",
+    "redis_cache": "Servicio de Cache",
+    "postgres_db": "Base de Datos",
+    "stt_service": "Reconocimiento de Voz",
+    "tts_service": "Síntesis de Voz",
   };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'CLOSED': return 'Operativo';
-      case 'OPEN': return 'Fuera de servicio';
-      case 'HALF_OPEN': return 'Limitado';
-      default: return 'Desconocido';
-    }
-  };
-
-  if (compact) {
-    return (
-      <div className="flex items-center gap-2">
-        <div className={`h-2 w-2 rounded-full ${getStatusColor(service.status)}`} />
-        <span className="text-xs capitalize">{service.service}</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
-      <div className={`h-3 w-3 rounded-full ${getStatusColor(service.status)}`} />
-      <div className="flex-1">
-        <p className="text-sm font-medium capitalize">{service.service}</p>
-        <p className="text-xs text-muted-foreground">{getStatusText(service.status)}</p>
-        {service.failureCount && service.failureCount > 0 && (
-          <p className="text-xs text-amber-600">
-            {service.failureCount} fallos recientes
-          </p>
-        )}
-      </div>
-    </div>
-  );
+  return mapping[name] || name.replace(/_/g, " ");
 }

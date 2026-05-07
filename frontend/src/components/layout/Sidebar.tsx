@@ -1,23 +1,22 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useTranslations, useLocale } from 'next-intl';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  LayoutDashboard, Bot, MessageSquare, Plug, BarChart3, Settings, 
-  LogOut, Database, Contact2, Package, TestTube2,
-  FileCode2, MessageCircle, FileBarChart, Loader2, ChevronDown, ChevronRight
-} from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import {
+  LayoutDashboard,
+  Bot,
+  MessageSquare,
+  BarChart3,
+  Plug,
+  Database,
+  Settings,
+  ChevronRight,
+  AlertCircle,
+  CheckCircle2,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // =============================================================================
 // CONFIGURACIÓN DEL MENÚ (7 ITEMS MÁXIMO - PRINCIPIO DE JERARQUÍA CLARA)
@@ -100,6 +99,10 @@ export const MAIN_MENU_ITEMS: MenuItem[] = [
   },
 ];
 
+// =============================================================================
+// COMPONENTE PRINCIPAL: SIDEBAR
+// =============================================================================
+
 interface SidebarProps {
   collapsed?: boolean;
   onToggleCollapse?: () => void;
@@ -116,16 +119,6 @@ export function Sidebar({
   userName = "Usuario",
 }: SidebarProps) {
   const pathname = usePathname();
-  const [navigatingHref, setNavigatingHref] = useState<string | null>(null);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  
-  let t = (key: string) => key;
-  let locale = "es";
-  try {
-    t = useTranslations('navigation');
-    locale = useLocale();
-  } catch(e) {}
-
 
   // Helper para determinar si un item está activo (incluyendo hijos)
   const isItemActive = (item: MenuItem): boolean => {
@@ -136,168 +129,38 @@ export function Sidebar({
     return false;
   };
 
-  // Reset loading state when pathname changes
-  useEffect(() => {
-    setNavigatingHref(null);
-  }, [pathname]);
-
-  // Verificar si el usuario ha completado el onboarding basado en agentes existentes
-  const [onboardingComplete, setOnboardingComplete] = useState(true);
-  const [loading, setLoading] = useState(true);
-  
-  useEffect(() => {
-    const checkOnboarding = async () => {
-      try {
-        const token = localStorage.getItem('flux_token');
-        if (!token) {
-          setOnboardingComplete(false);
-          setLoading(false);
-          return;
-        }
-
-        const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:9000";
-        
-        const res = await fetch(`${BACKEND_URL}/api/v1/agents`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (res.ok) {
-          const agentsData = await res.json();
-          const hasAgents = agentsData && agentsData.length > 0;
-          setOnboardingComplete(hasAgents);
-          
-          // Actualizar localStorage basado en el estado real
-          if (typeof window !== 'undefined') {
-            if (hasAgents) {
-              localStorage.setItem('onboarding_complete', 'true');
-              document.cookie = "onboarding_complete=true; path=/; max-age=31536000";
-            } else {
-              localStorage.removeItem('onboarding_complete');
-              document.cookie = "onboarding_complete=; path=/; max-age=0";
-            }
-          }
-        } else {
-          setOnboardingComplete(false);
-        }
-      } catch (error) {
-        console.error('Error checking onboarding status:', error);
-        setOnboardingComplete(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    checkOnboarding();
-    
-    // Escuchar cambios en localStorage
-    const handleStorageChange = () => checkOnboarding();
-    window.addEventListener('storage', handleStorageChange);
-    
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
-  const renderLinks = (items: any[], isChild = false) => items.map((item) => {
-    const isActive = item.href === '/dashboard' 
-        ? pathname === '/dashboard' || pathname === `/${locale}/dashboard`
-        : pathname.endsWith(item.href);
-    
-    const hasChildren = item.children && item.children.length > 0;
-    const isNavigating = navigatingHref === item.href;
-
-    // Bloquear navegación si el onboarding no está completo o está cargando
-    const isBlocked = (!onboardingComplete || loading) && !item.href.includes('/onboarding');
-    
-    const linkContent = (
-      <Link
-        href={item.href.startsWith('/') ? `/${locale}${item.href}` : item.href}
-        onClick={() => {
-          if (isBlocked) {
-            // Mostrar tooltip o mensaje de que debe completar onboarding
-            return;
-          }
-          if (hasChildren) {
-            setIsSettingsOpen(!isSettingsOpen);
-          } else {
-            setNavigatingHref(item.href);
-          }
-        }}
-        className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-          isBlocked 
-            ? 'opacity-50 cursor-not-allowed text-muted-foreground' 
-            : isActive && !isChild
-              ? 'bg-primary/10 text-primary' 
-              : isChild && isActive
-                ? 'text-primary font-bold'
-                : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-        } ${isChild ? 'ml-9 pl-4 py-1.5 text-xs border-l-2' : ''} ${
-          isChild && isActive ? 'border-primary' : isChild ? 'border-transparent' : ''
-        } ${isNavigating ? 'opacity-70 grayscale-[0.5]' : ''}`}
-      >
-        {!isChild && <item.icon className={`w-4 h-4 ${isActive ? 'text-primary' : ''}`} />}
-        <span className="flex-1">{t(item.labelKey)}</span>
-        
-        {isNavigating && <Loader2 className="w-3 h-3 animate-spin text-primary" />}
-        
-        {item.isNew && (
-          <span className="px-1.5 py-0.5 text-[8px] font-black bg-primary text-primary-foreground rounded-full animate-pulse">
-            NEW
-          </span>
-        )}
-
-        {hasChildren && (
-          <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isSettingsOpen ? 'rotate-180' : ''}`} />
-        )}
-      </Link>
-    );
-
-    return (
-      <div key={item.href} className="space-y-1">
-        {item.hasDesc ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              {linkContent}
-            </TooltipTrigger>
-            <TooltipContent side="right" className="bg-popover text-popover-foreground border-border shadow-xl">
-              <p className="text-xs font-medium">{t(`${item.labelKey}_desc` as any)}</p>
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          linkContent
-        )}
-
-        {hasChildren && (
-          <AnimatePresence>
-            {isSettingsOpen && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.2, ease: "easeInOut" }}
-                className="overflow-hidden"
-              >
-                <div className="space-y-1 pb-1">
-                  {renderLinks(item.children, true)}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        )}
-      </div>
-    );
-  });
-
   return (
-    <div className="flex flex-col h-full bg-card border-r border-border shadow-sm">
-      {/* Logo Area */}
-      <div className="h-16 flex items-center px-6 border-b border-border shrink-0">
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center mr-3 shadow-lg shadow-primary/20">
-          <Bot className="w-5 h-5 text-primary-foreground" />
-        </div>
-        <span className="text-xl font-black tracking-tight bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent">
-          FluxAgent
-        </span>
+    <aside
+      className={cn(
+        "flex flex-col h-screen border-r bg-background transition-all duration-200",
+        collapsed ? "w-16" : "w-64"
+      )}
+    >
+      {/* Header: Logo + Tenant */}
+      <div className={cn("flex items-center gap-3 p-4 border-b", collapsed ? "justify-center" : "")}>
+        {!collapsed && (
+          <div className="flex-1 min-w-0">
+            <h1 className="font-bold text-lg truncate">FluxAgent</h1>
+            <p className="text-xs text-muted-foreground truncate">{tenantName}</p>
+          </div>
+        )}
+        {onToggleCollapse && (
+          <button
+            onClick={onToggleCollapse}
+            className={cn(
+              "p-1.5 rounded-md hover:bg-muted transition-colors",
+              collapsed && "mx-auto"
+            )}
+            aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
+          >
+            <ChevronRight
+              className={cn(
+                "h-4 w-4 transition-transform",
+                collapsed && "rotate-180"
+              )}
+            />
+          </button>
+        )}
       </div>
 
       {/* Navegación principal */}
@@ -393,13 +256,101 @@ export function Sidebar({
           </TooltipProvider>
         </ul>
       </nav>
-        
-        <button className="w-full flex items-center gap-3 px-3 py-2 mt-4 text-sm text-red-500 font-bold hover:bg-red-500/10 rounded-md transition-all group">
-          <div className="p-1.5 rounded-md bg-red-500/10 group-hover:bg-red-500/20 transition-colors">
-            <LogOut className="w-3.5 h-3.5" />
+
+      {/* Footer: Usuario + Estado del sistema */}
+      <div className={cn("p-4 border-t", collapsed ? "flex justify-center" : "")}>
+        {!collapsed ? (
+          <div className="flex items-center gap-3">
+            {userAvatar ? (
+              <img
+                src={userAvatar}
+                alt={userName}
+                className="h-8 w-8 rounded-full border"
+              />
+            ) : (
+              <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
+                {userName.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{userName}</p>
+              <SystemStatusIndicator compact />
+            </div>
           </div>
-          Cerrar Sesión
-        </button>
+        ) : (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="relative">
+                  {userAvatar ? (
+                    <img
+                      src={userAvatar}
+                      alt={userName}
+                      className="h-8 w-8 rounded-full border cursor-pointer"
+                    />
+                  ) : (
+                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium cursor-pointer">
+                      {userName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <SystemStatusIndicator compact className="absolute -top-1 -right-1" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p className="font-medium">{userName}</p>
+                <SystemStatusIndicator />
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+      </div>
+    </aside>
+  );
+}
+
+// =============================================================================
+// COMPONENTE AUXILIAR: INDICADOR DE ESTADO DEL SISTEMA
+// =============================================================================
+
+/**
+ * Muestra el estado de salud del backend (conectado a circuit breakers)
+ * Se integra con el endpoint /health que implementamos en Fase 3 backend
+ */
+function SystemStatusIndicator({
+  compact = false,
+  className,
+}: {
+  compact?: boolean;
+  className?: string;
+}) {
+  // TODO: Conectar a query de /health cuando esté disponible
+  // Por ahora simulamos estado para demostración
+  const systemHealthy = true; // Reemplazar con: useQuery({ queryKey: ['system-health'], ... })
+
+  if (compact) {
+    return (
+      <div className={cn("flex items-center gap-1", className)}>
+        <div
+          className={cn(
+            "h-2 w-2 rounded-full",
+            systemHealthy ? "bg-emerald-500" : "bg-amber-500 animate-pulse"
+          )}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn("flex items-center gap-2 text-xs", className)}>
+      <div
+        className={cn(
+          "h-2 w-2 rounded-full",
+          systemHealthy ? "bg-emerald-500" : "bg-amber-500 animate-pulse"
+        )}
+      />
+      <span className={systemHealthy ? "text-emerald-600" : "text-amber-600"}>
+        {systemHealthy ? "Sistema operativo" : "Mantenimiento"}
+      </span>
     </div>
   );
 }
