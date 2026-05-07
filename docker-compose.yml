@@ -70,19 +70,24 @@ services:
       - OLLAMA_HOST=0.0.0.0
       - OLLAMA_KEEP_ALIVE=24h
       - OLLAMA_NUM_THREADS=6 # Optimizado para i7
+      - OLLAMA_MAX_LOADED_MODELS=3 # Límite de modelos cargados simultáneamente
     volumes:
       - ollama_data:/root/.ollama
     ports:
       - "11434:11434"
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:11434/ || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:11434/api/tags || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s # Esperar 60s antes de primer healthcheck
     deploy:
       resources:
         limits:
           memory: 12G # Límite para modelos grandes (qwen2.5)
+          cpus: '6' # Límite de CPU para i7 7th gen
+        reservations:
+          memory: 4G # Memoria mínima garantizada
     networks:
       - fluxagent-net
 
@@ -128,14 +133,16 @@ services:
       dockerfile: Dockerfile
     container_name: fluxagent-web
     restart: always
-    ports:
-      - "4000:3000" # Mapeo al puerto 4000 que usa el usuario
+    command: npm run dev -- -p 4000
+    network_mode: host
+    user: "0:0"
+    volumes:
+      - ./frontend:/app
     environment:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:9000/api/v1}
+      - NODE_ENV=development
     depends_on:
       - backend
-    networks:
-      - fluxagent-net
 
   # --- TTS CLEANUP (Cron) ---
   tts-cleanup:
@@ -166,4 +173,5 @@ volumes:
 
 networks:
   fluxagent-net:
+    name: fluxagent-network
     driver: bridge

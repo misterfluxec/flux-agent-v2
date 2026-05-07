@@ -1,0 +1,297 @@
+# =============================================================================
+# FLUXAGENT V2 — OBSERVABILIDAD DOCKER COMPOSE
+# =============================================================================
+# Servicios de observabilidad: Prometheus, Jaeger, Grafana
+# Sistema completo de monitoreo y tracing
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # Prometheus para métricas
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: fluxagent-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - fluxagent-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+  # Grafana para visualización de métricas
+  grafana:
+    image: grafana/grafana:latest
+    container_name: fluxagent-grafana
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=redis-datasource
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_SERVER_DOMAIN=localhost
+      - GF_SERVER_ROOT_URL=http://localhost:3001
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+    networks:
+      - fluxagent-network
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
+
+  # Jaeger para tracing distribuido
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: fluxagent-jaeger
+    restart: unless-stopped
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "16687:16687"  # Jaeger Collector HTTP
+      - "6831:6831"   # Jaeger Collector gRPC
+      - "6832:6832"   # Jaeger Agent gRPC
+      - "5775:5775"   # Jaeger Agent HTTP
+      - "14268:14268" # Jaeger Collector Compact
+    environment:
+      - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+      - SPAN_STORAGE_TYPE=badger
+      - BADGER_EPHEMERAL=true
+      - BADGER_DIRECTORY=/badger
+      - BADGER_DIRECTORY=/badger
+      - QUERY_BASE_PATH=/
+    volumes:
+      - jaeger_data:/badger
+    networks:
+      - fluxagent-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:16686/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+  # Redis para cache (si no está en docker-compose principal)
+  redis-cache:
+    image: redis:7-alpine
+    container_name: fluxagent-redis-cache
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - fluxagent-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+  # Node Exporter para métricas del sistema
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: fluxagent-node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    command:
+      - '--path.rootfs=/host'
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /:/host:ro,rslave
+    networks:
+      - fluxagent-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9100/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.1'
+        reservations:
+          memory: 64M
+          cpus: '0.05'
+
+  # Redis Exporter para métricas de Redis
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: fluxagent-redis-exporter
+    restart: unless-stopped
+    ports:
+      - "9121:9121"
+    environment:
+      - REDIS_ADDR=redis://redis-cache:6379
+    networks:
+      - fluxagent-network
+    depends_on:
+      - redis-cache
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9121/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: '0.1'
+        reservations:
+          memory: 32M
+          cpus: '0.05'
+
+  # Loki para logs estructurados (opcional)
+  loki:
+    image: grafana/loki:latest
+    container_name: fluxagent-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./monitoring/loki/local-config.yaml:/etc/loki/local-config.yaml
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - fluxagent-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3100/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+  # Promtail para recolección de logs (opcional)
+  promtail:
+    image: grafana/promtail:latest
+    container_name: fluxagent-promtail
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/promtail/config.yml:/etc/promtail/config.yml
+      - ./logs:/var/log/fluxagent:ro
+      - /var/log:/var/log:ro
+    networks:
+      - fluxagent-network
+    depends_on:
+      - loki
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9080/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.1'
+        reservations:
+          memory: 64M
+          cpus: '0.05'
+
+networks:
+  fluxagent-network:
+    external: true
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  jaeger_data:
+  redis_data:
+  loki_data:
+
+# =============================================================================
+# COMANDOS DE USO
+# =============================================================================
+#
+# Iniciar stack de observabilidad:
+# docker-compose -f docker-compose.observability.yml up -d
+#
+# Ver logs de servicios específicos:
+# docker-compose -f docker-compose.observability.yml logs -f prometheus
+#
+# Escalar servicios:
+# docker-compose -f docker-compose.observability.yml up -d --scale prometheus=1
+#
+# URLs de acceso:
+# - Prometheus: http://localhost:9090
+# - Grafana: http://localhost:3001 (admin/admin123)
+# - Jaeger: http://localhost:16686
+# - Loki: http://localhost:3100
+# - Node Exporter: http://localhost:9100/metrics
+# - Redis Exporter: http://localhost:9121/metrics
+#
+# Métricas personalizadas de FluxAgent:
+# - http://localhost:9090/metrics (Prometheus)
+# - http://localhost:3001 (Grafana dashboards)
+#
+# Tracing de requests:
+# - http://localhost:16686 (Jaeger UI)
+#
+# Logs estructurados:
+# - http://localhost:3100 (Loki)
+# - http://localhost:3001/explore (Grafana Explore)
+#
+# =============================================================================

@@ -1,0 +1,166 @@
+# =============================================================================
+# FLUXAGENT V2 — DRAMATIQ DOCKER COMPOSE
+# =============================================================================
+# Servicios para cola de tareas Dramatiq
+# Workers separados para mejor escalabilidad
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # Worker principal (WhatsApp)
+  dramatiq-worker-whatsapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fluxagent-dramatiq-whatsapp
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://fluxagent:password@postgres:5432/fluxagent
+      - REDIS_URL=redis://redis:6379/0
+      - OLLAMA_HOST=http://ollama:11434
+      - EVOLUTION_API_URL=https://api.evolution-api.com
+      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY}
+      - APP_ENV=production
+    command: python -m src.core.queue.worker --queues whatsapp --processes 2
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - fluxagent-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import dramatiq; print('OK')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+  # Worker de voz
+  dramatiq-worker-voice:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fluxagent-dramatiq-voice
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://fluxagent:password@postgres:5432/fluxagent
+      - REDIS_URL=redis://redis:6379/0
+      - OLLAMA_HOST=http://ollama:11434
+      - APP_ENV=production
+    command: python -m src.core.queue.worker --queues voice --processes 2
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - fluxagent-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import dramatiq; print('OK')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+
+  # Worker de analytics y tareas generales
+  dramatiq-worker-analytics:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fluxagent-dramatiq-analytics
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://fluxagent:password@postgres:5432/fluxagent
+      - REDIS_URL=redis://redis:6379/0
+      - APP_ENV=production
+    command: python -m src.core.queue.worker --queues analytics default --processes 1
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - fluxagent-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import dramatiq; print('OK')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
+
+  # Monitor de Dramatiq (opcional)
+  dramatiq-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fluxagent-dramatiq-monitor
+    restart: unless-stopped
+    ports:
+      - "9292:9292"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    command: dramatiq-dashboard --broker redis://redis:6379/0 --port 9292
+    depends_on:
+      - redis
+    networks:
+      - fluxagent-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9292/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.1'
+
+networks:
+  fluxagent-network:
+    external: true
+
+# =============================================================================
+# COMANDOS DE USO
+# =============================================================================
+#
+# Iniciar workers:
+# docker-compose -f docker-compose.dramatiq.yml up -d
+#
+# Ver logs de worker específico:
+# docker-compose -f docker-compose.dramatiq.yml logs -f dramatiq-worker-whatsapp
+#
+# Escalar workers:
+# docker-compose -f docker-compose.dramatiq.yml up -d --scale dramatiq-worker-whatsapp=3
+#
+# Reiniciar worker específico:
+# docker-compose -f docker-compose.dramatiq.yml restart dramatiq-worker-voice
+#
+# Ver monitor de Dramatiq:
+# http://localhost:9292
+#
+# =============================================================================
