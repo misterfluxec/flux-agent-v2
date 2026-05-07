@@ -37,6 +37,9 @@ async def voice_stream_endpoint(websocket: WebSocket, tenant_id: Optional[str] =
     }
     
     try:
+        # LOG DE DIAGNÓSTICO: Ver si llega algo al menos una vez
+        logger.info(f"Esperando primer mensaje en {websocket.client}...")
+        
         service = VoicePipelineService(tenant_config)
         await service.process_audio_stream(websocket)
     except Exception as e:

@@ -20,8 +20,8 @@ router = APIRouter(
 config = obtener_config()
 
 # URL de Evolution API (por defecto)
-EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "http://localhost:8081")
-EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "admin_flux_2025")
+EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "http://flux-evolution:8080")
+EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "fluxkey123")
 
 # Modelos Pydantic
 class WhatsAppConnectRequest(BaseModel):

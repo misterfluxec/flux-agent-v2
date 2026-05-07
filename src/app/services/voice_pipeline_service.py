@@ -7,7 +7,6 @@ try:
     from pipecat.pipeline.pipeline import Pipeline
     from pipecat.pipeline.task import PipelineTask
     from pipecat.pipeline.runner import PipelineRunner
-    # Removed OpenAI import to avoid websockets.asyncio missing error on startup
     from pipecat.transports.websocket.fastapi import FastAPIWebsocketTransport, FastAPIWebsocketParams
     from pipecat.serializers.base_serializer import FrameSerializer
     from pipecat.frames.frames import EndFrame, Frame, InputAudioRawFrame, OutputAudioRawFrame
@@ -18,20 +17,30 @@ try:
     from pipecat.services.ollama.llm import OLLamaLLMService
     from pipecat.services.piper.tts import PiperTTSService
     import json
+    # Removed OpenAI import to avoid websockets.asyncio missing error on startup
+    PIPECAT_AVAILABLE = True
+except ImportError as e:
+    print(f"Failed to import Pipecat dependencies: {e}")
+    PIPECAT_AVAILABLE = False
+    Pipeline = None  # Definir Pipeline como None si no está disponible
+    FrameSerializer = None  # Definir FrameSerializer como None si está disponible
+    Frame = None  # Definir Frame como None si no está disponible
+    OutputAudioRawFrame = None  # Definir OutputAudioRawFrame como None si no está disponible
     import base64
     
-    class JSONBase64Serializer(FrameSerializer):
+    class JSONBase64Serializer:
         def __init__(self, sample_rate: int = 16000, channels: int = 1):
             self.sample_rate = sample_rate
             self.channels = channels
 
-        async def serialize(self, frame: Frame):
-            if isinstance(frame, OutputAudioRawFrame):
+        async def serialize(self, frame):
+            if hasattr(frame, 'audio'):  # Check if it has audio attribute
                 data = base64.b64encode(frame.audio).decode("utf-8")
                 return json.dumps({"type": "audio", "data": data})
             return None
 
         async def deserialize(self, data: str | bytes):
+            logger.info(f"DEBUG: Raw data received in serializer: {type(data)} - len: {len(data)}")
             try:
                 if isinstance(data, bytes):
                     data = data.decode("utf-8")
@@ -165,7 +174,9 @@ class OpenSourceVoicePipeline:
             runner = PipelineRunner()
             
             # Iniciar runner (bloqueará hasta que el transport reciba EndFrame o se desconecte)
+            logger.info("🚀 Iniciando PipelineTask...")
             await runner.run(task)
+            logger.info("🏁 PipelineTask finalizado.")
             
         except Exception as e:
             logger.error(f"Voice pipeline error: {e}", exc_info=True)
