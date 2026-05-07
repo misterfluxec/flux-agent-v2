@@ -1,0 +1,23 @@
+# =============================================================================
+# FLUXAGENT V2 — DRAMATIQ DEPENDENCIES
+# =============================================================================
+# Dependencias para cola de tareas asíncrona
+# =============================================================================
+
+# Dramatiq core y broker
+dramatiq[redis,watch]==1.15.0
+
+# Redis broker
+redis[hiredis]==5.0.1
+
+# Dependencias de desarrollo para Dramatiq
+dramatiq[monitoring]==1.15.0
+
+# Watchdog para modo watch (desarrollo)
+watchdog==3.0.0
+
+# Logging mejorado
+structlog==23.2.0
+
+# Métricas para Dramatiq
+prometheus-client==0.17.1

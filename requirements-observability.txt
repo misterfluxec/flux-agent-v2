@@ -1,0 +1,41 @@
+# =============================================================================
+# FLUXAGENT V2 — OBSERVABILITY DEPENDENCIES
+# =============================================================================
+# Dependencias para cache, rate limiting, métricas y tracing
+# Sistema production-ready con monitoreo completo
+# =============================================================================
+
+# Cache y Rate Limiting
+redis[hiredis]==5.0.1
+redis-py-cluster==5.0.1
+
+# Métricas Prometheus
+prometheus-client==0.19.0
+prometheus-fastapi-instrumentator==0.0.6
+
+# OpenTelemetry (opcional pero recomendado)
+opentelemetry-api==1.21.0
+opentelemetry-sdk==1.21.0
+opentelemetry-exporter-jaeger==1.21.0
+opentelemetry-exporter-zipkin==1.21.0
+opentelemetry-instrumentation-fastapi==0.42b0
+opentelemetry-instrumentation-sqlalchemy==0.42b0
+opentelemetry-instrumentation-redis==0.42b0
+opentelemetry-instrumentation-httpx==0.42b0
+opentelemetry-propagator-b3==1.21.0
+opentelemetry-semconv==1.21.0
+opentelemetry-sdk-extension-aws==2.0.2
+
+# Logging estructurado
+structlog==23.2.0
+python-json-logger==2.0.7
+
+# Utilidades para observabilidad
+watchdog==3.0.0
+psutil==5.9.6
+
+# Jaeger (opcional, para desarrollo local)
+jaeger-client==4.8.0
+
+# Grafana Agent (opcional, para métricas en producción)
+grafana-api-sdk==3.3.1

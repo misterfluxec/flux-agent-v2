@@ -1,0 +1,82 @@
+# =============================================================================
+# FLUXAGENT V2 — TESTING DEPENDENCIES
+# =============================================================================
+# Dependencias para testing con Pytest + TestContainers
+# Testing E2E con aislamiento completo
+# =============================================================================
+
+# Core testing framework
+pytest>=8.0.0
+pytest-asyncio>=0.21.0
+pytest-mock>=3.12.0
+pytest-cov>=4.1.0
+pytest-xdist>=3.5.0
+
+# TestContainers for isolated testing
+testcontainers>=3.7.1
+testcontainers[postgres]>=3.7.1
+testcontainers[redis]>=3.7.1
+
+# HTTP client for testing
+httpx>=0.25.0
+respx>=0.20.0
+
+# Database testing
+sqlalchemy[asyncio]>=2.0.0
+alembic>=1.12.0
+
+# Authentication testing
+pyjwt>=2.8.0
+cryptography>=41.0.0
+
+# Async utilities
+aiofiles>=23.2.0
+asyncio-mqtt>=0.16.0
+
+# Mock and fixtures
+factory-boy>=3.3.0
+faker>=19.0.0
+freezegun>=1.2.2
+
+# Performance testing
+pytest-benchmark>=4.0.0
+pytest-profiling>=1.7.0
+
+# Reporting
+pytest-html>=4.1.0
+pytest-json-report>=1.5.0
+allure-pytest>=2.13.0
+
+# Development and debugging
+pytest-socket>=0.6.0
+pytest-timeout>=2.1.0
+pytest-env>=1.1.0
+
+# Coverage
+coverage[toml]>=7.3.0
+coverage-conditional-plugin>=0.6.0
+
+# Optional: Load testing
+locust>=2.17.0
+pytest-parallel>=0.1.1
+
+# Optional: Property-based testing
+hypothesis>=6.88.0
+
+# Optional: Contract testing
+pact-python>=1.9.0
+
+# Optional: API testing
+schemathesis>=3.25.0
+bravado>=12.0.0
+
+# Optional: Security testing
+bandit>=1.7.5
+safety>=2.3.0
+
+# Development tools
+black>=23.9.0
+isort>=5.12.0
+flake8>=6.1.0
+mypy>=1.7.0
+pre-commit>=3.5.0
