@@ -101,7 +101,7 @@ services:
     ports:
       - "${BACKEND_PORT:-9000}:8000"
     environment:
-      DATABASE_URL: postgresql://${DB_USER:-fluxadmin}:${DB_PASSWORD:-fluxsecure2026}@postgres:5432/${DB_NAME:-fluxagent_v2}
+      DATABASE_URL: postgresql://${DB_USER:-fluxadmin}:${DB_PASSWORD:-fluxsecure2026}@fluxagent-postgres:5432/${DB_NAME:-fluxagent_v2}
       REDIS_URL: redis://:${REDIS_PASSWORD:-redisflux2026}@redis:6379/0
       JWT_SECRET: ${JWT_SECRET:-cambiar_en_produccion_jwt_secret}
       OLLAMA_BASE_URL: http://ollama:11434
@@ -113,7 +113,7 @@ services:
       redis:
         condition: service_healthy
       ollama:
-        condition: service_healthy
+        condition: service_started
     volumes:
       - ./src:/app
       - ./data/media:/app/data/media
@@ -173,5 +173,4 @@ volumes:
 
 networks:
   fluxagent-net:
-    name: fluxagent-network
     driver: bridge

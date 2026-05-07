@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "https://api.labodegaec.com";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:9000";
 
 export default function SocialLoginButtons() {
   const [loading, setLoading] = useState<string | null>(null);

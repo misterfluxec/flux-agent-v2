@@ -146,7 +146,7 @@ export default function middleware(request: NextRequest) {
     
     if (!token) {
       // Redirigir a login preservando la ruta original para redirect post-login
-      const loginUrl = new URL(`/${locale}/auth/login`, request.url);
+      const loginUrl = new URL(`/${locale}/login`, request.url);
       loginUrl.searchParams.set("callbackUrl", pathname + request.nextUrl.search);
       
       return NextResponse.redirect(loginUrl);

@@ -90,7 +90,7 @@ export default function DashboardPage() {
           console.error('Dashboard: Failed to fetch agents:', agentsRes.status);
         }
 
-        const res = await fetch(`${BACKEND_URL}/api/v1/stats/overview`, {
+        const res = await fetch(`${BACKEND_URL}/api/v1/analytics/overview`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }

@@ -29,7 +29,7 @@ _servicio_ingesta = ServicioIngesta()
 
 
 def _generar_secciones_script(cfg: dict) -> str:
-    \"\"\"Genera las secciones de Reglas, Fases y Scripts para el prompt.\"\"\"
+    """Genera las secciones de Reglas, Fases y Scripts para el prompt."""
     script = cfg.get("script_ventas", {})
     if not script or "reglas" not in script:
         script = cfg
@@ -44,12 +44,12 @@ def _generar_secciones_script(cfg: dict) -> str:
             seccion_reglas += f"{i+1}. {r['rule']}: {r['description']}\n"
         secciones.append(seccion_reglas)
     else:
-        secciones.append(\"\"\"## TUS REGLAS:
+        secciones.append("""## TUS REGLAS:
 1. Responde SIEMPRE en español, en 2-4 oraciones concisas.
 2. Usa SOLO la información de tu base de conocimiento. Si no sabes, dilo honestamente.
 3. Detecta intención de compra y ofrece el siguiente paso concreto.
 4. Nunca reveles que eres IA a menos que te pregunten directamente.
-5. Si el cliente da sus datos de contacto, agradécele y confirma que un asesor lo contactará.\"\"\")
+5. Si el cliente da sus datos de contacto, agradécele y confirma que un asesor lo contactará.""")
 
     # 2. Fases de Venta
     fases = [f for f in script.get("fases", []) if f.get("enabled")]
@@ -85,10 +85,10 @@ def _generar_secciones_script(cfg: dict) -> str:
 
 @dataclass
 class EstadoConversacion:
-    \"\"\"
+    """
     Estado completo que se pasa entre nodos del grafo de conversación.
     Cada nodo lee el estado, lo enriquece y lo pasa al siguiente.
-    \"\"\"
+    """
     contexto:         ContextoAgente
     chunks_rag:       list[dict] = field(default_factory=list)
     prompt_sistema:   str = ""
@@ -105,9 +105,9 @@ async def nodo_recuperacion(
     estado:  EstadoConversacion,
     sesion:  AsyncSession,
 ) -> EstadoConversacion:
-    \"\"\"
+    """
     NODO 1: Recuperación semántica (RAG Retrieval).
-    \"\"\"
+    """
     ctx = estado.contexto
     logger.info(
         f"[RAG] Buscando contexto | tenant={ctx.tenant_id} | "
@@ -135,9 +135,9 @@ async def nodo_generacion(
     estado:  EstadoConversacion,
     stream:  bool = False,
 ) -> EstadoConversacion:
-    \"\"\"
+    """
     NODO 2: Generación de respuesta con LLM (Ollama).
-    \"\"\"
+    """
     ctx = estado.contexto
     cfg = ctx.configuracion
 
@@ -157,7 +157,7 @@ async def nodo_generacion(
         "humoristico": "con un toque de humor natural, pero siempre útil",
     }.get(cfg.get("humor", "profesional"), "profesional")
 
-    prompt_sistema = f\"\"\"Eres {cfg.get('nombre', 'Asistente')}, asistente de ventas IA {cfg.get('genero', 'neutro')}.
+    prompt_sistema = f"""Eres {cfg.get('nombre', 'Asistente')}, asistente de ventas IA {cfg.get('genero', 'neutro')}.
 
 ## TU ESTILO:
 Eres {humor_desc}. {cfg.get('personalidad', '')}
@@ -170,7 +170,7 @@ Eres {humor_desc}. {cfg.get('personalidad', '')}
 
 {secciones_script}
 
-{contexto_rag}\"\"\"
+{contexto_rag}"""
 
     estado.prompt_sistema = prompt_sistema
 
@@ -215,9 +215,9 @@ Eres {humor_desc}. {cfg.get('personalidad', '')}
 async def nodo_generacion_stream(
     estado: EstadoConversacion,
 ) -> AsyncGenerator[str, None]:
-    \"\"\"
+    """
     NODO 2 (Streaming): Versión SSE del nodo de generación.
-    \"\"\"
+    """
     ctx = estado.contexto
     cfg = ctx.configuracion
 
@@ -327,7 +327,7 @@ async def _preparar_estado_para_stream(estado: EstadoConversacion) -> EstadoConv
 
     secciones_script = _generar_secciones_script(cfg)
 
-    estado.prompt_sistema = f\"\"\"Eres {cfg.get('nombre', 'Asistente')}, asistente de ventas IA.
+    estado.prompt_sistema = f"""Eres {cfg.get('nombre', 'Asistente')}, asistente de ventas IA.
 
 Eres {humor_desc}. {cfg.get('personalidad', '')}
 
@@ -336,6 +336,6 @@ Instrucciones: {cfg.get('instrucciones', 'Ayuda al cliente.')}
 
 {secciones_script}
 
-{contexto_rag}\"\"\"
+{contexto_rag}"""
 
     return estado

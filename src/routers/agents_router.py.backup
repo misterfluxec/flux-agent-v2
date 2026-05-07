@@ -61,9 +61,9 @@ class AgentCreate(BaseModel):
     canales: List[str] = ["web_chat"]
     horario_inicio: Optional[str] = None
     horario_fin: Optional[str] = None
-    dias_atencion: Optional[List[str]] = None
+    dias_atencion: Optional[List[str] = None] = None
     mensaje_fuera_horario: Optional[str] = None
-    script_ventas: Optional[Dict[str, Any]] = None
+    script_ventas: Optional[Dict[str, Any] = None] = None
     agent_type: str = "sales"
     specialty: Optional[str] = None
     system_prompt: Optional[str] = None
@@ -84,12 +84,12 @@ class AgentUpdate(BaseModel):
     modelo: Optional[str] = None
     temperatura: Optional[float] = None
     max_tokens: Optional[int] = None
-    canales: Optional[List[str]] = None
+    canales: Optional[List[str] = None] = None
     horario_inicio: Optional[str] = None
     horario_fin: Optional[str] = None
-    dias_atencion: Optional[List[str]] = None
+    dias_atencion: Optional[List[str] = None] = None
     mensaje_fuera_horario: Optional[str] = None
-    script_ventas: Optional[Dict[str, Any]] = None
+    script_ventas: Optional[Dict[str, Any] = None] = None
     agent_type: Optional[str] = None
     specialty: Optional[str] = None
     system_prompt: Optional[str] = None
@@ -114,9 +114,9 @@ class AgentResponse(BaseModel):
     canales: List[str]
     horario_inicio: Optional[str] = None
     horario_fin: Optional[str] = None
-    dias_atencion: Optional[List[str]] = None
+    dias_atencion: Optional[List[str] = None] = None
     mensaje_fuera_horario: Optional[str] = None
-    script_ventas: Optional[Dict[str, Any]] = None
+    script_ventas: Optional[Dict[str, Any] = None] = None
     agent_type: str
     specialty: Optional[str] = None
     system_prompt: Optional[str] = None

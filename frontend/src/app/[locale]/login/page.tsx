@@ -93,6 +93,7 @@ export default function LoginPage() {
       const data = await resp.json() as any;
       localStorage.setItem("flux_token", data.access_token);
       localStorage.setItem("flux_tenant_id", data.usuario.tenant_id);
+      document.cookie = `auth_token=${data.access_token}; path=/; max-age=86400; SameSite=lax`;
       router.push(`/${locale}/dashboard`);
     } catch {
       toast.error(t('error_critical'), { description: t('error_critical_desc') });

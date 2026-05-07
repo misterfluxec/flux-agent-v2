@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://127.0.0.1:8002/api/:path*', // Proxy to FastAPI Backend
+        destination: 'http://localhost:9000/api/:path*', // Proxy to FastAPI Backend
       },
     ];
   },
