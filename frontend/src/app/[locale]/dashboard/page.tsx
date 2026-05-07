@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bot, MessageSquare, Users, Zap, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { MessageSquare, Users, Target, Clock, TrendingUp, TrendingDown, Minus, Bot, Zap } from 'lucide-react';
+
+import { fetchAnalyticsOverview } from '@/lib/api/analytics';
+import { queryClient } from '@/lib/query-client';
+import { KPICardSkeleton, ConversationsKPI, LeadsKPI, ConversionRateKPI, SentimentKPI, ResponseTimeKPI } from '@/components/ui/kpi-card';
 
 interface StatsOverview {
   kpis: {
@@ -22,8 +27,20 @@ interface StatsOverview {
   }[];
 }
 
+interface AnalyticsOverview {
+  total_conversations: number;
+  total_messages: number;
+  total_sales: number;
+  conversion_rate: number;
+  avg_response_time: number;
+  sentiment_score: number;
+  cache_status?: 'HIT' | 'MISS';
+  cache_ttl?: number;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [stats, setStats] = useState<StatsOverview | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -38,7 +55,40 @@ export default function DashboardPage() {
           return;
         }
 
-        const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "https://api.labodegaec.com";
+        // Verificar si el usuario tiene agentes creados (más confiable que localStorage)
+        const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:9000";
+        
+        console.log('Dashboard: Checking agents for onboarding...');
+        
+        const agentsRes = await fetch(`${BACKEND_URL}/api/v1/agents`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        console.log('Dashboard: Agents response status:', agentsRes.status);
+
+        if (agentsRes.ok) {
+          const agentsData = await agentsRes.json();
+          const hasAgents = agentsData && agentsData.length > 0;
+          
+          console.log('Dashboard: Has agents:', hasAgents, 'Agents count:', agentsData?.length);
+          
+          if (!hasAgents) {
+            // Redirigir al wizard de onboarding si no tiene agentes
+            console.log('Dashboard: Redirecting to onboarding...');
+            router.push('/onboarding');
+            return;
+          }
+          
+          // Si tiene agentes, marcar onboarding como completado
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('onboarding_complete', 'true');
+            document.cookie = "onboarding_complete=true; path=/; max-age=31536000";
+          }
+        } else {
+          console.error('Dashboard: Failed to fetch agents:', agentsRes.status);
+        }
 
         const res = await fetch(`${BACKEND_URL}/api/v1/stats/overview`, {
           headers: {

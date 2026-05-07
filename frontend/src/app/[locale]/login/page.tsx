@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import SocialLoginButtons from "@/components/auth/SocialLoginButtons";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "https://api.labodegaec.com";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:9000";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -45,16 +45,46 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      console.log('Login attempt:', { email: email.trim().toLowerCase(), BACKEND_URL });
+      
       const resp = await fetch(`${BACKEND_URL}/api/v1/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
       });
 
+      console.log('Login response status:', resp.status);
+
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
-        toast.error(t('error_denied'), {
-          description: (err as { detail?: string }).detail ?? t('error_denied_desc'),
+        console.error('Login error response:', err);
+        
+        // Mensajes específicos según el error
+        let errorMessage = t('error_denied');
+        let errorDescription = t('error_denied_desc');
+        
+        if (resp.status === 401) {
+          if (err.detail && err.detail.includes('Email o contraseña incorrectos')) {
+            errorMessage = 'Credenciales Incorrectas';
+            errorDescription = 'El email o la contraseña que ingresaste son incorrectos. Por favor, verifica tus datos.';
+          } else if (err.detail && err.detail.includes('Usuario no encontrado')) {
+            errorMessage = 'Usuario No Existe';
+            errorDescription = 'No encontramos una cuenta con este email. ¿Deseas crear una cuenta nueva?';
+          } else {
+            errorMessage = 'Acceso Denegado';
+            errorDescription = 'No tienes permiso para acceder. Contacta al administrador si crees que es un error.';
+          }
+        } else if (resp.status === 404) {
+          errorMessage = 'Servicio No Disponible';
+          errorDescription = 'El servicio de autenticación no está disponible. Intenta más tarde.';
+        } else if (resp.status >= 500) {
+          errorMessage = 'Error del Servidor';
+          errorDescription = 'Estamos teniendo problemas técnicos. Intenta nuevamente en unos minutos.';
+        }
+        
+        toast.error(errorMessage, {
+          description: errorDescription,
+          duration: 5000,
         });
         setLoading(false);
         return;
