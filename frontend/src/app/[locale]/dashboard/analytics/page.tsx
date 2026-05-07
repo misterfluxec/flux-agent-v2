@@ -1,18 +1,63 @@
 'use client';
 import { useTranslations } from 'next-intl';
 import { TrendingUp, Users, ShoppingCart, DollarSign, ArrowUpRight, ArrowDownRight, Target, Zap } from 'lucide-react';
-import { MOCK_ROI } from '@/types/connectors';
+import { useQuery } from '@tanstack/react-query';
+import { fetchAnalyticsOverview, AnalyticsOverview } from '@/lib/api/analytics';
+import { KPICardSkeleton, ConversationsKPI, LeadsKPI, ConversionRateKPI, SentimentKPI, ResponseTimeKPI } from '@/components/ui/kpi-card';
 
 export default function AnalyticsPage() {
   const t = useTranslations('analytics');
-  const m = MOCK_ROI;
 
-  const metrics = [
-    { label: t('conversations'), value: m.conversations, icon: MessageSquare, trend: m.trend, color: 'text-blue-500' },
-    { label: t('leads'), value: m.qualifiedLeads, icon: Target, trend: m.trend - 2, color: 'text-purple-500' },
-    { label: t('sales'), value: m.salesAttributed, icon: ShoppingCart, trend: m.trend + 1.5, color: 'text-orange-500' },
-    { label: t('revenue'), value: `$${m.revenueAttributed.toLocaleString()}`, icon: DollarSign, trend: m.trend + 3.2, color: 'text-green-500' },
-  ];
+  const { data: analytics, isLoading, error, refetch } = useQuery<AnalyticsOverview, Error>({
+    queryKey: ['analytics-overview'],
+    queryFn: () => fetchAnalyticsOverview(),
+    staleTime: 60000, // 1 minuto
+    refetchInterval: 60000, // Auto-refresh cada minuto
+  });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8 max-w-6xl mx-auto pb-12">
+        <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-black tracking-tight">{t('title')}</h1>
+            <p className="text-muted-foreground mt-1">Mide el impacto real de tu agente en tus ventas y captación de clientes.</p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <KPICardSkeleton />
+          <KPICardSkeleton />
+          <KPICardSkeleton />
+          <KPICardSkeleton />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-8 max-w-6xl mx-auto pb-12">
+        <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-black tracking-tight">{t('title')}</h1>
+            <p className="text-muted-foreground mt-1">Mide el impacto real de tu agente en tus ventas y captación de clientes.</p>
+          </div>
+        </div>
+        
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <h3 className="text-red-800 font-medium mb-2">Error al cargar analytics</h3>
+          <p className="text-red-600 text-sm mb-4">No se pudieron cargar los datos de analytics. Por favor, intenta nuevamente.</p>
+          <button 
+            onClick={() => refetch()}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto pb-12">
@@ -25,27 +70,18 @@ export default function AnalyticsPage() {
            <Zap className="w-5 h-5 text-primary fill-primary/20" />
            <div>
              <p className="text-[10px] font-bold uppercase tracking-widest text-primary/70 leading-none">Cálculo de ROI</p>
-             <p className="text-sm font-bold text-primary">Actualizado hace 2 min</p>
+             <p className="text-sm font-bold text-primary">
+               {analytics?.cache_status === 'HIT' ? 'Cache: 60s' : 'Actualizado ahora'}
+             </p>
            </div>
         </div>
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {metrics.map((met, i) => (
-          <div key={i} className="bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all">
-            <div className="flex items-center justify-between mb-4">
-              <div className={`p-2 rounded-xl bg-muted group-hover:scale-110 transition-transform`}>
-                <met.icon className={`w-5 h-5 ${met.color}`} />
-              </div>
-              <div className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-tighter ${met.trend >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                {met.trend >= 0 ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
-                {Math.abs(met.trend)}%
-              </div>
-            </div>
-            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{met.label}</p>
-            <p className="text-3xl font-black mt-1 tracking-tight">{met.value}</p>
-          </div>
-        ))}
+        <ConversationsKPI value={analytics?.total_conversations || 0} />
+        <LeadsKPI value={analytics?.total_messages || 0} />
+        <ConversionRateKPI value={analytics?.conversion_rate || 0} />
+        <SentimentKPI value={analytics?.sentiment_score || 0} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

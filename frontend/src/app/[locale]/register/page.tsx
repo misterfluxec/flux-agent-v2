@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from 'next-intl';
-import { Eye, EyeOff, Zap, Shield, Activity, Sun, Moon, Building2, User, Palette, Globe2, CheckCircle } from "lucide-react";
+import { Eye, EyeOff, Zap, Shield, Activity, Sun, Moon, Building2, User, Palette, Globe2, CheckCircle, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -145,92 +145,67 @@ function RegisterContent() {
         )}
       </button>
 
-      <div className="w-full max-w-lg relative z-10 animate-in fade-in zoom-in-95 duration-700">
-        <div className="bg-card/40 backdrop-blur-2xl border border-white/10 dark:border-white/5 rounded-[40px] p-8 md:p-10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)]">
-        <div style={{ marginBottom: 28 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-            <div style={{
-              width: 42, height: 42,
-              background: "var(--primary)",
-              color: "var(--primary-foreground)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              borderRadius: isDark ? "0px" : "12px",
-              boxShadow: isDark ? `0 0 12px var(--primary)60` : "var(--shadow-sm)",
-            }}>
-              <Zap size={20} strokeWidth={2.5} />
+      <div className="w-full max-w-md relative z-10 animate-in fade-in zoom-in-95 duration-700">
+        <div className="bg-card/40 backdrop-blur-2xl border border-white/10 dark:border-white/5 rounded-[40px] p-10 md:p-12 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)]">
+          
+          {/* Header & Branding */}
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-[22px] bg-gradient-to-br from-primary to-blue-700 shadow-lg shadow-primary/30 mb-6 group transition-transform hover:scale-105 duration-500">
+              <Zap className="w-8 h-8 text-white fill-white/20 group-hover:animate-pulse" />
             </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground m-0">
-                {isDark ? t('badge_dark') : t('badge_light')}
-              </p>
-              <h1 className="text-xl md:text-2xl font-black tracking-tight mb-2 bg-gradient-to-br from-purple-400 to-cyan-400 bg-clip-text text-transparent">
-                {t('title')}
-              </h1>
+            <h1 className="text-3xl font-black tracking-tight mb-2 bg-gradient-to-br from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+              {t('title')}
+            </h1>
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full border border-primary/20">
+               <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
+               <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+                 {isDark ? t('badge_dark') : t('badge_light')}
+               </p>
             </div>
-          </div>
-
-          <div style={{
-            borderLeft: "2px solid var(--primary)",
-            paddingLeft: 14,
-          }}>
-            <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0 }}>
+            <p className="text-sm text-muted-foreground mt-3">
               {t('subtitle')}
             </p>
           </div>
-        </div>
 
-        <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
-          <button
-            type="button"
-            onClick={() => setTipo("individual")}
-            style={{
-              flex: 1,
-              padding: "12px 16px",
-              borderRadius: isDark ? "0px" : "12px",
-              border: `2px solid ${tipo === "individual" ? "var(--primary)" : "var(--border)"}`,
-              background: tipo === "individual" ? "var(--primary-light)" : "transparent",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-            }}
-          >
-            <User size={18} style={{ color: tipo === "individual" ? "var(--primary)" : "var(--muted-foreground)" }} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>{t('type_individual')}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setTipo("empresa")}
-            style={{
-              flex: 1,
-              padding: "12px 16px",
-              borderRadius: isDark ? "0px" : "12px",
-              border: `2px solid ${tipo === "empresa" ? "var(--primary)" : "var(--border)"}`,
-              background: tipo === "empresa" ? "var(--primary-light)" : "transparent",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-            }}
-          >
-            <Building2 size={18} style={{ color: tipo === "empresa" ? "var(--primary)" : "var(--muted-foreground)" }} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>{t('type_company')}</span>
-          </button>
-        </div>
+          {/* Type Selector */}
+          <div className="flex gap-2 mb-6">
+            <button
+              type="button"
+              onClick={() => setTipo("individual")}
+              className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-2xl border-2 transition-all font-medium text-sm ${
+                tipo === "individual"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border/50 bg-background/50 text-foreground hover:bg-background/80"
+              }`}
+            >
+              <User className="w-4 h-4" />
+              <span>{t('type_individual')}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTipo("empresa")}
+              className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-2xl border-2 transition-all font-medium text-sm ${
+                tipo === "empresa"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border/50 bg-background/50 text-foreground hover:bg-background/80"
+              }`}
+            >
+              <Building2 className="w-4 h-4" />
+              <span>{t('type_company')}</span>
+            </button>
+          </div>
 
         {/* Social Login Buttons */}
         <SocialLoginButtons />
 
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <form onSubmit={handleSubmit} className="space-y-5">
           {tipo === "empresa" && (
-            <div>
-              <label className="text-[11px] font-black uppercase tracking-[0.06em] text-muted-foreground block mb-[6px]">
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/70 ml-1">
                 {t('company_name')}
               </label>
-              <div style={{ position: "relative" }}>
-                <Building2 size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--muted-foreground)" }} />
+              <div className="relative group">
+                <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                 <Input
                   type="text" required
                   value={empresa} onChange={e => setEmpresa(e.target.value)}
@@ -241,184 +216,182 @@ function RegisterContent() {
             </div>
           )}
 
-          <div>
-            <label className="text-[11px] font-black uppercase tracking-[0.06em] text-muted-foreground block mb-[6px]">
-              {t('name_label')}
-            </label>
-            <div style={{ position: "relative" }}>
-              <User size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--muted-foreground)" }} />
-              <Input
-                type="text" required
-                value={nombre} onChange={e => setNombre(e.target.value)}
-                placeholder={t('name_placeholder')}
-                className="h-14 pl-12 bg-background/50 border-border/50 rounded-2xl focus:ring-primary/20 focus:border-primary/50 transition-all font-medium"
-              />
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/70 ml-1">
+                {t('name_label')}
+              </label>
+              <div className="relative group">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <Input
+                  type="text" required
+                  value={nombre} onChange={e => setNombre(e.target.value)}
+                  placeholder={t('name_placeholder')}
+                  className="h-14 pl-12 bg-background/50 border-border/50 rounded-2xl focus:ring-primary/20 focus:border-primary/50 transition-all font-medium"
+                />
+              </div>
             </div>
-          </div>
 
-          <div>
-            <label className="text-[11px] font-black uppercase tracking-[0.06em] text-muted-foreground block mb-[6px]">
-              {t('email_label')}
-            </label>
-            <Input
-              type="email" autoComplete="email" required
-              value={email} onChange={e => setEmail(e.target.value)}
-              placeholder={t('email_placeholder')}
-              className="h-14 px-4 bg-background/50 border-border/50 rounded-2xl focus:ring-primary/20 focus:border-primary/50 transition-all font-medium"
-            />
-          </div>
-
-          <div>
-            <label className="text-[11px] font-black uppercase tracking-[0.06em] text-muted-foreground block mb-[6px]">
-              {t('password_label')}
-            </label>
-            <div style={{ position: "relative" }}>
-              <Input
-                type={showPwd ? "text" : "password"}
-                required minLength={6}
-                value={password} onChange={e => setPassword(e.target.value)}
-                placeholder={t('password_placeholder')}
-                className="h-14 pl-4 pr-12 bg-background/50 border-border/50 rounded-2xl focus:ring-primary/20 focus:border-primary/50 transition-all font-medium"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPwd(v => !v)}
-                style={{
-                  position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
-                  background: "transparent", border: "none", cursor: "pointer",
-                  color: "var(--muted-foreground)", padding: 4,
-                }}
-              >
-                {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/70 ml-1">
+                {t('email_label')}
+              </label>
+              <div className="relative group">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <Input
+                  type="email" autoComplete="email" required
+                  value={email} onChange={e => setEmail(e.target.value)}
+                  placeholder={t('email_placeholder')}
+                  className="h-14 pl-12 bg-background/50 border-border/50 rounded-2xl focus:ring-primary/20 focus:border-primary/50 transition-all font-medium"
+                />
+              </div>
             </div>
-          </div>
 
-          <div>
-            <label className="text-[11px] font-black uppercase tracking-[0.06em] text-muted-foreground block mb-2">
-              {t('plan_label')}
-            </label>
-            <div style={{ display: "flex", gap: 8 }}>
-              {planes.map(p => (
+            <div className="space-y-2">
+              <div className="flex justify-between items-center px-1">
+                <label className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/70">
+                  {t('password_label')}
+                </label>
+                <span className="text-[10px] text-muted-foreground">
+                  {t('password_min')}
+                </span>
+              </div>
+              <div className="relative group">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <Input
+                  type={showPwd ? "text" : "password"}
+                  required minLength={6}
+                  value={password} onChange={e => setPassword(e.target.value)}
+                  placeholder={t('password_placeholder')}
+                  className="h-14 pl-12 pr-12 bg-background/50 border-border/50 rounded-2xl focus:ring-primary/20 focus:border-primary/50 transition-all font-medium"
+                />
                 <button
-                  key={p.id}
                   type="button"
-                  onClick={() => setPlan(p.id)}
-                  style={{
-                    flex: 1,
-                    padding: "10px 8px",
-                    borderRadius: isDark ? "0px" : "10px",
-                    border: `2px solid ${plan === p.id ? "var(--primary)" : "var(--border)"}`,
-                    background: plan === p.id ? "var(--primary-light)" : "transparent",
-                    cursor: "pointer",
-                    textAlign: "center",
-                  }}
+                  onClick={() => setShowPwd(v => !v)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <p style={{ fontSize: 12, fontWeight: 700, color: "var(--foreground)", margin: 0 }}>{p.nombre}</p>
-                  <p style={{ fontSize: 10, color: "var(--muted-foreground)", margin: "2px 0 0" }}>
-                    {p.precio === 0 ? t('free') : `$${p.precio}${t('per_month')}`}
-                  </p>
+                  {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
-              ))}
+              </div>
             </div>
-          </div>
 
-          {tipo === "empresa" && (
-            <div>
-              <label className="text-[11px] font-black uppercase tracking-[0.06em] text-muted-foreground block mb-2">
-                <Palette size={12} style={{ display: "inline", marginRight: 4 }} />
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/70 ml-1">
+                {t('plan_label')}
+              </label>
+              <div className="flex gap-2">
+                {planes.map(p => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setPlan(p.id)}
+                    className={`flex-1 p-2 rounded-xl border-2 transition-all text-center ${
+                      plan === p.id
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border/50 bg-background/50 text-foreground hover:bg-background/80"
+                    }`}
+                  >
+                    <p className="text-xs font-bold text-foreground">{p.nombre}</p>
+                    <p className="text-[9px] text-muted-foreground mt-0.5">
+                      {p.precio === 0 ? t('free') : `$${p.precio}${t('per_month')}`}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/70 ml-1">
+                <Palette className="w-3 h-3 inline mr-1" />
                 {t('brand_color')}
               </label>
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <div className="flex gap-2 items-center">
                 <input
                   type="color"
                   value={colorPrimario}
                   onChange={e => setColorPrimario(e.target.value)}
-                  style={{ width: 40, height: 40, border: "1px solid var(--border)", borderRadius: 8, cursor: "pointer" }}
+                  className="w-10 h-10 border border-border rounded-lg cursor-pointer"
                 />
-                <div style={{ flex: 1, display: "flex", gap: 6 }}>
+                <div className="flex gap-1.5">
                   {["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"].map(c => (
                     <button
                       key={c}
                       type="button"
                       onClick={() => setColorPrimario(c)}
-                      style={{
-                        width: 28, height: 28,
-                        borderRadius: 6,
-                        background: c,
-                        border: colorPrimario === c ? "2px solid var(--foreground)" : "1px solid var(--border)",
-                        cursor: "pointer",
-                      }}
+                      className={`w-7 h-7 rounded-md border-2 transition-all ${
+                        colorPrimario === c
+                          ? "border-foreground"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                      style={{ backgroundColor: c }}
                     />
                   ))}
                 </div>
               </div>
             </div>
-          )}
 
           {tipo === "empresa" && (
-            <div style={{
-              padding: 12,
-              background: "var(--primary-light)",
-              borderRadius: isDark ? "0px" : "10px",
-              border: "1px solid var(--primary-mid)",
-            }}>
-              <p style={{ fontSize: 12, fontWeight: 600, color: "var(--primary)", margin: "0 0 6px", display: "flex", alignItems: "center", gap: 6 }}>
-                <CheckCircle size={14} />
+            <div className="p-3 bg-primary/10 rounded-xl border border-primary/20">
+              <p className="text-xs font-semibold text-primary flex items-center gap-1.5 mb-1.5">
+                <CheckCircle className="w-3.5 h-3.5" />
                 {t('portal_includes')}
               </p>
-              <ul style={{ fontSize: 11, color: "var(--muted-foreground)", margin: 0, paddingLeft: 16 }}>
+              <ul className="text-[10px] text-muted-foreground space-y-0.5">
                 {t.raw('portal_features').map((f: string, i: number) => (
-                  <li key={i}>{f}</li>
+                  <li key={i} className="list-disc list-inside">{f}</li>
                 ))}
               </ul>
             </div>
           )}
 
-          <Button
-            type="submit" disabled={loading}
-            className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 group transition-all active:scale-[0.98] mt-6"
-          >
-            {loading
-              ? <span style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "center" }}>
-                  <span style={{ width: 16, height: 16, border: "2px solid currentColor", borderTopColor: "transparent", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} />
-                  {t('creating_env')}
+            <Button
+              type="submit" disabled={loading}
+              className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 group transition-all active:scale-[0.98] mt-6"
+            >
+              {loading ? (
+                <div className="flex items-center gap-3 justify-center">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>{t('creating_env')}</span>
+                </div>
+              ) : (
+                <span>{tipo === "empresa" ? t('submit_company') : t('submit_individual')}</span>
+              )}
+            </Button>
+          </form>
+
+          {/* Footer Info */}
+          <div className="mt-8 pt-6 border-t border-border/50">
+            <p className="text-center text-sm text-muted-foreground">
+              {t('already_have_account')}{" "}
+              <button 
+                onClick={() => router.push(`/${locale}/login`)}
+                className="text-primary font-semibold hover:underline bg-transparent border-none cursor-pointer"
+              >
+                {t('login')}
+              </button>
+            </p>
+            
+            <div className="flex items-center justify-between px-3 py-2 mt-4 bg-muted/50 rounded-xl border border-border/50 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <Shield className="w-3 h-3 text-primary" />
+                <span className="font-semibold uppercase tracking-wider">
+                  {isDark ? t('jwt_encryption') : t('secure_data')}
                 </span>
-              : tipo === "empresa" ? t('submit_company') : t('submit_individual')
-            }
-          </Button>
-        </form>
-
-        <div style={{ marginTop: 20, textAlign: "center" }}>
-          <p style={{ fontSize: 13, color: "var(--muted-foreground)" }}>
-            {t('already_have_account')}{" "}
-            <button onClick={() => router.push(`/${locale}/login`)} style={{ color: "var(--primary)", fontWeight: 600, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
-              {t('login')}
-            </button>
-          </p>
-        </div>
-
-        <div style={{
-          marginTop: 20,
-          padding: "10px 14px",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          fontSize: 11,
-          color: "var(--muted-foreground)",
-          border: "1px solid var(--border)",
-          borderRadius: isDark ? "0px" : "10px",
-          background: "var(--secondary)",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <Shield size={12} />
-            <span>{isDark ? t('jwt_encryption') : t('secure_data')}</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span className="pulse-live" style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--success)", display: "inline-block" }} />
-            <Activity size={11} />
-            <span>{isDark ? t('rls_isolation') : t('multi_tenant')}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                <Activity className="w-3 h-3 text-green-500" />
+                <span className="font-semibold uppercase tracking-wider">
+                  {isDark ? t('rls_isolation') : t('multi_tenant')}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
-        </div>
+        
+        {/* Version & Credits */}
+        <p className="text-center mt-6 text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.3em]">
+          {t('footer_version')}
+        </p>
       </div>
     </div>
   );

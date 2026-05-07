@@ -7,6 +7,7 @@ import {
   CheckCircle2, ArrowRight, Activity, Book, Store, ShoppingCart, ShoppingBag,
   DollarSign, Home, Car, Laptop, Plane, Utensils, UserRound
 } from "lucide-react";
+import { useParams, useRouter } from 'next/navigation';
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
