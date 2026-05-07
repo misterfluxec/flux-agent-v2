@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, Bot, MessageSquare, Plug, BarChart3, Settings, 
   LogOut, Database, Contact2, Package, TestTube2,
-  FileCode2, MessageCircle, FileBarChart, Loader2, ChevronDown
+  FileCode2, MessageCircle, FileBarChart, Loader2, ChevronDown, ChevronRight
 } from 'lucide-react';
 import {
   Tooltip,
@@ -16,52 +16,187 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
-const mainItems = [
-  { href: '/dashboard', icon: LayoutDashboard, labelKey: 'dashboard' },
-  { href: '/dashboard/agent', icon: Bot, labelKey: 'my_agent' },
-  { href: '/dashboard/conversations', icon: MessageSquare, labelKey: 'conversations' },
-  { href: '/dashboard/analytics', icon: BarChart3, labelKey: 'analytics' },
-];
+// =============================================================================
+// CONFIGURACIÓN DEL MENÚ (7 ITEMS MÁXIMO - PRINCIPIO DE JERARQUÍA CLARA)
+// =============================================================================
 
-const integrationItems = [
-  { href: '/dashboard/connectors', icon: Plug, labelKey: 'connectors' },
-  { href: '/dashboard/data-ingestion', icon: Database, labelKey: 'data_center', hasDesc: true },
-  { href: '/dashboard/script-editor', icon: FileCode2, labelKey: 'scripts', hasDesc: true },
-];
+export interface MenuItem {
+  id: string;
+  label: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  description?: string; // Para tooltips
+  badge?: {
+    label: string;
+    variant?: "default" | "secondary" | "destructive" | "outline";
+  };
+  children?: Array<{
+    label: string;
+    href: string;
+    description?: string;
+  }>;
+  requiresPermission?: string; // Para RBAC futuro
+}
 
-const toolItems = [
-  { href: '/dashboard/crm', icon: Contact2, labelKey: 'crm', isNew: true, hasDesc: true },
-  { href: '/dashboard/inventory', icon: Package, labelKey: 'inventory', isNew: true, hasDesc: true },
-  { href: '/dashboard/testing', icon: TestTube2, labelKey: 'testing', hasDesc: true },
-  { href: '/dashboard/chat-playground', icon: MessageCircle, labelKey: 'chat_playground', hasDesc: true },
-  { href: '/dashboard/reports', icon: FileBarChart, labelKey: 'reports', hasDesc: true },
-];
-
-const adminItems = [
-  { 
-    href: '/dashboard/settings', 
-    icon: Settings, 
-    labelKey: 'settings',
+export const MAIN_MENU_ITEMS: MenuItem[] = [
+  {
+    id: "dashboard",
+    label: "Panel",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+    description: "Resumen ejecutivo de tu agente IA",
+  },
+  {
+    id: "agent",
+    label: "Mi Agente",
+    href: "/dashboard/agent",
+    icon: Bot,
+    description: "Configura identidad, personalidad y conocimiento",
+    badge: { label: "Nuevo", variant: "default" }, // Highlight para nueva UX
+  },
+  {
+    id: "conversations",
+    label: "Conversaciones",
+    href: "/dashboard/conversations",
+    icon: MessageSquare,
+    description: "Seguimiento de clientes en tiempo real",
+  },
+  {
+    id: "metrics",
+    label: "Métricas",
+    href: "/dashboard/metrics",
+    icon: BarChart3,
+    description: "Analytics unificados: rendimiento y ROI",
+  },
+  {
+    id: "channels",
+    label: "Canales",
+    href: "/dashboard/channels",
+    icon: Plug,
+    description: "Conecta WhatsApp, Telegram y Web",
+  },
+  {
+    id: "data",
+    label: "Datos",
+    href: "/dashboard/data",
+    icon: Database,
+    description: "Alimenta el conocimiento de tu agente",
+  },
+  {
+    id: "settings",
+    label: "Configuración",
+    href: "/dashboard/settings",
+    icon: Settings,
+    description: "Facturación, equipo y preferencias",
     children: [
-      { labelKey: 'settings_general', href: '/dashboard/settings' },
-      { labelKey: 'settings_team', href: '/dashboard/settings/team' },
-      { labelKey: 'settings_billing', href: '/dashboard/settings/billing' }
-    ]
+      { label: "General", href: "/dashboard/settings", description: "Preferencias de cuenta" },
+      { label: "Facturación", href: "/dashboard/settings/billing", description: "Planes y pagos" },
+      { label: "Equipo", href: "/dashboard/settings/team", description: "Gestión de usuarios" },
+      { label: "API Keys", href: "/dashboard/settings/api-keys", description: "Acceso programático" },
+    ],
   },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
+  tenantName?: string;
+  userAvatar?: string;
+  userName?: string;
+}
+
+export function Sidebar({
+  collapsed = false,
+  onToggleCollapse,
+  tenantName = "Mi Empresa",
+  userAvatar,
+  userName = "Usuario",
+}: SidebarProps) {
   const pathname = usePathname();
-  const locale = useLocale();
-  const t = useTranslations('nav');
-  const [isSettingsOpen, setIsSettingsOpen] = useState(pathname.includes('/settings'));
   const [navigatingHref, setNavigatingHref] = useState<string | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  
+  let t = (key: string) => key;
+  let locale = "es";
+  try {
+    t = useTranslations('navigation');
+    locale = useLocale();
+  } catch(e) {}
+
+
+  // Helper para determinar si un item está activo (incluyendo hijos)
+  const isItemActive = (item: MenuItem): boolean => {
+    if (pathname === item.href) return true;
+    if (item.children) {
+      return item.children.some((child) => pathname === child.href);
+    }
+    return false;
+  };
 
   // Reset loading state when pathname changes
   useEffect(() => {
     setNavigatingHref(null);
   }, [pathname]);
+
+  // Verificar si el usuario ha completado el onboarding basado en agentes existentes
+  const [onboardingComplete, setOnboardingComplete] = useState(true);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      try {
+        const token = localStorage.getItem('flux_token');
+        if (!token) {
+          setOnboardingComplete(false);
+          setLoading(false);
+          return;
+        }
+
+        const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:9000";
+        
+        const res = await fetch(`${BACKEND_URL}/api/v1/agents`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (res.ok) {
+          const agentsData = await res.json();
+          const hasAgents = agentsData && agentsData.length > 0;
+          setOnboardingComplete(hasAgents);
+          
+          // Actualizar localStorage basado en el estado real
+          if (typeof window !== 'undefined') {
+            if (hasAgents) {
+              localStorage.setItem('onboarding_complete', 'true');
+              document.cookie = "onboarding_complete=true; path=/; max-age=31536000";
+            } else {
+              localStorage.removeItem('onboarding_complete');
+              document.cookie = "onboarding_complete=; path=/; max-age=0";
+            }
+          }
+        } else {
+          setOnboardingComplete(false);
+        }
+      } catch (error) {
+        console.error('Error checking onboarding status:', error);
+        setOnboardingComplete(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    checkOnboarding();
+    
+    // Escuchar cambios en localStorage
+    const handleStorageChange = () => checkOnboarding();
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const renderLinks = (items: any[], isChild = false) => items.map((item) => {
     const isActive = item.href === '/dashboard' 
@@ -71,10 +206,17 @@ export function Sidebar() {
     const hasChildren = item.children && item.children.length > 0;
     const isNavigating = navigatingHref === item.href;
 
+    // Bloquear navegación si el onboarding no está completo o está cargando
+    const isBlocked = (!onboardingComplete || loading) && !item.href.includes('/onboarding');
+    
     const linkContent = (
       <Link
         href={item.href.startsWith('/') ? `/${locale}${item.href}` : item.href}
         onClick={() => {
+          if (isBlocked) {
+            // Mostrar tooltip o mensaje de que debe completar onboarding
+            return;
+          }
           if (hasChildren) {
             setIsSettingsOpen(!isSettingsOpen);
           } else {
@@ -82,11 +224,13 @@ export function Sidebar() {
           }
         }}
         className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-          isActive && !isChild
-            ? 'bg-primary/10 text-primary' 
-            : isChild && isActive
-            ? 'text-primary font-bold'
-            : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+          isBlocked 
+            ? 'opacity-50 cursor-not-allowed text-muted-foreground' 
+            : isActive && !isChild
+              ? 'bg-primary/10 text-primary' 
+              : isChild && isActive
+                ? 'text-primary font-bold'
+                : 'text-muted-foreground hover:bg-accent hover:text-foreground'
         } ${isChild ? 'ml-9 pl-4 py-1.5 text-xs border-l-2' : ''} ${
           isChild && isActive ? 'border-primary' : isChild ? 'border-transparent' : ''
         } ${isNavigating ? 'opacity-70 grayscale-[0.5]' : ''}`}
@@ -156,34 +300,99 @@ export function Sidebar() {
         </span>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-8 custom-scrollbar">
-        <div>
-          <p className="px-3 mb-3 text-[10px] font-black tracking-[0.2em] text-muted-foreground/60 uppercase">General</p>
-          <div className="space-y-1">
-            {renderLinks(mainItems)}
-          </div>
-        </div>
+      {/* Navegación principal */}
+      <nav className="flex-1 overflow-y-auto py-4">
+        <ul className="space-y-1 px-2">
+          <TooltipProvider delayDuration={200}>
+            {MAIN_MENU_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const active = isItemActive(item);
+              const hasChildren = item.children && item.children.length > 0;
 
-        <div>
-          <p className="px-3 mb-3 text-[10px] font-black tracking-[0.2em] text-muted-foreground/60 uppercase">Conocimiento</p>
-          <div className="space-y-1">
-            {renderLinks(integrationItems)}
-          </div>
-        </div>
+              return (
+                <li key={item.id}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link
+                        href={item.href}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors group",
+                          active
+                            ? "bg-primary/10 text-primary"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                          collapsed && "justify-center px-2"
+                        )}
+                      >
+                        <Icon
+                          className={cn(
+                            "h-5 w-5 flex-shrink-0",
+                            active && "text-primary"
+                          )}
+                        />
+                        {!collapsed && (
+                          <>
+                            <span className="flex-1 truncate">{item.label}</span>
+                            {item.badge && (
+                              <Badge
+                                variant={item.badge.variant}
+                                className="text-[10px] px-1.5 py-0 h-5"
+                              >
+                                {item.badge.label}
+                              </Badge>
+                            )}
+                            {hasChildren && (
+                              <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                            )}
+                          </>
+                        )}
+                      </Link>
+                    </TooltipTrigger>
+                    {!collapsed && item.description && (
+                      <TooltipContent side="right" align="start" className="max-w-xs">
+                        <p className="text-sm">{item.description}</p>
+                      </TooltipContent>
+                    )}
+                    {collapsed && (
+                      <TooltipContent side="right" className="max-w-xs">
+                        <p className="font-medium">{item.label}</p>
+                        {item.description && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {item.description}
+                          </p>
+                        )}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
 
-        <div>
-          <p className="px-3 mb-3 text-[10px] font-black tracking-[0.2em] text-muted-foreground/60 uppercase">Herramientas</p>
-          <div className="space-y-1">
-            {renderLinks(toolItems)}
-          </div>
-        </div>
+                  {/* Submenú expansible (solo cuando no está colapsado) */}
+                  {!collapsed && hasChildren && active && (
+                    <ul className="ml-9 mt-1 space-y-1 border-l pl-3">
+                      {item.children!.map((child) => {
+                        const childActive = pathname === child.href;
+                        return (
+                          <li key={child.href}>
+                            <Link
+                              href={child.href}
+                              className={cn(
+                                "block px-3 py-1.5 text-sm rounded-md transition-colors",
+                                childActive
+                                  ? "text-primary font-medium"
+                                  : "text-muted-foreground hover:text-foreground"
+                              )}
+                            >
+                              {child.label}
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </li>
+              );
+            })}
+          </TooltipProvider>
+        </ul>
       </nav>
-
-      {/* Footer Admin */}
-      <div className="p-3 border-t border-border space-y-1 bg-muted/30 shrink-0">
-        <p className="px-3 mb-3 text-[10px] font-black tracking-[0.2em] text-muted-foreground/60 uppercase mt-2">Configuración</p>
-        {renderLinks(adminItems)}
         
         <button className="w-full flex items-center gap-3 px-3 py-2 mt-4 text-sm text-red-500 font-bold hover:bg-red-500/10 rounded-md transition-all group">
           <div className="p-1.5 rounded-md bg-red-500/10 group-hover:bg-red-500/20 transition-colors">
@@ -191,7 +400,6 @@ export function Sidebar() {
           </div>
           Cerrar Sesión
         </button>
-      </div>
     </div>
   );
 }

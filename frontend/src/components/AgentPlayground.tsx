@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Send, Bot, User, Loader2, Trash2, Zap, FileText, Database, Globe } from "lucide-react";
+import { Send, Bot, User, Loader2, Trash2, Zap, FileText, Database, Globe, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { sendChat } from "@/lib/api";
+import { VoiceTestClient } from "./voice/VoiceTestClient";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Message {
   rol: "usuario" | "asistente";
@@ -22,7 +23,7 @@ function SourceIcon({ fuente }: { fuente: string }) {
   return <FileText size={10} />;
 }
 
-export default function AgentPlayground() {
+export default function AgentPlayground({ agentId, tenantId }: { agentId?: string, tenantId?: string }) {
   const [messages, setMessages] = useState<Message[]>([{
     rol: "asistente",
     contenido: "👋 Hola, soy tu agente. Pregúntame sobre los documentos entrenados.",
@@ -31,142 +32,196 @@ export default function AgentPlayground() {
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
 
   const sendMessage = useCallback(async () => {
     const texto = input.trim();
     if (!texto || loading) return;
     setInput("");
-    setMessages(p => [...p, { rol: "usuario", contenido: texto }]);
+    
+    const newMessages = [...messages, { rol: "usuario" as const, contenido: texto }];
+    setMessages([...newMessages, { rol: "asistente" as const, contenido: "" }]);
     setLoading(true);
+
     try {
-      const res = await sendChat({
-        session_id: SESSION_ID, mensaje: texto,
-        historial: messages.map(m => ({ rol: m.rol, contenido: m.contenido })),
-        configuracion: { nombre: "FluxBot", humor: "profesional" },
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:9000'}/api/v1/chat/stream`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("flux_token") || ""}`,
+        },
+        body: JSON.stringify({
+          session_id: SESSION_ID,
+          mensaje: texto,
+          agent_id: agentId,
+          historial: messages.map(m => ({ rol: m.rol, contenido: m.contenido })),
+          configuracion: { nombre: "FluxBot", humor: "profesional" },
+        }),
       });
-      setMessages(p => [...p, { rol: "asistente", contenido: res.respuesta, tokens: res.tokens, fuentes: res.fuentes_rag, chunks: res.chunks_usados }]);
-    } catch {
-      setMessages(p => [...p, { rol: "asistente", contenido: "⚠️ Sin conexión con el backend." }]);
-    } finally { setLoading(false); }
-  }, [input, loading, messages]);
+
+      if (!response.ok) throw new Error("Error en la conexión con el servidor");
+      
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder("utf-8");
+
+      while (true) {
+        const { done, value } = await reader!.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split("\n");
+        
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const dataStr = line.replace("data: ", "").trim();
+            if (dataStr === "[DONE]") {
+              setLoading(false);
+              break;
+            }
+            try {
+              const data = JSON.parse(dataStr);
+              if (data.event === "token" && data.texto) {
+                setMessages(prev => {
+                  const updated = [...prev];
+                  updated[updated.length - 1] = {
+                    ...updated[updated.length - 1],
+                    contenido: updated[updated.length - 1].contenido + data.texto
+                  };
+                  return updated;
+                });
+              } else if (data.event === "fuentes") {
+                setMessages(prev => {
+                  const updated = [...prev];
+                  updated[updated.length - 1] = {
+                    ...updated[updated.length - 1],
+                    fuentes: data.urls,
+                    chunks: data.chunks
+                  };
+                  return updated;
+                });
+              }
+            } catch (e) {
+              // Ignore partial JSON parsing errors
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      setMessages(p => {
+        const updated = [...p];
+        updated[updated.length - 1].contenido = "⚠️ Error de conexión con el stream.";
+        return updated;
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [input, loading, messages, agentId]);
 
   return (
-    <div style={{
-      background: "var(--card)", border: "1px solid var(--border)",
-      borderRadius: "var(--radius)", boxShadow: "var(--shadow-md)",
-      display: "flex", flexDirection: "column",
-      height: "100%", minHeight: 560, maxHeight: 720,
-      position: "sticky", top: 24, overflow: "hidden",
-    }}>
+    <div className="flex flex-col h-[600px] border border-border bg-card rounded-xl shadow-md overflow-hidden">
       {/* Header */}
-      <div style={{
-        padding: "14px 16px", borderBottom: "1px solid var(--border)",
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        background: "var(--secondary)", flexShrink: 0,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: "var(--radius)",
-            background: "var(--primary-light)", display: "flex",
-            alignItems: "center", justifyContent: "center",
-            border: "1px solid var(--primary-mid)",
-          }}>
-            <Zap size={16} style={{ color: "var(--primary)" }} />
+      <div className="flex items-center justify-between px-4 py-3 border-b bg-secondary shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+            <Zap className="w-4 h-4 text-primary" />
           </div>
           <div>
-            <p style={{ fontSize: 13, fontWeight: 700, color: "var(--foreground)", margin: 0 }}>Simulador</p>
-            <p style={{ fontSize: 10, color: "var(--muted-foreground)", margin: 0 }}>🔬 Rayos X activo</p>
+            <p className="text-sm font-bold m-0">Simulador</p>
+            <p className="text-[10px] text-muted-foreground m-0">🔬 Rayos X activo</p>
           </div>
         </div>
-        <button onClick={() => setMessages([{ rol: "asistente", contenido: "👋 Chat reiniciado." }])}
+        <button 
+          onClick={() => setMessages([{ rol: "asistente", contenido: "👋 Chat reiniciado." }])}
           title="Limpiar chat"
-          style={{ padding: 6, borderRadius: 6, border: "none", background: "transparent", cursor: "pointer", color: "var(--muted-foreground)" }}>
-          <Trash2 size={13} />
+          className="p-1.5 rounded-md hover:bg-muted text-muted-foreground transition-colors"
+        >
+          <Trash2 className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Messages */}
-      <div style={{ flex: 1, overflowY: "auto", padding: 14, display: "flex", flexDirection: "column", gap: 12 }}>
-        {messages.map((msg, i) => (
-          <div key={i} style={{ display: "flex", flexDirection: msg.rol === "usuario" ? "row-reverse" : "row", gap: 8, alignItems: "flex-end" }}>
-            <div style={{
-              width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              background: "var(--primary-light)", border: "1px solid var(--primary-mid)",
-            }}>
-              {msg.rol === "asistente"
-                ? <Bot size={13} style={{ color: "var(--primary)" }} />
-                : <User size={13} style={{ color: "var(--primary)" }} />}
-            </div>
-            <div style={{ maxWidth: "78%" }}>
-              <div style={{
-                padding: "9px 13px",
-                borderRadius: msg.rol === "usuario" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-                fontSize: 13, lineHeight: 1.55,
-                background: msg.rol === "usuario" ? "var(--primary)" : "var(--card)",
-                color: msg.rol === "usuario" ? "var(--primary-foreground)" : "var(--foreground)",
-                border: msg.rol === "asistente" ? "1px solid var(--border)" : "none",
-                boxShadow: msg.rol === "asistente" ? "var(--shadow-sm)" : "none",
-              }}>
-                {msg.contenido}
-              </div>
-              {msg.fuentes && msg.fuentes.length > 0 && (
-                <div style={{ marginTop: 5, display: "flex", flexWrap: "wrap", gap: 4 }}>
-                  {msg.fuentes.slice(0, 3).map((f, fi) => (
-                    <div key={fi} style={{
-                      display: "inline-flex", alignItems: "center", gap: 4,
-                      padding: "2px 8px", borderRadius: 20, fontSize: 10,
-                      background: "var(--success-light)", border: "1px solid var(--success)",
-                      color: "var(--success)", opacity: 0.9,
-                    }}>
-                      <SourceIcon fuente={f} />
-                      {f.length > 28 ? f.slice(0, 28) + "…" : f}
-                    </div>
-                  ))}
-                  {msg.chunks && msg.chunks > 0 && (
-                    <span style={{ fontSize: 10, color: "var(--muted-foreground)", alignSelf: "center" }}>
-                      {msg.chunks} fragmentos · {msg.tokens} tokens
-                    </span>
+      <Tabs defaultValue="chat" className="flex flex-col flex-1 overflow-hidden">
+        <div className="px-4 py-2 border-b bg-muted/30">
+          <TabsList className="w-full grid grid-cols-2">
+            <TabsTrigger value="chat">Texto</TabsTrigger>
+            <TabsTrigger value="voice" className="flex items-center gap-2">
+              <Mic className="w-4 h-4" /> Voz
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="chat" className="flex flex-col flex-1 m-0 overflow-hidden">
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+            {messages.map((msg, i) => (
+              <div key={i} className={`flex gap-2 items-end ${msg.rol === "usuario" ? "flex-row-reverse" : "flex-row"}`}>
+                <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center bg-primary/10 border border-primary/20">
+                  {msg.rol === "asistente" ? (
+                    <Bot className="w-3.5 h-3.5 text-primary" />
+                  ) : (
+                    <User className="w-3.5 h-3.5 text-primary" />
                   )}
                 </div>
-              )}
-            </div>
+                <div className="max-w-[78%]">
+                  <div className={`px-3 py-2 text-sm leading-relaxed ${
+                    msg.rol === "usuario" 
+                      ? "rounded-[14px_14px_4px_14px] bg-primary text-primary-foreground" 
+                      : "rounded-[14px_14px_14px_4px] bg-card text-foreground border shadow-sm"
+                  }`}>
+                    {msg.contenido}
+                  </div>
+                  {msg.fuentes && msg.fuentes.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {msg.fuentes.slice(0, 3).map((f, fi) => (
+                        <div key={fi} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-green-500/10 border border-green-500/20 text-green-600">
+                          <SourceIcon fuente={f} />
+                          {f.length > 20 ? f.slice(0, 20) + "…" : f}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            {loading && messages[messages.length - 1]?.contenido === "" && (
+              <div className="flex gap-2 items-end">
+                <div className="w-7 h-7 rounded-full flex items-center justify-center bg-primary/10 border border-primary/20">
+                  <Bot className="w-3.5 h-3.5 text-primary" />
+                </div>
+                <div className="px-3 py-3 bg-card border rounded-[14px_14px_14px_4px] flex gap-1 items-center">
+                  {[0, 1, 2].map(i => (
+                    <div key={i} className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" style={{ animationDelay: `${i * 0.15}s` }} />
+                  ))}
+                </div>
+              </div>
+            )}
+            <div ref={bottomRef} />
           </div>
-        ))}
-        {loading && (
-          <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
-            <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--primary-light)", border: "1px solid var(--primary-mid)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Bot size={13} style={{ color: "var(--primary)" }} />
-            </div>
-            <div style={{ padding: "10px 14px", background: "var(--card)", border: "1px solid var(--border)", borderRadius: "14px 14px 14px 4px", display: "flex", gap: 5, alignItems: "center" }}>
-              {[0, 1, 2].map(i => (
-                <div key={i} style={{
-                  width: 6, height: 6, borderRadius: "50%", background: "var(--primary)",
-                  animation: "pulse-dot-light 1s ease-in-out infinite",
-                  animationDelay: `${i * 0.18}s`,
-                }} />
-              ))}
-            </div>
-          </div>
-        )}
-        <div ref={bottomRef} />
-      </div>
 
-      {/* Input */}
-      <div style={{ padding: 12, borderTop: "1px solid var(--border)", display: "flex", gap: 8, background: "var(--secondary)", flexShrink: 0 }}>
-        <Input
-          value={input} onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage()}
-          placeholder="Pregunta sobre los documentos..." disabled={loading}
-          style={{ flex: 1, height: 38, fontSize: 13, borderRadius: 8, border: "1px solid var(--border)", background: "var(--input)", color: "var(--foreground)" }}
-        />
-        <Button onClick={sendMessage} disabled={!input.trim() || loading}
-          style={{ height: 38, width: 38, padding: 0, borderRadius: 8, background: "var(--primary)", color: "var(--primary-foreground)", flexShrink: 0, border: "none", cursor: "pointer" }}>
-          {loading ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
-        </Button>
-      </div>
+          {/* Input */}
+          <div className="p-3 border-t bg-secondary flex gap-2 shrink-0">
+            <Input
+              value={input} 
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage()}
+              placeholder="Pregunta a tu agente..." 
+              disabled={loading}
+              className="flex-1 h-9 text-sm"
+            />
+            <Button 
+              onClick={sendMessage} 
+              disabled={!input.trim() || loading}
+              className="h-9 w-9 p-0 shrink-0"
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            </Button>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="voice" className="flex-1 p-4 m-0 bg-muted/10 overflow-y-auto">
+          <VoiceTestClient tenantId={tenantId || "default"} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
