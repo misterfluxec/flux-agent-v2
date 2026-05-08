@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Conversation, Message, MOCK_CONVERSATIONS, PipelineStage } from '@/types/conversation';
+import { useEventBus } from '@/providers/EventBusProvider';
 
 export function useConversations() {
   const [conversations, setConversations] = useState<Conversation[]>(MOCK_CONVERSATIONS);
@@ -8,15 +9,36 @@ export function useConversations() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isSending, setIsSending] = useState(false);
 
-  // Simulación de mensajes entrantes en "tiempo real"
+  const { subscribe } = useEventBus();
+
+  // Escuchar eventos reales del EventBus
   useEffect(() => {
-    const interval = setInterval(() => {
-      setConversations(prev => prev.map(c => 
-        c.id === '2' ? { ...c, unreadCount: c.unreadCount + 1, lastMessage: '¿Sigue disponible el descuento?', lastMessageTime: new Date().toISOString() } : c
-      ));
-    }, 15000);
-    return () => clearInterval(interval);
-  }, []);
+    const unsubscribe = subscribe(["CONVERSATION_HANDOFF", "VOICE_LIVE_TRANSCRIPT", "LEAD_HOT"], (msg) => {
+      setConversations(prev => {
+        // En un caso real, buscaríamos por tenant o conversation_id real. 
+        // Como usamos mocks, forzaremos actualización en el primer mock o crearemos uno nuevo.
+        const idToUpdate = msg.event_id || '1'; 
+        
+        // Si es un handoff, marcar status como waiting
+        if (msg.type === "CONVERSATION_HANDOFF") {
+          return prev.map(c => c.id === '1' ? { ...c, status: 'waiting', lastMessage: 'Handoff: ' + msg.data?.reason, lastMessageTime: new Date().toISOString() } : c);
+        }
+        
+        // Si es un transcript de voz, agregarlo a la historia (simulado)
+        if (msg.type === "VOICE_LIVE_TRANSCRIPT") {
+          return prev.map(c => c.id === '2' ? { 
+            ...c, 
+            lastMessage: `🎙️ ${msg.data?.text}`, 
+            lastMessageTime: new Date().toISOString() 
+          } : c);
+        }
+
+        return prev;
+      });
+    });
+
+    return () => unsubscribe();
+  }, [subscribe]);
 
   const filtered = conversations.filter(c => {
     const matchSearch = c.contactName.toLowerCase().includes(search.toLowerCase()) || c.contactPhone.includes(search);

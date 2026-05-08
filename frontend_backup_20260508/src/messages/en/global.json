@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "my_agent": "My Agent",
+    "conversations": "Conversations",
+    "connectors": "Connectors",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "tools": "Advanced Tools",
+    "data_center": "Data Center",
+    "data_center_desc": "Manage and sync your data sources",
+    "crm": "CRM & Leads",
+    "crm_desc": "Lead and customer management",
+    "inventory": "Inventory",
+    "inventory_desc": "Product and service catalog",
+    "testing": "Agent Testing",
+    "testing_desc": "Testing environment for your agent",
+    "reports": "Reports",
+    "reports_desc": "Detailed metrics and reports",
+    "scripts": "Script Editor",
+    "scripts_desc": "Customize conversation flows",
+    "chat_playground": "Chat Playground",
+    "chat_playground_desc": "Manual chat with your customers",
+    "settings_general": "General",
+    "settings_team": "Team",
+    "settings_billing": "Billing"
+  },
+  "common": {
+    "loading": "Loading...",
+    "search": "Search..."
+  },
+  "voice": {
+    "page_title": "Voice Test",
+    "page_description": "Test the real-time voice agent",
+    "title": "Real-Time Voice Test",
+    "description": "Talk to your agent powered by Pipecat and FastAPI.",
+    "latency": "Round-Trip Latency",
+    "connecting": "Connecting to voice server...",
+    "connected": "Connected. Start speaking.",
+    "disconnected": "Disconnected. Click 'Speak' to connect.",
+    "start_recording": "Speak",
+    "stop_recording": "Stop",
+    "setup_error": "Error setting up microphone.",
+    "connection_error": "Error connecting to the server.",
+    "format_note": "Audio processed in PCM 16-bit 16kHz Mono.",
+    "latency_note": "Using base64 streaming over WebSocket.",
+    "mobile_note": "Best experience on Chrome/Edge desktop browsers."
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "my_agent": "Mi Agente",
+    "conversations": "Conversaciones",
+    "connectors": "Conectores",
+    "analytics": "Analítica",
+    "settings": "Ajustes",
+    "tools": "Herramientas Avanzadas",
+    "data_center": "Centro de Datos",
+    "data_center_desc": "Gestiona y sincroniza tus fuentes de datos",
+    "crm": "CRM & Leads",
+    "crm_desc": "Administración de prospectos y clientes",
+    "inventory": "Inventario",
+    "inventory_desc": "Catálogo de productos y servicios",
+    "testing": "Pruebas del Agente",
+    "testing_desc": "Entorno de pruebas para tu agente",
+    "reports": "Reportes",
+    "reports_desc": "Métricas detalladas y reportes",
+    "scripts": "Editor de Scripts",
+    "scripts_desc": "Personaliza los flujos de conversación",
+    "chat_playground": "Chat Playground",
+    "chat_playground_desc": "Chat manual con tus clientes",
+    "settings_general": "General",
+    "settings_team": "Equipo",
+    "settings_billing": "Facturación"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "search": "Buscar..."
+  },
+  "voice": {
+    "page_title": "Test de Voz",
+    "page_description": "Prueba el agente de voz en tiempo real",
+    "title": "Prueba de Voz en Tiempo Real",
+    "description": "Habla con tu agente configurado con Pipecat y FastAPI.",
+    "latency": "Latencia Round-Trip",
+    "connecting": "Conectando al servidor de voz...",
+    "connected": "Conectado. Empieza a hablar.",
+    "disconnected": "Desconectado. Pulsa 'Hablar' para conectar.",
+    "start_recording": "Hablar",
+    "stop_recording": "Detener",
+    "setup_error": "Error configurando el micrófono.",
+    "connection_error": "Error de conexión al servidor.",
+    "format_note": "Audio procesado en PCM 16-bit 16kHz Mono.",
+    "latency_note": "Usando streaming base64 sobre WebSocket.",
+    "mobile_note": "Mejor experiencia en navegadores de escritorio Chrome/Edge."
+  }
+}

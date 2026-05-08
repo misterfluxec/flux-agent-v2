@@ -2,173 +2,227 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { MessageSquare, Users, Zap, Bot, ArrowRight, Sparkles, Plus, Terminal, RefreshCw } from 'lucide-react';
+import { 
+  MessageSquare, Zap, Bot, ArrowUpRight, ShieldCheck, 
+  Wifi, Activity, AlertCircle, Circle, Command, PhoneOff
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-interface StatsOverview {
-  kpis: {
-    total_conversaciones: number;
-    leads_capturados: number;
-    uso_tokens: number;
-  };
-}
+import { useEventBus } from '@/providers/EventBusProvider';
+import { OnboardingWizard } from '@/components/system/OnboardingWizard';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [stats, setStats] = useState<StatsOverview | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isHydrated, setIsHydrated] = useState(false);
+  
+  const { isConnected, history } = useEventBus();
+  
+  // Mapeamos el history global del websocket a formato feed de la UI
+  const feed = history.map((msg, index) => {
+    let text = "Evento desconocido";
+    let iconType = "system";
+    
+    if (msg.type === "SYSTEM_ALERT") { text = msg.data?.message || "Alerta del sistema"; iconType = "insight"; }
+    else if (msg.type === "ORCHESTRATOR_STEP") { text = `Orquestador: Fase ${msg.data?.step} completada.`; iconType = "action"; }
+    else if (msg.type === "BILLING_ALERT") { text = `Facturación: ${msg.data?.alert_type} - ${msg.data?.resource}`; iconType = "policy"; }
+    else if (msg.type === "LEAD_HOT") { text = `¡Lead Caliente Detectado! Score: ${msg.data?.score}`; iconType = "insight"; }
+    else if (msg.type === "CONVERSATION_HANDOFF") { text = `Handoff solicitado por agente. Motivo: ${msg.data?.reason}`; iconType = "insight"; }
+    else if (msg.type === "VOICE_LIVE_TRANSCRIPT") { text = `Voz: "${msg.data?.text}"`; iconType = "action"; }
+    else if (msg.type === "VOICE_INTERRUPTED") { text = "Interrupción de voz detectada."; iconType = "insight"; }
+
+    // Generar tiempo (mockeado rápido para la UI)
+    const timeText = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : "Ahora";
+    
+    return {
+      id: msg.event_id || `msg-${index}`,
+      type: iconType,
+      text: text,
+      time: timeText
+    };
+  });
 
   useEffect(() => {
-    async function fetchStats() {
-      try {
-        const token = localStorage.getItem('flux_token');
-        if (!token) {
-          router.push('/login');
-          return;
-        }
+    setIsHydrated(true);
+  }, []);
 
-        const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:9000";
-        const res = await fetch(`${BACKEND_URL}/api/v1/analytics/overview`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          setStats({
-            kpis: {
-              total_conversaciones: data.total_conversations || 0,
-              leads_capturados: data.total_messages || 0,
-              uso_tokens: data.uso_tokens || 0,
-            }
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching stats:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchStats();
-  }, [router]);
+  if (!isHydrated) return null; // Zero-spinner rule (Progressive Hydration)
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-12">
-      {/* HEADER & YANUA COPILOT */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+    <div className="space-y-6 animate-in fade-in duration-700 pb-12 px-4 md:px-8 max-w-7xl mx-auto pt-8">
+      
+      {/* ONBOARDING — First Victory Wizard */}
+      <OnboardingWizard />
+
+      {/* HEADER + NORTH STAR */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 relative mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Inicio</h1>
-          <p className="text-muted-foreground mt-1">Centro de operaciones de tu IA comercial.</p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline" className="border-border hover:bg-white/5 gap-2">
-            <RefreshCw className="w-4 h-4" />
-            Sincronizar Datos
-          </Button>
-          <Button onClick={() => router.push('/dashboard/agent')} className="bg-primary text-primary-foreground hover:bg-primary-hover gap-2 shadow-[0_0_15px_rgba(6,182,212,0.3)]">
-            <Plus className="w-4 h-4" />
-            Nuevo Agente
-          </Button>
-        </div>
-      </div>
-
-      {/* YANUA COPILOT BANNER */}
-      <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-card p-6 md:p-8 shadow-lg group">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none transition-all group-hover:bg-primary/20"></div>
-        <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
-          <div className="w-16 h-16 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center flex-shrink-0 shadow-[0_0_20px_rgba(6,182,212,0.4)]">
-            <Bot className="w-8 h-8 text-primary" />
-          </div>
-          <div className="flex-1 text-center md:text-left">
-            <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
-              <h2 className="text-xl font-bold text-foreground">Hola, soy Yanua ✨</h2>
+          <div className="flex items-center gap-3 mb-1">
+            <h1 className="text-3xl font-black tracking-tight text-white/90">Torre de Control</h1>
+            <div 
+              onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
+              className="px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-xs text-white/50 font-medium flex items-center gap-1.5 cursor-pointer hover:bg-white/10 transition-colors"
+            >
+              <Command className="w-3 h-3" /> K
             </div>
-            <p className="text-muted-foreground text-sm md:text-base max-w-2xl">
-              Tu sistema está operando correctamente. He detectado 3 conversaciones nuevas en WhatsApp que requieren atención humana, y 12 productos que fueron consultados sin éxito en la base de conocimientos.
-            </p>
           </div>
-          <div className="flex-shrink-0">
-            <Button className="bg-white/5 hover:bg-white/10 text-foreground border border-white/10 gap-2">
-              <Sparkles className="w-4 h-4 text-primary" />
-              Ver Insights
-            </Button>
+          <p className="text-white/50 text-sm">Resumen ejecutivo y pulso del sistema en vivo.</p>
+        </div>
+        
+        {/* NORTH-STAR METRIC */}
+        <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 pr-12 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-3xl -mr-10 -mt-10"></div>
+          <p className="text-xs font-semibold text-primary/80 uppercase tracking-wider mb-1">Valor Potencial Hoy</p>
+          <div className="flex items-end gap-3">
+            <h2 className="text-3xl font-black text-white">$2,430</h2>
+            <span className="text-sm font-medium text-emerald-400 flex items-center mb-1">
+              <ArrowUpRight className="w-4 h-4 mr-0.5" /> 18%
+            </span>
           </div>
+          <p className="text-xs text-white/50 mt-2">Basado en <span className="text-white/80 font-medium">3 leads calientes</span> en curso.</p>
         </div>
       </div>
 
-      {/* QUICK ACTIONS */}
-      <div>
-        <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wider">Acciones Rápidas</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div onClick={() => router.push('/dashboard/agent')} className="p-4 rounded-xl border border-border bg-card hover:bg-white/5 hover:border-white/20 transition cursor-pointer group flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary"><Bot className="w-5 h-5" /></div>
-              <span className="font-medium text-sm">Afinar Personalidad</span>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* MAIN COLUMN (8 cols) */}
+        <div className="lg:col-span-8 space-y-6">
+          
+          {/* SEMÁFORO DE ESTADO (System Traffic Light) */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-[#111827] border border-white/5 rounded-xl p-4 flex items-center gap-4">
+              <div className="relative">
+                <div className={`w-3 h-3 rounded-full z-10 relative ${isConnected ? "bg-emerald-500" : "bg-amber-500"}`}></div>
+                {isConnected && <div className="w-3 h-3 rounded-full bg-emerald-500 absolute inset-0 animate-ping opacity-50"></div>}
+              </div>
+              <div>
+                <p className="text-xs text-white/50 font-medium">Event Bus WS</p>
+                <p className="text-sm text-white/90 font-semibold">{isConnected ? "Conectado" : "Conectando..."}</p>
+              </div>
             </div>
-            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-          </div>
-          <div onClick={() => router.push('/dashboard/data')} className="p-4 rounded-xl border border-border bg-card hover:bg-white/5 hover:border-white/20 transition cursor-pointer group flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500"><Terminal className="w-5 h-5" /></div>
-              <span className="font-medium text-sm">Añadir Conocimiento</span>
+            
+            <div className="bg-[#111827] border border-white/5 rounded-xl p-4 flex items-center gap-4">
+              <div className="relative">
+                <div className="w-3 h-3 rounded-full bg-emerald-500 z-10 relative"></div>
+              </div>
+              <div>
+                <p className="text-xs text-white/50 font-medium">WhatsApp</p>
+                <p className="text-sm text-white/90 font-semibold">Conectado</p>
+              </div>
             </div>
-            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-          </div>
-          <div onClick={() => router.push('/dashboard/channels')} className="p-4 rounded-xl border border-border bg-card hover:bg-white/5 hover:border-white/20 transition cursor-pointer group flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-500/10 rounded-lg text-green-500"><MessageSquare className="w-5 h-5" /></div>
-              <span className="font-medium text-sm">Configurar WhatsApp</span>
+            
+            <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-4 flex items-center gap-4 cursor-pointer hover:bg-red-500/10 transition-colors" onClick={() => router.push('/dashboard/conversations')}>
+              <div className="relative">
+                <div className="w-3 h-3 rounded-full bg-red-500 z-10 relative"></div>
+                <div className="w-3 h-3 rounded-full bg-red-500 absolute inset-0 animate-ping opacity-50"></div>
+              </div>
+              <div>
+                <p className="text-xs text-white/50 font-medium">Handoffs</p>
+                <p className="text-sm text-red-400 font-bold">2 Esperando</p>
+              </div>
             </div>
-            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
           </div>
+
+          {/* LIVE INSIGHTS FEED */}
+          <div className="bg-[#111827] border border-white/5 rounded-2xl overflow-hidden shadow-lg">
+            <div className="px-6 py-4 border-b border-white/5 flex justify-between items-center">
+              <h3 className="text-sm font-semibold text-white/80 flex items-center gap-2">
+                <Activity className="w-4 h-4 text-primary" />
+                Live Action Feed
+              </h3>
+              <span className="text-[10px] uppercase font-bold text-emerald-500 tracking-wider bg-emerald-500/10 px-2 py-1 rounded">Live</span>
+            </div>
+            <div className="p-4 space-y-1">
+              {feed.length === 0 ? (
+                <div className="p-8 text-center text-white/30 text-sm">Escuchando eventos en tiempo real...</div>
+              ) : (
+                feed.slice(0, 8).map((item) => (
+                  <div key={item.id} className="flex gap-4 p-3 rounded-lg hover:bg-white/[0.02] transition-colors group">
+                    <div className="pt-0.5">
+                      {item.type === "insight" && <AlertCircle className="w-4 h-4 text-amber-400" />}
+                      {item.type === "system" && <Wifi className="w-4 h-4 text-blue-400" />}
+                      {item.type === "policy" && <ShieldCheck className="w-4 h-4 text-purple-400" />}
+                      {item.type === "action" && <Bot className="w-4 h-4 text-primary" />}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm text-white/80">{item.text}</p>
+                      <p className="text-xs text-white/40 mt-1">{item.time}</p>
+                    </div>
+                    {item.type === "insight" && (
+                      <Button size="sm" variant="outline" className="opacity-0 group-hover:opacity-100 h-7 text-xs bg-transparent border-white/10 hover:bg-white/10" onClick={() => router.push('/dashboard/conversations')}>
+                        Ver Detalles
+                      </Button>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+        </div>
+
+        {/* RIGHT COLUMN (4 cols) */}
+        <div className="lg:col-span-4 space-y-6">
+          
+          {/* TOKEN ECONOMY WIDGET */}
+          <div className="bg-[#111827] border border-white/5 rounded-2xl p-6 shadow-lg">
+            <h3 className="text-sm font-semibold text-white/80 mb-4 flex items-center gap-2">
+              <Zap className="w-4 h-4 text-amber-400" />
+              Economía de Tokens
+            </h3>
+            
+            <div className="relative h-32 flex items-center justify-center mb-4">
+              {/* Fake Donut Chart */}
+              <svg viewBox="0 0 36 36" className="w-32 h-32 transform -rotate-90">
+                <path
+                  className="text-white/5"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                />
+                <path
+                  className="text-primary transition-all duration-1000 ease-out"
+                  strokeDasharray="78, 100"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-2xl font-black text-white">78%</span>
+                <span className="text-[10px] text-white/40 uppercase font-semibold">Usado</span>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex justify-between text-xs">
+                <span className="text-white/50">Límite Pro</span>
+                <span className="text-white/90 font-medium">1,000,000</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-white/50">Consumidos</span>
+                <span className="text-white/90 font-medium">780,450</span>
+              </div>
+              <div className="pt-2 border-t border-white/5">
+                <p className="text-[11px] text-amber-400/80 mt-1 leading-tight">
+                  Alerta: Al 80% te notificaremos. Si llegas al 100% se activará el Kill-Switch si no hay overage.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* POLICY ENGINE SHIELD */}
+          <div className="bg-gradient-to-br from-purple-500/10 to-[#111827] border border-purple-500/20 rounded-2xl p-6 shadow-lg">
+            <h3 className="text-sm font-semibold text-white/80 mb-2 flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-purple-400" />
+              Escudo Activo
+            </h3>
+            <p className="text-3xl font-black text-white mb-1">14</p>
+            <p className="text-xs text-purple-200/50">Acciones riesgosas bloqueadas por políticas hoy.</p>
+          </div>
+
         </div>
       </div>
-
-      {/* KPIS */}
-      {loading ? (
-        <div className="grid gap-4 md:grid-cols-3">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="rounded-xl border border-border bg-card p-6 h-[120px] animate-pulse flex flex-col justify-center gap-3">
-              <div className="h-4 bg-muted rounded w-1/2"></div>
-              <div className="h-8 bg-muted rounded w-3/4"></div>
-            </div>
-          ))}
-        </div>
-      ) : stats ? (
-        <div>
-          <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wider">Métricas Clave</h3>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-              <div className="absolute right-0 top-0 w-24 h-24 bg-primary/5 rounded-bl-full transition-colors group-hover:bg-primary/10"></div>
-              <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-primary" />
-                Conversaciones Activas
-              </h3>
-              <div className="text-3xl font-bold mt-2 text-foreground">{stats.kpis.total_conversaciones}</div>
-            </div>
-
-            <div className="rounded-xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-              <div className="absolute right-0 top-0 w-24 h-24 bg-blue-500/5 rounded-bl-full transition-colors group-hover:bg-blue-500/10"></div>
-              <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Users className="w-4 h-4 text-blue-500" />
-                Leads Capturados
-              </h3>
-              <div className="text-3xl font-bold mt-2 text-foreground">{stats.kpis.leads_capturados}</div>
-            </div>
-
-            <div className="rounded-xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-              <div className="absolute right-0 top-0 w-24 h-24 bg-yellow-500/5 rounded-bl-full transition-colors group-hover:bg-yellow-500/10"></div>
-              <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Zap className="w-4 h-4 text-yellow-500" />
-                Consumo de Tokens
-              </h3>
-              <div className="text-3xl font-bold mt-2 text-foreground">{stats.kpis.uso_tokens.toLocaleString()}</div>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

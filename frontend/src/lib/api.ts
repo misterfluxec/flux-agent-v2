@@ -265,6 +265,9 @@ export interface AgentCreate {
   dias_atencion?: string[] | null;
   mensaje_fuera_horario?: string | null;
   script_ventas?: any | null;
+  agent_type?: string;
+  specialty?: string | null;
+  system_prompt?: string | null;
 }
 
 export interface AgentUpdate extends Partial<AgentCreate> {
@@ -294,9 +297,14 @@ export interface AgentResponse {
   dias_atencion?: string[] | null;
   mensaje_fuera_horario?: string | null;
   script_ventas?: any | null;
+  agent_type: string;
+  specialty?: string | null;
+  system_prompt?: string | null;
   estado: string;
   creado_en: string;
   actualizado_en: string;
+  knowledge_base_size: number;
+  last_sync_at?: string | null;
 }
 
 export async function fetchAgents(): Promise<AgentResponse[]> {
@@ -323,6 +331,16 @@ export async function uploadAgentAvatar(id: string, file: File): Promise<{ mensa
       "Content-Type": "multipart/form-data",
     },
   });
+  return data;
+}
+
+export async function deleteAgent(id: string): Promise<{ mensaje: string }> {
+  const { data } = await api.delete<{ mensaje: string }>(`/agents/${id}`);
+  return data;
+}
+
+export async function testAgent(id: string, mensaje: string): Promise<{ agente: string; respuesta: string; modelo: string }> {
+  const { data } = await api.post<{ agente: string; respuesta: string; modelo: string }>(`/agents/${id}/test`, { mensaje });
   return data;
 }
 

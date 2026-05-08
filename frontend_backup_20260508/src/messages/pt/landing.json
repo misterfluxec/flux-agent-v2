@@ -1,0 +1,217 @@
+{
+  "nav": {
+    "features": "Recursos",
+    "comparison": "Comparativo",
+    "pricing": "Planos",
+    "tech": "Tecnologia"
+  },
+  "auth": {
+    "login": "Entrar",
+    "free_trial": "🚀 7 Dias Grátis"
+  },
+  "hero": {
+    "badge": "Infraestrutura Edge Computing disponível",
+    "title_1": "A IA que não apenas responde.",
+    "title_2": "Ela vê, ouve e raciocina como você.",
+    "subtitle_1": "Esqueça os bots rígidos e as recargas constantes.",
+    "subtitle_2": "FluxAgent V2 é a infraestrutura de inteligência local que automatiza seu atendimento em 100%.",
+    "cta_activate": "🚀 Ativar meus Superpoderes - 7 Dias Grátis"
+  },
+  "market": {
+    "title": "POTÊNCIA LOCAL DE CLASSE MUNDIAL",
+    "subtitle": "As opções mais caras do mercado que você pode evitar",
+    "fluxagent_value": "Com FluxAgent V2: Tudo incluído a partir de $45/mês"
+  },
+  "features": {
+    "badge": "Recursos",
+    "title_1": "Automatize seu atendimento",
+    "title_2": "e multiplique suas vendas",
+    "subtitle": "Não é apenas um bot. É seu melhor vendedor digital trabalhando 24/7.",
+    "items": [
+      {
+        "title": "Atendimento 24/7 Sem Pausas",
+        "description": "Seu vendedor virtual nunca dorme, nunca se cansa e responde instantaneamente a qualquer hora do dia.",
+        "highlight": "Resposta Instantânea"
+      },
+      {
+        "title": "Conversões Maximizadas",
+        "description": "Cada consulta se transforma em venda. O agente qualifica leads, contorna objeções e fecha negócios.",
+        "highlight": "+300% de Conversão"
+      },
+      {
+        "title": "Custos Previsíveis",
+        "description": "Esqueça as faturas surpresas. Um preço fixo mensal inclui tudo, sem recargas ou extras.",
+        "highlight": "Sem Surpresas"
+      },
+      {
+        "title": "Dados 100% Privados",
+        "description": "Seus dados e os de seus clientes nunca saem de sua infraestrutura. Controle total e soberania.",
+        "highlight": "Soberania Total"
+      }
+    ]
+  },
+  "chat": {
+    "welcome": "Olá! Sou Yanua, sua assistente do FluxAgent V2. Como posso ajudar você hoje?",
+    "responses": [
+      "Excelente pergunta! Posso ajudar você a configurar seu primeiro agente de IA em minutos.",
+      "Com FluxAgent V2, você pode economizar até 3X comparado a outras soluções. Gostaria de ver um comparativo?",
+      "Nosso teste gratuito de 7 dias permite que você experimente todos os recursos sem compromisso.",
+      "Você possui um ERP específico? Posso explicar como nossa integração nativa funciona.",
+      "O plano Conexão Humana inclui mensagens de voz ultrarrealistas para atender seus clientes 24/7."
+    ]
+  },
+  "comparison": {
+    "rows": [
+      {
+        "benefit": "Modelo de Pagamento",
+        "competitor": "Recargas por conversa",
+        "ventacore": "Assinatura de Abundância",
+        "highlight": false
+      },
+      {
+        "benefit": "Capacidade de Mensagens",
+        "competitor": "1.000 - 2.000",
+        "ventacore": "3.000 - 15.000",
+        "highlight": true
+      },
+      {
+        "benefit": "Sentidos da IA",
+        "competitor": "Somente Texto",
+        "ventacore": "Vê, Ouve e Fala nativamente",
+        "highlight": false
+      }
+    ]
+  },
+  "plans": {
+    "stability": {
+      "name": "Estabilidade",
+      "tagline": "Seu negócio nunca dorme",
+      "price": "45",
+      "period": "/mês",
+      "features": [
+        "3.000 mensagens / mês",
+        "Treinamento RAG Ilimitado",
+        "Respostas de Texto Ultrarrápidas"
+      ],
+      "cta": "Selecionar Estabilidade",
+      "recommended": false
+    },
+    "human": {
+      "name": "Conexão Humana",
+      "tagline": "Venda por mensagens de voz",
+      "price": "85",
+      "period": "/mês",
+      "features": [
+        "7.000 mensagens / mês",
+        "Ouça Mensagens de Voz (STT)",
+        "Responda com Voz Humana (TTS)"
+      ],
+      "cta": "Ativar Conexão Humana",
+      "recommended": true
+    },
+    "peace": {
+      "name": "Paz de Espírito",
+      "tagline": "Escalabilidade Total",
+      "price": "160",
+      "period": "/mês",
+      "features": [
+        "15.000 mensagens / mês",
+        "Visão IA: Lê fotos e catálogos",
+        "Raciocínio Multimodal Completo"
+      ],
+      "cta": "Escolher Paz de Espírito",
+      "recommended": false
+    }
+  },
+  "marketAlternatives": {
+    "items": [
+      {
+        "name": "GPT-4 Turbo",
+        "category": "Nuvem Pública",
+        "price": "~$0.03/mensagem",
+        "limit": "Limitado por API"
+      },
+      {
+        "name": "Claude 3",
+        "category": "Nuvem Pública",
+        "price": "~$0.025/mensagem",
+        "limit": "Limitado por API"
+      },
+      {
+        "name": "Amazon Lex",
+        "category": "Nuvem Pública",
+        "price": "~$0.04/mensagem",
+        "limit": "Limitado por API"
+      },
+      {
+        "name": "IBM Watson",
+        "category": "Enterprise Cloud",
+        "price": "A partir de $0.06/mensagem",
+        "limit": "Custo escalonável"
+      }
+    ]
+  },
+  "stats": {
+    "items": [
+      {
+        "value": "3-15K",
+        "label": "Mensagens incluídas"
+      },
+      {
+        "value": "7 Dias",
+        "label": "Teste gratuito"
+      },
+      {
+        "value": "< 500ms",
+        "label": "Latência ultrabaixa"
+      },
+      {
+        "value": "100%",
+        "label": "Soberania de dados"
+      }
+    ]
+  },
+  "footer": {
+    "rights": "© 2026 FluxAgent V2. Todos os direitos reservados.",
+    "sections": [
+      {
+        "title": "Sede Principal",
+        "content": [
+          "FluxAgent V2",
+          "20-22 Wenlock Road, London, England, N1 7GU",
+          "London Tech Hub - Centro europeu de inovação em IA"
+        ]
+      },
+      {
+        "title": "Conformidade e Governança",
+        "content": [
+          "Data Protection Act 2018 + GDPR",
+          "Soberania de dados para a América Latina",
+          "Infraestrutura corporativa privada"
+        ]
+      },
+      {
+        "title": "Distribuição Autorizada",
+        "content": [
+          "Operação exclusiva para a América Latina",
+          "Canal oficial de distribuição: FluxAgent Latam"
+        ]
+      },
+      {
+        "title": "Força Tecnológica",
+        "content": [
+          "Infraestrutura Edge Computing dedicada",
+          "Processamento de Voz em tempo real",
+          "Latência <500ms - Custo zero para escala",
+          "Memória Inteligente RAG"
+        ]
+      }
+    ]
+  },
+  "final_cta": {
+    "title_1": "É hora de automatizar e",
+    "title_2": "escalar o seu negócio",
+    "subtitle": "Crie sua conta agora e coloque seu clone digital para trabalhar.\n7 dias grátis, cancele quando quiser.",
+    "button": "🚀 Criar Conta Grátis"
+  }
+}

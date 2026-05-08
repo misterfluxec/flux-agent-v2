@@ -1,0 +1,15 @@
+{
+  "payment_failed_title": "Pago pendiente",
+  "payment_failed_desc": "Tu último pago no fue procesado. Actualiza tu método de pago para evitar interrupciones.",
+  "update_payment": "Actualizar método de pago",
+  "messages": "Mensajes", "agents": "Agentes", "storage": "Almacenamiento",
+  "active_until": "Activo hasta {date}",
+  "status_active": "Activo", "status_past_due": "Pago pendiente", "status_canceled": "Cancelado", "status_trialing": "Prueba gratuita",
+  "manage_billing": "Gestionar facturación", "upgrade": "Actualizar plan",
+  "compare_plans": "Comparar planes",
+  "security_compliance": "Seguridad y Cumplimiento",
+  "encryption": "Cifrado AES-256 en reposo y tránsito",
+  "gdpr": "Cumplimiento GDPR/LGPD para datos de clientes",
+  "whatsapp_compliance": "Cumplimiento oficial de políticas Meta/WhatsApp",
+  "audit_logs": "Registros de auditoría inmutables por tenant"
+}

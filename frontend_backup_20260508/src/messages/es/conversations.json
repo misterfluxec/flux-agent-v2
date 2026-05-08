@@ -1,0 +1,9 @@
+{
+  "search": "Buscar contacto...",
+  "status_all": "Todos", "status_new": "Nuevos", "status_active": "Activos", "status_waiting": "En espera", "status_closed": "Cerrados",
+  "unread": "sin leer", "read": "Leído", "empty": "No hay conversaciones aún",
+  "select_chat": "Selecciona una conversación para comenzar",
+  "typing": "Escribiendo...", "type_message": "Escribe un mensaje...",
+  "stage_new": "Nuevos", "stage_qualified": "Calificados", "stage_negotiation": "Negociación", "stage_closed": "Cerrados",
+  "drop_here": "Arrastra o asigna leads aquí"
+}

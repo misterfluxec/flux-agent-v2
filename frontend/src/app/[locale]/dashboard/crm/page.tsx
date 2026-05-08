@@ -2,32 +2,27 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { 
-  Users, Plus, Search, MessageSquare, Eye, Edit, RefreshCw, Filter, Mail, Phone, Calendar, Trash2
+  Users, Plus, Search, MessageSquare, Edit, RefreshCw, Filter, 
+  Mail, Phone, Calendar, Trash2, LayoutGrid, List, ArrowRight, TrendingUp
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { fetchLeads, type LeadData } from "@/lib/api";
 
 const statusColors: Record<string, string> = {
-  nuevo: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  contactado: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  interesado: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  cerrado: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  perdido: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+  nuevo: "text-blue-400 bg-blue-500/10 border-blue-500/20",
+  contactado: "text-amber-400 bg-amber-500/10 border-amber-500/20",
+  interesado: "text-purple-400 bg-purple-500/10 border-purple-500/20",
+  cerrado: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+  perdido: "text-rose-400 bg-rose-500/10 border-rose-500/20",
 };
 
-const sourceLabels: Record<string, string> = {
-  whatsapp: "WhatsApp",
-  telegram: "Telegram",
-  web: "Web",
-  email: "Email",
-};
+const pipelineStages = ["nuevo", "contactado", "interesado", "cerrado"];
 
 export default function CRMPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterEstado, setFilterEstado] = useState("all");
   const [filterOrigen, setFilterOrigen] = useState("all");
   const [leadsData, setLeadsData] = useState<LeadData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<"pipeline" | "list">("pipeline");
 
   const loadLeads = useCallback(async () => {
     setLoading(true);
@@ -47,205 +42,265 @@ export default function CRMPage() {
 
   const stats = {
     total: leadsData.length,
-    nuevos: leadsData.filter(l => l.estado === "nuevo").length,
-    contactados: leadsData.filter(l => l.estado === "contactado").length,
-    interesados: leadsData.filter(l => l.estado === "interesado").length,
     cerrados: leadsData.filter(l => l.estado === "cerrado").length,
-    perdido: leadsData.filter(l => l.estado === "perdido").length,
+    ingresos: leadsData.filter(l => l.estado === "cerrado").reduce((acc, curr) => acc + curr.monto, 0),
   };
 
   const filteredLeads = leadsData.filter(lead => {
     const matchesSearch = lead.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           lead.phone.includes(searchTerm) ||
                           lead.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilterEstado = filterEstado === "all" || lead.estado === filterEstado;
     const matchesFilterOrigen = filterOrigen === "all" || lead.canal === filterOrigen;
-    return matchesSearch && matchesFilterEstado && matchesFilterOrigen;
+    return matchesSearch && matchesFilterOrigen;
   });
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto animate-entry">
+    <div className="space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-700 pb-20">
+      
+      {/* Background glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-96 bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none -z-10" />
+
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Users className="w-6 h-6 text-indigo-500" />
-            Clientes & Leads
+          <div className="flex items-center gap-2 mb-2">
+            <Users className="w-4 h-4 text-emerald-400" />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/80">Gestión de Clientes</span>
+          </div>
+          <h1 className="text-3xl md:text-4xl font-black text-white/90 tracking-tight">
+            Pipeline de <span className="text-emerald-400">Ventas</span>
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">
-            Gestiona tu base de clientes y oportunidades de venta
+          <p className="text-sm text-white/50 mt-2 font-light">
+            Seguimiento automático de leads generados y cerrados por la IA.
           </p>
         </div>
-        <div className="flex gap-2">
+
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="bg-black/40 backdrop-blur-md p-1 rounded-xl border border-white/5 flex">
+            <button 
+              onClick={() => setViewMode("pipeline")}
+              className={`p-2 rounded-lg transition-colors flex items-center gap-2 ${viewMode === 'pipeline' ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white'}`}
+            >
+              <LayoutGrid className="w-4 h-4" />
+              <span className="text-xs font-bold hidden sm:block">Kanban</span>
+            </button>
+            <button 
+              onClick={() => setViewMode("list")}
+              className={`p-2 rounded-lg transition-colors flex items-center gap-2 ${viewMode === 'list' ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white'}`}
+            >
+              <List className="w-4 h-4" />
+              <span className="text-xs font-bold hidden sm:block">Lista</span>
+            </button>
+          </div>
+
           <button
             onClick={loadLeads}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition shadow-sm disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-white/70 bg-black/40 backdrop-blur-md border border-white/5 rounded-xl hover:bg-white/5 hover:text-white transition-colors disabled:opacity-50"
           >
-            <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
-            Actualizar
+            <RefreshCw size={16} className={loading ? "animate-spin text-emerald-400" : ""} />
+            <span className="hidden sm:block">Sincronizar</span>
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition shadow-sm">
+          
+          <button className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)]">
             <Plus className="w-4 h-4" />
-            Nuevo Cliente
+            <span className="hidden sm:block">Nuevo Lead</span>
           </button>
         </div>
       </div>
 
-      {/* Stats Cards - Template Style */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        {[
-          { label: "Nuevos", count: stats.nuevos },
-          { label: "Contactados", count: stats.contactados },
-          { label: "Interesados", count: stats.interesados },
-          { label: "Cerrados", count: stats.cerrados },
-          { label: "Perdidos", count: stats.perdido },
-        ].map((stat) => (
-          <Card key={stat.label} className="border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 shadow-sm">
-            <CardContent className="p-4">
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{stat.label}</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{stat.count}</p>
-            </CardContent>
-          </Card>
-        ))}
+      {/* Mini Analytics Board */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-black/40 backdrop-blur-xl border border-white/5 rounded-[24px] p-6 shadow-xl flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center">
+            <Users className="w-6 h-6 text-blue-400" />
+          </div>
+          <div>
+            <p className="text-xs text-white/50 uppercase tracking-wider font-bold mb-1">Total Leads</p>
+            <p className="text-2xl font-black text-white/90">{stats.total}</p>
+          </div>
+        </div>
+        <div className="bg-black/40 backdrop-blur-xl border border-white/5 rounded-[24px] p-6 shadow-xl flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
+            <TrendingUp className="w-6 h-6 text-emerald-400" />
+          </div>
+          <div>
+            <p className="text-xs text-white/50 uppercase tracking-wider font-bold mb-1">Ventas Cerradas</p>
+            <p className="text-2xl font-black text-white/90">{stats.cerrados}</p>
+          </div>
+        </div>
+        <div className="bg-black/40 backdrop-blur-xl border border-white/5 rounded-[24px] p-6 shadow-xl flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/20 flex items-center justify-center">
+            <span className="text-xl font-black text-emerald-400">$</span>
+          </div>
+          <div>
+            <p className="text-xs text-white/50 uppercase tracking-wider font-bold mb-1">Ingresos Generados</p>
+            <p className="text-2xl font-black text-emerald-400">${stats.ingresos.toLocaleString()}</p>
+          </div>
+        </div>
       </div>
 
-      {/* Filters - Template Style */}
-      <Card className="border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 shadow-sm">
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                placeholder="Buscar clientes..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-10 pl-9 pr-4 bg-transparent border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 placeholder:text-slate-400"
-              />
-            </div>
-            <div className="flex gap-2">
-              <div className="relative">
-                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <select 
-                  value={filterEstado}
-                  onChange={(e) => setFilterEstado(e.target.value)}
-                  className="h-10 pl-9 pr-8 bg-transparent border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 appearance-none"
-                >
-                  <option value="all" className="dark:bg-slate-900">Estado (Todos)</option>
-                  <option value="nuevo" className="dark:bg-slate-900">Nuevo</option>
-                  <option value="contactado" className="dark:bg-slate-900">Contactado</option>
-                  <option value="interesado" className="dark:bg-slate-900">Interesado</option>
-                  <option value="cerrado" className="dark:bg-slate-900">Cerrado</option>
-                  <option value="perdido" className="dark:bg-slate-900">Perdido</option>
-                </select>
-              </div>
-              <select 
-                value={filterOrigen}
-                onChange={(e) => setFilterOrigen(e.target.value)}
-                className="h-10 px-4 bg-transparent border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              >
-                <option value="all" className="dark:bg-slate-900">Origen (Todos)</option>
-                <option value="whatsapp" className="dark:bg-slate-900">WhatsApp</option>
-                <option value="telegram" className="dark:bg-slate-900">Telegram</option>
-                <option value="web" className="dark:bg-slate-900">Web</option>
-                <option value="email" className="dark:bg-slate-900">Email</option>
-              </select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Filters Bar */}
+      <div className="bg-black/40 backdrop-blur-xl border border-white/5 rounded-2xl p-3 shadow-xl flex flex-col md:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+          <input
+            placeholder="Buscar por nombre, correo o teléfono..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full h-11 pl-11 pr-4 bg-white/5 border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500/50 placeholder:text-white/30 transition-colors"
+          />
+        </div>
+        <div className="relative min-w-[200px]">
+          <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+          <select 
+            value={filterOrigen}
+            onChange={(e) => setFilterOrigen(e.target.value)}
+            className="w-full h-11 pl-11 pr-8 bg-white/5 border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500/50 appearance-none transition-colors"
+          >
+            <option value="all" className="bg-gray-900">Origen: Todos</option>
+            <option value="whatsapp" className="bg-gray-900">WhatsApp</option>
+            <option value="web" className="bg-gray-900">Sitio Web</option>
+          </select>
+        </div>
+      </div>
 
-      {/* Clients Table - Template Style */}
-      <Card className="border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 shadow-sm">
-        <CardContent className="p-0">
+      {/* Main Content Area */}
+      {viewMode === "pipeline" ? (
+        /* PIPELINE KANBAN VIEW */
+        <div className="flex gap-4 overflow-x-auto pb-8 snap-x">
+          {pipelineStages.map((stage) => {
+            const stageLeads = filteredLeads.filter(l => l.estado === stage);
+            return (
+              <div key={stage} className="flex-none w-80 bg-black/20 rounded-[24px] border border-white/5 p-4 snap-start flex flex-col h-[calc(100vh-380px)] min-h-[500px]">
+                <div className="flex items-center justify-between mb-4 px-2">
+                  <h3 className="font-bold text-white/80 capitalize flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${statusColors[stage].split(' ')[1]}`} />
+                    {stage}
+                  </h3>
+                  <span className="bg-white/10 text-white/60 text-xs px-2 py-0.5 rounded-full font-bold">{stageLeads.length}</span>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                  {stageLeads.length === 0 ? (
+                    <div className="h-24 border-2 border-dashed border-white/5 rounded-xl flex items-center justify-center text-xs text-white/30 font-light">
+                      Sin prospectos
+                    </div>
+                  ) : (
+                    stageLeads.map(lead => (
+                      <div key={lead.id} className="bg-white/5 border border-white/5 rounded-2xl p-4 hover:bg-white/10 hover:border-white/10 transition-colors cursor-pointer group">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-bold text-white/90 text-sm truncate pr-2">{lead.name}</h4>
+                          <span className="text-emerald-400 text-xs font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full shrink-0">
+                            ${lead.monto}
+                          </span>
+                        </div>
+                        <div className="space-y-1 mb-4">
+                          {lead.phone && (
+                            <div className="flex items-center gap-2 text-xs text-white/40">
+                              <Phone className="w-3 h-3" />
+                              <span className="truncate">{lead.phone}</span>
+                            </div>
+                          )}
+                          {lead.email && (
+                            <div className="flex items-center gap-2 text-xs text-white/40">
+                              <Mail className="w-3 h-3" />
+                              <span className="truncate">{lead.email}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                          <span className="text-[10px] text-white/30 bg-black/50 px-2 py-1 rounded-md uppercase tracking-wider">
+                            {lead.canal}
+                          </span>
+                          <button className="text-white/30 hover:text-emerald-400 transition-colors opacity-0 group-hover:opacity-100">
+                            <ArrowRight className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* LIST VIEW */
+        <div className="bg-black/40 backdrop-blur-xl border border-white/5 rounded-[24px] overflow-hidden shadow-xl">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800">
-                  <th className="px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Cliente</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Contacto</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Estado</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Origen</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Último Contacto</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Monto</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">Acciones</th>
+                <tr className="border-b border-white/5 bg-white/5">
+                  <th className="px-6 py-4 text-xs font-bold text-white/40 uppercase tracking-widest">Cliente</th>
+                  <th className="px-6 py-4 text-xs font-bold text-white/40 uppercase tracking-widest">Contacto</th>
+                  <th className="px-6 py-4 text-xs font-bold text-white/40 uppercase tracking-widest">Fase</th>
+                  <th className="px-6 py-4 text-xs font-bold text-white/40 uppercase tracking-widest">Origen</th>
+                  <th className="px-6 py-4 text-xs font-bold text-white/40 uppercase tracking-widest">Valor</th>
+                  <th className="px-6 py-4 text-xs font-bold text-white/40 uppercase tracking-widest text-right">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
+              <tbody className="divide-y divide-white/5">
                 {loading && filteredLeads.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-slate-400 text-sm animate-pulse">
-                      Cargando clientes...
+                    <td colSpan={6} className="px-6 py-12 text-center text-white/30 text-sm animate-pulse">
+                      Cargando pipeline...
                     </td>
                   </tr>
                 ) : filteredLeads.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-slate-400 text-sm">
-                      No se encontraron clientes con esos filtros.
+                    <td colSpan={6} className="px-6 py-12 text-center text-white/40 text-sm">
+                      No hay leads que coincidan con la búsqueda.
                     </td>
                   </tr>
                 ) : (
-                  filteredLeads.map((client) => (
-                    <tr key={client.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                  filteredLeads.map((lead) => (
+                    <tr key={lead.id} className="hover:bg-white/5 transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-300 shrink-0">
-                            {client.name[0].toUpperCase()}
+                          <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-sm font-bold text-white/70 shrink-0">
+                            {lead.name[0].toUpperCase()}
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-slate-900 dark:text-white">
-                              {client.name}
-                            </p>
-                            <div className="flex gap-1 mt-0.5">
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700">
-                                lead
-                              </span>
-                            </div>
+                            <p className="text-sm font-bold text-white/90">{lead.name}</p>
+                            <p className="text-xs text-white/40 mt-0.5">{lead.fecha}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="space-y-1">
-                          <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-                            <Mail className="w-3 h-3" />
-                            {client.email}
+                          <div className="flex items-center gap-1.5 text-xs text-white/50">
+                            <Mail className="w-3 h-3 text-white/30" /> {lead.email || "—"}
                           </div>
-                          <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-                            <Phone className="w-3 h-3" />
-                            {client.phone}
+                          <div className="flex items-center gap-1.5 text-xs text-white/50">
+                            <Phone className="w-3 h-3 text-white/30" /> {lead.phone || "—"}
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${statusColors[client.estado] || statusColors.nuevo}`}>
-                          {client.estado.charAt(0).toUpperCase() + client.estado.slice(1)}
+                        <span className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border ${statusColors[lead.estado] || statusColors.nuevo}`}>
+                          {lead.estado}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                          {sourceLabels[client.canal] || client.canal.charAt(0).toUpperCase() + client.canal.slice(1)}
+                        <span className="text-xs font-medium text-white/50 capitalize bg-white/5 px-2 py-1 rounded-md border border-white/5">
+                          {lead.canal}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-                          <Calendar className="w-3 h-3" />
-                          {client.fecha}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-sm font-medium text-slate-900 dark:text-white">
-                          ${client.monto > 0 ? client.monto : "-"}
+                        <span className="text-sm font-bold text-emerald-400">
+                          ${lead.monto > 0 ? lead.monto.toLocaleString() : "-"}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <button className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-md transition-colors" title="Editar">
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-md transition-colors" title="Ver Historial">
+                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button className="p-2 text-white/40 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-xl transition-colors" title="Chat">
                             <MessageSquare className="w-4 h-4" />
                           </button>
-                          <button className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-colors" title="Eliminar">
+                          <button className="p-2 text-white/40 hover:text-blue-400 hover:bg-blue-500/10 rounded-xl transition-colors" title="Editar">
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button className="p-2 text-white/40 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors" title="Eliminar">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
@@ -256,17 +311,25 @@ export default function CRMPage() {
               </tbody>
             </table>
           </div>
-          {filteredLeads.length > 0 && (
-            <div className="px-6 py-3 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-900/50 rounded-b-xl flex justify-between items-center">
-              <span>Mostrando {filteredLeads.length} de {leadsData.length} clientes</span>
-              <div className="flex items-center gap-2">
-                <button className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded hover:bg-slate-50 dark:hover:bg-slate-700 transition">Anterior</button>
-                <button className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded hover:bg-slate-50 dark:hover:bg-slate-700 transition">Siguiente</button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        </div>
+      )}
+
+      {/* Global CSS for scrollbar override inside Kanban columns */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.2);
+        }
+      `}} />
     </div>
   );
 }

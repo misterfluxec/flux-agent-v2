@@ -21,6 +21,7 @@ pydantic-settings==2.7.0  # Carga .env en BaseSettings
 
 # --- Redis ---
 redis==5.2.1               # Cliente async de Redis
+hiredis>=2.3.0             # Parser C nativo para Redis
 
 # --- HTTP Client (para llamadas a Ollama) ---
 httpx==0.28.1

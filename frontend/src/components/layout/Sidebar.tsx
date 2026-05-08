@@ -9,18 +9,17 @@ import {
   MessageSquare,
   BarChart3,
   Plug,
-  Database,
-  Settings,
+  Brain,
   ChevronRight,
-  AlertCircle,
-  CheckCircle2,
-  Users,
+  Building2,
+  Zap,
+  Users2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // =============================================================================
-// CONFIGURACIÓN DEL MENÚ (7 ITEMS MÁXIMO - PRINCIPIO DE JERARQUÍA CLARA)
+// TIPOS
 // =============================================================================
 
 export interface MenuItem {
@@ -28,7 +27,7 @@ export interface MenuItem {
   label: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-  description?: string; // Para tooltips
+  description?: string;
   badge?: {
     label: string;
     variant?: "default" | "secondary" | "destructive" | "outline";
@@ -38,59 +37,103 @@ export interface MenuItem {
     href: string;
     description?: string;
   }>;
-  requiresPermission?: string; // Para RBAC futuro
+  requiresPermission?: string;
 }
 
+interface MenuSection {
+  id: string;
+  label: string;
+  items: MenuItem[];
+}
+
+// =============================================================================
+// ARQUITECTURA DE NAVEGACIÓN DEFINITIVA
+// Estructura cognitiva: OPERAR → CONFIGURAR → ANALIZAR → EMPRESA
+// =============================================================================
+
+export const MENU_SECTIONS: MenuSection[] = [
+  {
+    id: "operate",
+    label: "OPERAR",
+    items: [
+      {
+        id: "dashboard",
+        label: "Control",
+        href: "/dashboard",
+        icon: LayoutDashboard,
+        description: "Torre de control — Estado global y prioridades",
+      },
+      {
+        id: "operations",
+        label: "Operaciones",
+        href: "/dashboard/conversations",
+        icon: MessageSquare,
+        description: "Centro de comando — Inbox, leads y handoffs",
+      },
+    ],
+  },
+  {
+    id: "configure",
+    label: "CONFIGURAR",
+    items: [
+      {
+        id: "agents",
+        label: "Agentes IA",
+        href: "/dashboard/agents",
+        icon: Users2,
+        description: "Workforce multi-agente — Crear, configurar y supervisar",
+      },
+      {
+        id: "intelligence",
+        label: "Inteligencia",
+        href: "/dashboard/data-ingestion",
+        icon: Brain,
+        description: "Aprender → Procesar → Validar → Asignar",
+      },
+      {
+        id: "channels",
+        label: "Canales",
+        href: "/dashboard/connectors",
+        icon: Plug,
+        description: "WhatsApp, Telegram, Web — Estado vivo y reconexión",
+      },
+      {
+        id: "flows",
+        label: "Flujos",
+        href: "/dashboard/automations",
+        icon: Zap,
+        description: "Reglas y automatizaciones del Policy Engine",
+      },
+    ],
+  },
+  {
+    id: "analyze",
+    label: "ANALIZAR",
+    items: [
+      {
+        id: "results",
+        label: "Resultados",
+        href: "/dashboard/analytics",
+        icon: BarChart3,
+        description: "KPIs accionables — Conversión, ROI, consumo",
+      },
+    ],
+  },
+];
+
+// Item fijo del footer (fuera de secciones)
+export const FOOTER_MENU_ITEM: MenuItem = {
+  id: "organization",
+  label: "Organización",
+  href: "/dashboard/settings",
+  icon: Building2,
+  description: "Empresa, equipo, facturación y seguridad",
+};
+
+// Flat list para compatibilidad (incluye todos los items + footer)
 export const MAIN_MENU_ITEMS: MenuItem[] = [
-  {
-    id: "dashboard",
-    label: "Inicio",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-    description: "Resumen ejecutivo en tiempo real",
-  },
-  {
-    id: "agents",
-    label: "Agentes",
-    href: "/dashboard/agent",
-    icon: Bot,
-    description: "Centro operativo IA",
-  },
-  {
-    id: "conversations",
-    label: "Conversaciones",
-    href: "/dashboard/conversations",
-    icon: MessageSquare,
-    description: "Inbox inteligente",
-  },
-  {
-    id: "intelligence",
-    label: "Inteligencia",
-    href: "/dashboard/analytics",
-    icon: BarChart3,
-    description: "Métricas de alto nivel y consumo",
-  },
-  {
-    id: "channels",
-    label: "Canales",
-    href: "/dashboard/channels",
-    icon: Plug,
-    description: "Estado vivo de integraciones",
-  },
-  {
-    id: "team",
-    label: "Equipo",
-    href: "/dashboard/settings/team",
-    icon: Users,
-    description: "Roles, usuarios y permisos",
-  },
-  {
-    id: "settings",
-    label: "Configuración",
-    href: "/dashboard/settings",
-    icon: Settings,
-    description: "Billing, facturación y sistema",
-  },
+  ...MENU_SECTIONS.flatMap(s => s.items),
+  FOOTER_MENU_ITEM,
 ];
 
 // =============================================================================
@@ -114,237 +157,185 @@ export function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
 
-  // Helper para determinar si un item está activo (incluyendo hijos)
   const isItemActive = (item: MenuItem): boolean => {
-    if (pathname === item.href) return true;
+    // Exact match
+    if (pathname.endsWith(item.href)) return true;
+    // Prefix match for sub-routes (e.g. /dashboard/agents/xxx)
+    if (item.href !== "/dashboard" && pathname.includes(item.href)) return true;
+    // Children match
     if (item.children) {
-      return item.children.some((child) => pathname === child.href);
+      return item.children.some((child) => pathname.endsWith(child.href));
     }
     return false;
+  };
+
+  const renderMenuItem = (item: MenuItem) => {
+    const Icon = item.icon;
+    const active = isItemActive(item);
+
+    return (
+      <li key={item.id}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link
+              href={item.href}
+              className={cn(
+                "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all group",
+                active
+                  ? "bg-cyan-500/10 text-cyan-400 shadow-[inset_0_1px_0_0_rgba(6,182,212,0.1)] border border-cyan-500/10"
+                  : "text-white/45 hover:bg-white/5 hover:text-white/80 border border-transparent",
+                collapsed && "justify-center px-2"
+              )}
+            >
+              <Icon
+                className={cn(
+                  "h-[18px] w-[18px] flex-shrink-0 transition-colors",
+                  active ? "text-cyan-400" : "text-white/30 group-hover:text-white/60"
+                )}
+              />
+              {!collapsed && (
+                <>
+                  <span className="flex-1 truncate">{item.label}</span>
+                  {item.badge && (
+                    <Badge
+                      variant={item.badge.variant}
+                      className="text-[10px] px-1.5 py-0 h-5"
+                    >
+                      {item.badge.label}
+                    </Badge>
+                  )}
+                </>
+              )}
+            </Link>
+          </TooltipTrigger>
+          {collapsed && (
+            <TooltipContent side="right" className="max-w-xs">
+              <p className="font-medium">{item.label}</p>
+              {item.description && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {item.description}
+                </p>
+              )}
+            </TooltipContent>
+          )}
+        </Tooltip>
+      </li>
+    );
   };
 
   return (
     <aside
       className={cn(
-        "flex flex-col h-screen border-r bg-background transition-all duration-200",
-        collapsed ? "w-16" : "w-64"
+        "flex flex-col h-screen border-r border-white/5 bg-black/90 backdrop-blur-3xl text-white/90 transition-all duration-300",
+        collapsed ? "w-20" : "w-64"
       )}
     >
       {/* Header: Logo + Tenant */}
-      <div className={cn("flex items-center gap-3 p-4 border-b", collapsed ? "justify-center" : "")}>
+      <div className={cn("flex items-center gap-3 px-5 py-5 border-b border-white/5", collapsed ? "justify-center px-3" : "")}>
         {!collapsed && (
           <div className="flex-1 min-w-0">
-            <h1 className="font-bold text-lg truncate">FluxAgent</h1>
-            <p className="text-xs text-muted-foreground truncate">{tenantName}</p>
+            <h1 className="font-black text-lg tracking-tight text-white flex items-center gap-2">
+              FluxAgent <span className="text-cyan-400 text-[10px] font-bold bg-cyan-400/10 px-1.5 py-0.5 rounded tracking-widest">OS</span>
+            </h1>
+            <p className="text-[11px] text-white/30 font-medium truncate mt-0.5">{tenantName}</p>
           </div>
         )}
         {onToggleCollapse && (
           <button
             onClick={onToggleCollapse}
             className={cn(
-              "p-1.5 rounded-md hover:bg-muted transition-colors",
+              "p-1.5 rounded-md hover:bg-white/5 transition-colors",
               collapsed && "mx-auto"
             )}
             aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
           >
             <ChevronRight
               className={cn(
-                "h-4 w-4 transition-transform",
-                collapsed && "rotate-180"
+                "h-4 w-4 text-white/30 transition-transform",
+                !collapsed && "rotate-180"
               )}
             />
           </button>
         )}
       </div>
 
-      {/* Navegación principal */}
-      <nav className="flex-1 overflow-y-auto py-4">
-        <ul className="space-y-1 px-2">
-          <TooltipProvider delayDuration={200}>
-            {MAIN_MENU_ITEMS.map((item) => {
-              const Icon = item.icon;
-              const active = isItemActive(item);
-              const hasChildren = item.children && item.children.length > 0;
-
-              return (
-                <li key={item.id}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Link
-                        href={item.href}
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors group",
-                          active
-                            ? "bg-primary/10 text-primary"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                          collapsed && "justify-center px-2"
-                        )}
-                      >
-                        <Icon
-                          className={cn(
-                            "h-5 w-5 flex-shrink-0",
-                            active && "text-primary"
-                          )}
-                        />
-                        {!collapsed && (
-                          <>
-                            <span className="flex-1 truncate">{item.label}</span>
-                            {item.badge && (
-                              <Badge
-                                variant={item.badge.variant}
-                                className="text-[10px] px-1.5 py-0 h-5"
-                              >
-                                {item.badge.label}
-                              </Badge>
-                            )}
-                            {hasChildren && (
-                              <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                            )}
-                          </>
-                        )}
-                      </Link>
-                    </TooltipTrigger>
-                    {!collapsed && item.description && (
-                      <TooltipContent side="right" align="start" className="max-w-xs">
-                        <p className="text-sm">{item.description}</p>
-                      </TooltipContent>
-                    )}
-                    {collapsed && (
-                      <TooltipContent side="right" className="max-w-xs">
-                        <p className="font-medium">{item.label}</p>
-                        {item.description && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {item.description}
-                          </p>
-                        )}
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-
-                  {/* Submenú expansible (solo cuando no está colapsado) */}
-                  {!collapsed && hasChildren && active && (
-                    <ul className="ml-9 mt-1 space-y-1 border-l pl-3">
-                      {item.children!.map((child) => {
-                        const childActive = pathname === child.href;
-                        return (
-                          <li key={child.href}>
-                            <Link
-                              href={child.href}
-                              className={cn(
-                                "block px-3 py-1.5 text-sm rounded-md transition-colors",
-                                childActive
-                                  ? "text-primary font-medium"
-                                  : "text-muted-foreground hover:text-foreground"
-                              )}
-                            >
-                              {child.label}
-                            </Link>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-                </li>
-              );
-            })}
-          </TooltipProvider>
-        </ul>
+      {/* Navegación por secciones cognitivas */}
+      <nav className="flex-1 overflow-y-auto py-3">
+        <TooltipProvider delayDuration={200}>
+          {MENU_SECTIONS.map((section, sectionIndex) => (
+            <div key={section.id} className={cn(sectionIndex > 0 && "mt-4")}>
+              {/* Section Label */}
+              {!collapsed && (
+                <p className="px-6 mb-2 text-[10px] font-bold uppercase tracking-[0.15em] text-white/20">
+                  {section.label}
+                </p>
+              )}
+              {collapsed && sectionIndex > 0 && (
+                <div className="mx-4 mb-2 border-t border-white/5" />
+              )}
+              <ul className="space-y-0.5 px-2">
+                {section.items.map(renderMenuItem)}
+              </ul>
+            </div>
+          ))}
+        </TooltipProvider>
       </nav>
 
-      {/* Footer: Usuario + Estado del sistema */}
-      <div className={cn("p-4 border-t", collapsed ? "flex justify-center" : "")}>
+      {/* Footer: Organización + Usuario */}
+      <div className={cn("border-t border-white/5 bg-black/40", collapsed ? "px-2 py-3" : "p-4")}>
+        {/* Organización link */}
+        <TooltipProvider delayDuration={200}>
+          <div className="mb-3">
+            {renderMenuItem(FOOTER_MENU_ITEM)}
+          </div>
+        </TooltipProvider>
+
+        {/* User info */}
         {!collapsed ? (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 px-2">
             {userAvatar ? (
               <img
                 src={userAvatar}
                 alt={userName}
-                className="h-8 w-8 rounded-full border"
+                className="h-8 w-8 rounded-full border border-white/10"
               />
             ) : (
-              <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
+              <div className="h-8 w-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-xs font-bold text-white/60">
                 {userName.charAt(0).toUpperCase()}
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{userName}</p>
-              <SystemStatusIndicator compact />
+              <p className="text-sm font-medium text-white/70 truncate">{userName}</p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                <span className="text-[10px] text-white/30 font-medium">En línea</span>
+              </div>
             </div>
           </div>
         ) : (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="relative">
-                  {userAvatar ? (
-                    <img
-                      src={userAvatar}
-                      alt={userName}
-                      className="h-8 w-8 rounded-full border cursor-pointer"
-                    />
-                  ) : (
-                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium cursor-pointer">
-                      {userName.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <SystemStatusIndicator compact className="absolute -top-1 -right-1" />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p className="font-medium">{userName}</p>
-                <SystemStatusIndicator />
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex justify-center">
+                {userAvatar ? (
+                  <img
+                    src={userAvatar}
+                    alt={userName}
+                    className="h-8 w-8 rounded-full border border-white/10 cursor-pointer"
+                  />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-xs font-bold text-white/60 cursor-pointer">
+                    {userName.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <p className="font-medium">{userName}</p>
+              <p className="text-xs text-emerald-400">En línea</p>
+            </TooltipContent>
+          </Tooltip>
         )}
       </div>
     </aside>
-  );
-}
-
-// =============================================================================
-// COMPONENTE AUXILIAR: INDICADOR DE ESTADO DEL SISTEMA
-// =============================================================================
-
-/**
- * Muestra el estado de salud del backend (conectado a circuit breakers)
- * Se integra con el endpoint /health que implementamos en Fase 3 backend
- */
-function SystemStatusIndicator({
-  compact = false,
-  className,
-}: {
-  compact?: boolean;
-  className?: string;
-}) {
-  // TODO: Conectar a query de /health cuando esté disponible
-  // Por ahora simulamos estado para demostración
-  const systemHealthy = true; // Reemplazar con: useQuery({ queryKey: ['system-health'], ... })
-
-  if (compact) {
-    return (
-      <div className={cn("flex items-center gap-1", className)}>
-        <div
-          className={cn(
-            "h-2 w-2 rounded-full",
-            systemHealthy ? "bg-emerald-500" : "bg-amber-500 animate-pulse"
-          )}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div className={cn("flex items-center gap-2 text-xs", className)}>
-      <div
-        className={cn(
-          "h-2 w-2 rounded-full",
-          systemHealthy ? "bg-emerald-500" : "bg-amber-500 animate-pulse"
-        )}
-      />
-      <span className={systemHealthy ? "text-emerald-600" : "text-amber-600"}>
-        {systemHealthy ? "Sistema operativo" : "Mantenimiento"}
-      </span>
-    </div>
   );
 }

@@ -1,0 +1,15 @@
+{
+  "payment_failed_title": "Payment Pending",
+  "payment_failed_desc": "Your last payment was not processed. Update your payment method to avoid interruptions.",
+  "update_payment": "Update payment method",
+  "messages": "Messages", "agents": "Agents", "storage": "Storage",
+  "active_until": "Active until {date}",
+  "status_active": "Active", "status_past_due": "Payment pending", "status_canceled": "Canceled", "status_trialing": "Free trial",
+  "manage_billing": "Manage billing", "upgrade": "Upgrade plan",
+  "compare_plans": "Compare plans",
+  "security_compliance": "Security & Compliance",
+  "encryption": "AES-256 encryption at rest and in transit",
+  "gdpr": "GDPR/LGPD compliance for customer data",
+  "whatsapp_compliance": "Official Meta/WhatsApp policy compliance",
+  "audit_logs": "Immutable audit logs per tenant"
+}

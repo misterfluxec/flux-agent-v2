@@ -43,6 +43,8 @@ from app.routers.sales_agent_router import router as sales_router
 from routers.analytics_router import router as analytics_router
 from routers.billing_router import router as billing_router
 from routers.plans_router import router as plans_router
+from routers.handoff_router import router as handoff_router
+from routers.ws_gateway_router import router as ws_gateway_router
 # Nota: chat_router no tiene un APIRouter registrado, provee la función lógica a webhooks
 
 from core.metrics import start_metrics_server
@@ -60,6 +62,20 @@ config = obtener_config()
 # =============================================================================
 # CICLO DE VIDA
 # =============================================================================
+from src.core.dependencies import get_redis
+from src.core.event_bus import EventBus
+from src.core.ws_event_bridge import WSRealtimeBridge
+from src.core.realtime_gateway import RealtimeGateway
+from src.services.lead_scorer import LeadScorer
+from src.services.tool_executor import ToolExecutor
+from src.services.tools.crm_tools import TOOL_UPDATE_LEAD
+from src.services.ai_memory import AIMemoryManager
+from src.services.policy_engine import PolicyEngine
+from src.services.ai_orchestrator import AIOrchestrator
+from src.domain.events import EventType
+from src.services.usage_tracker import UsageTracker
+from src.services.quota_manager import QuotaManager
+from src.routers.usage_router import router as usage_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -73,6 +89,71 @@ async def lifespan(app: FastAPI):
         logger.warning(f"⚠️  EncryptionService no iniciado: {e}")
 
     await inicializar_db()
+
+    # Inicializar Redis, Gateway y Event Bus
+    redis_conn = await get_redis()
+    
+    # Nuevo Gateway Unificado de Tiempo Real
+    realtime_gateway = RealtimeGateway(redis_conn)
+    app.state.realtime_gateway = realtime_gateway
+    
+    event_bus = EventBus(redis_conn)
+    ws_bridge = WSRealtimeBridge(realtime_gateway)
+    ws_bridge.register(event_bus)
+    app.state.event_bus = event_bus
+
+    # Motor de Scoring
+    lead_scorer = LeadScorer(redis_conn, event_bus)
+    lead_scorer.register()
+    app.state.lead_scorer = lead_scorer
+    
+    # Motor de Herramientas
+    # Nota: db_session se inyecta en los endpoints (vía dependenices)
+    tool_executor = ToolExecutor(redis_conn, db=None) 
+    tool_executor.register(TOOL_UPDATE_LEAD)
+    app.state.tool_executor = tool_executor
+
+    # === NUEVO: AI Orchestrator + Policy Engine ===
+    memory_manager = AIMemoryManager(redis=redis_conn, db_session=None)
+    policy_engine = PolicyEngine(redis=redis_conn, db=None)
+    
+    orchestrator = AIOrchestrator(
+        redis=redis_conn,
+        event_bus=event_bus,
+        policy_engine=policy_engine,
+        tool_executor=tool_executor,
+        memory_manager=memory_manager,
+        llm_provider=None, # Inyectar provider real más adelante
+    )
+    
+    # Suscribirse a eventos de entrada
+    import asyncio
+    asyncio.create_task(
+        event_bus.subscribe(
+            event_types=[EventType.MESSAGE_RECEIVED, EventType.VOICE_TRANSCRIPTION_CHUNK],
+            handler=orchestrator.process_event,
+            consumer_name="ai-orchestrator",
+        )
+    )
+    
+    # Guardar en app state para inyección en routers
+    app.state.memory_manager = memory_manager
+    app.state.orchestrator = orchestrator
+    app.state.policy_engine = policy_engine
+
+    # === NUEVO: Token Economy Engine ===
+    usage_tracker = UsageTracker(redis=redis_conn, db_session_factory=None) # db_session_factory inyectable
+    quota_manager = QuotaManager(redis=redis_conn, db_session_factory=None)
+
+    await usage_tracker.start()
+
+    app.state.usage_tracker = usage_tracker
+    app.state.quota_manager = quota_manager
+    
+    # Manejar Kill Switch
+    from src.services.billing_alert_service import BillingAlertService
+    billing_alert = BillingAlertService(event_bus, redis_conn, None)
+    app.state.billing_alert = billing_alert
 
     try:
         import redis.asyncio as aioredis
@@ -130,6 +211,13 @@ async def lifespan(app: FastAPI):
     except Exception:
         pass
     
+    # Shutdown seguro de Event Bus y Usage Tracker
+    if hasattr(app.state, "usage_tracker"):
+        await app.state.usage_tracker.stop()
+        
+    if hasattr(app.state, "event_bus"):
+        await app.state.event_bus.close()
+        
     await cerrar_db()
 
 
@@ -173,6 +261,8 @@ setup_middlewares(app)
 # =============================================================================
 
 app.include_router(auth_router)
+from src.routers.usage_router import router as usage_router
+app.include_router(usage_router)
 # app.include_router(stats_router)  # Legacy - reemplazado por analytics_router
 app.include_router(products_router)
 app.include_router(whatsapp_router)
@@ -197,7 +287,8 @@ app.include_router(sales_router, prefix="/api/v1")
 app.include_router(analytics_router)
 app.include_router(billing_router)
 app.include_router(plans_router)
-
+app.include_router(ws_gateway_router)
+app.include_router(handoff_router)
 
 # =============================================================================
 # HANDLERS DE EXCEPCIONES ESPECÍFICOS

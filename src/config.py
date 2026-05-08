@@ -41,10 +41,14 @@ class Configuracion(BaseSettings):
     db_pool_pre_ping: bool = True     # Verifica la conexión antes de usarla
 
     # -------------------------------------------------------------------------
-    # Redis
+    # Redis & Event Bus
     # -------------------------------------------------------------------------
     redis_url: str = "redis://:redisflux2026@localhost:6381/0"
-
+    event_stream_maxlen: int = 100000
+    max_event_retries: int = 3
+    event_processing_timeout: int = 30
+    tool_rate_limit: int = 100
+    
     # -------------------------------------------------------------------------
     # Ollama (LLM Engine)
     # -------------------------------------------------------------------------

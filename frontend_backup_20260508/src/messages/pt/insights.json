@@ -1,0 +1,11 @@
+{
+  "title": "Inteligência & Insights",
+  "subtitle": "Análise preditiva e sugestões geradas pela Yanua AI.",
+  "filter": "Filtrar",
+  "export_report": "Exportar Relatório",
+  "agent_performance": "Desempenho do Agente",
+  "resolution_rate": "Taxa de Resolução",
+  "avg_response": "Resposta Média",
+  "sentiment_trend": "Tendência de Sentimento",
+  "human_takeovers": "Intervenções Humanas"
+}

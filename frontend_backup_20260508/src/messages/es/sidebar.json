@@ -1,0 +1,14 @@
+{
+  "dashboard": "Dashboard",
+  "my_agent": "Mi Agente",
+  "knowledge": "Conocimiento & Inventario",
+  "behavior": "Comportamiento & Flujos",
+  "testing": "Laboratorio de Pruebas",
+  "conversations": "Conversaciones & CRM",
+  "connectors": "Conectores",
+  "analytics": "Analítica",
+  "settings": "Configuración",
+  "search_placeholder": "Buscar en Yanua AI...",
+  "team": "Mi Equipo",
+  "billing": "Facturación"
+}

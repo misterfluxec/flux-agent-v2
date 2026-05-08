@@ -127,64 +127,64 @@ export default function ConectoresPage() {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 animate-entry">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Plug className="w-4 h-4 text-indigo-500" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-500/80">Omnicanalidad</span>
+            <Plug className="w-4 h-4 text-cyan-400" />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-400/80">Canales & Omnicanalidad</span>
           </div>
-          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-600">Conectores</span> Multicanal
+          <h1 className="text-3xl font-black text-white/90 tracking-tight">
+            <span className="text-cyan-400">Conectores</span> Multicanal
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Integra tu agente de ventas con diferentes plataformas de mensajería.
+          <p className="text-sm text-white/50 font-light mt-1">
+            Abre las válvulas: Conecta tu agente de ventas a WhatsApp, Web y Redes Sociales.
           </p>
         </div>
-        <Button onClick={() => setShowNewConnector(true)} className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white h-11 px-6 shadow-[0_0_20px_rgba(99,102,241,0.3)] transition-all">
+        <Button onClick={() => setShowNewConnector(true)} className="rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white h-11 px-6 shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all font-bold">
           <Plus className="w-5 h-5 mr-2" /> Agregar Conector
         </Button>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-card rounded-xl p-4 border border-border shadow-sm">
+        <div className="bg-black/40 backdrop-blur-xl rounded-[24px] p-6 border border-white/5 shadow-xl">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
               <Zap className="w-5 h-5 text-green-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{totalStats.activeConnectors}</p>
-              <p className="text-xs text-muted-foreground">Conectores activos</p>
+              <p className="text-2xl font-bold text-white/90">{totalStats.activeConnectors}</p>
+              <p className="text-xs text-white/50">Conectores activos</p>
             </div>
           </div>
         </div>
-        <div className="bg-card rounded-xl p-4 border border-border shadow-sm">
+        <div className="bg-black/40 backdrop-blur-xl rounded-[24px] p-6 border border-white/5 shadow-xl">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
-              <MessageSquare className="w-5 h-5 text-indigo-500" />
+            <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center">
+              <MessageSquare className="w-5 h-5 text-cyan-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{totalStats.totalMessages.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Mensajes totales</p>
+              <p className="text-2xl font-bold text-white/90">{totalStats.totalMessages.toLocaleString()}</p>
+              <p className="text-xs text-white/50">Mensajes totales</p>
             </div>
           </div>
         </div>
-        <div className="bg-card rounded-xl p-4 border border-border shadow-sm">
+        <div className="bg-black/40 backdrop-blur-xl rounded-[24px] p-6 border border-white/5 shadow-xl">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center">
               <Users className="w-5 h-5 text-orange-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{totalStats.totalConversations}</p>
-              <p className="text-xs text-muted-foreground">Conversaciones</p>
+              <p className="text-2xl font-bold text-white/90">{totalStats.totalConversations}</p>
+              <p className="text-xs text-white/50">Conversaciones</p>
             </div>
           </div>
         </div>
-        <div className="bg-card rounded-xl p-4 border border-border shadow-sm">
+        <div className="bg-black/40 backdrop-blur-xl rounded-[24px] p-6 border border-white/5 shadow-xl">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
               <Plug className="w-5 h-5 text-purple-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{totalStats.activePlatforms}</p>
-              <p className="text-xs text-muted-foreground">Plataformas activas</p>
+              <p className="text-2xl font-bold text-white/90">{totalStats.activePlatforms}</p>
+              <p className="text-xs text-white/50">Plataformas activas</p>
             </div>
           </div>
         </div>
@@ -194,55 +194,55 @@ export default function ConectoresPage() {
       <QuotaManager />
 
       {/* Connectors List */}
-      <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
-        <div className="p-5 border-b border-border">
-          <h2 className="font-semibold flex items-center gap-2">
-            <Plug className="w-5 h-5 text-indigo-500" /> Conectores Configurados
+      <div className="bg-black/40 backdrop-blur-xl rounded-[24px] border border-white/5 shadow-xl overflow-hidden">
+        <div className="p-6 border-b border-white/5">
+          <h2 className="text-lg font-bold text-white/90 flex items-center gap-2">
+            <Plug className="w-5 h-5 text-cyan-400" /> Conectores Configurados
           </h2>
         </div>
 
-        <div className="divide-y divide-border">
+        <div className="divide-y divide-white/5">
           {connectors.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground">No tienes conectores agregados.</div>
+            <div className="p-10 text-center text-white/40 font-light">No tienes conectores agregados. La IA no puede hablar con nadie aún.</div>
           ) : connectors.map((connector) => {
             const platform = platforms.find(p => p.value === connector.platform);
             const Icon = platform?.icon || Plug;
             return (
-              <div key={connector.id} className={`p-5 hover:bg-secondary/50 transition-colors ${!connector.enabled && 'opacity-60 grayscale'}`}>
+              <div key={connector.id} className={`p-6 hover:bg-white/5 transition-colors ${!connector.enabled && 'opacity-50 grayscale'}`}>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                  <div className={`w-14 h-14 rounded-xl ${platform?.color || 'bg-muted'} flex items-center justify-center flex-shrink-0 hidden sm:flex`}>
+                  <div className={`w-14 h-14 rounded-2xl ${platform?.color || 'bg-white/10'} flex items-center justify-center flex-shrink-0 hidden sm:flex shadow-lg`}>
                     <Icon className="w-7 h-7 text-white" />
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 flex-wrap">
-                      <h3 className="font-semibold text-base sm:text-lg truncate">{connector.name}</h3>
-                      <span className={`px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium ${getStatusBadge(connector.status)} flex items-center gap-1`}>
+                      <h3 className="font-semibold text-lg text-white/90 truncate">{connector.name}</h3>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(connector.status)} flex items-center gap-1 border border-current`}>
                         {getStatusIcon(connector.status)}
                         {connector.status === 'connected' && 'Conectado'}
                         {connector.status === 'disconnected' && 'Desconectado'}
                         {connector.status === 'error' && 'Error'}
                         {connector.status === 'syncing' && 'Sincronizando'}
                       </span>
-                      <span className="px-2 py-1 bg-secondary text-muted-foreground rounded-full text-[10px] sm:text-xs">
+                      <span className="px-2 py-1 bg-white/10 text-white/60 rounded-full text-xs">
                         {platform?.label}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-4 mt-3 text-xs sm:text-sm text-muted-foreground flex-wrap">
-                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {connector.lastActivity}</span>
-                      <span className="flex items-center gap-1"><MessageSquare className="w-3 h-3" /> {connector.messages.toLocaleString()} msg</span>
-                      <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {connector.conversations} conv.</span>
+                    <div className="flex items-center gap-4 mt-3 text-sm text-white/40 flex-wrap font-light">
+                      <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {connector.lastActivity}</span>
+                      <span className="flex items-center gap-1"><MessageSquare className="w-4 h-4" /> {connector.messages.toLocaleString()} msg</span>
+                      <span className="flex items-center gap-1"><Users className="w-4 h-4" /> {connector.conversations} conv.</span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 justify-end sm:justify-start">
-                    <Button variant="ghost" size="icon" className="hover:bg-muted" title="Configurar"><Settings className="w-4 h-4" /></Button>
-                    <Button variant="ghost" size="icon" className="text-indigo-500 hover:bg-indigo-500/10" title="Probar"><Send className="w-4 h-4" /></Button>
-                    <button onClick={() => toggleConnector(connector.id)} className={`w-10 h-6 rounded-full transition-colors relative flex-shrink-0 ${connector.enabled ? 'bg-green-500' : 'bg-muted'}`} title={connector.enabled ? 'Desactivar' : 'Activar'}>
-                      <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${connector.enabled ? 'left-5' : 'left-1'}`} />
+                    <Button variant="ghost" size="icon" className="hover:bg-white/10 text-white/60 hover:text-white" title="Configurar"><Settings className="w-4 h-4" /></Button>
+                    <Button variant="ghost" size="icon" className="text-cyan-400 hover:bg-cyan-500/10" title="Probar"><Send className="w-4 h-4" /></Button>
+                    <button onClick={() => toggleConnector(connector.id)} className={`w-12 h-6 rounded-full transition-colors relative flex-shrink-0 border ${connector.enabled ? 'bg-cyan-500 border-cyan-400' : 'bg-black/50 border-white/20'}`} title={connector.enabled ? 'Desactivar' : 'Activar'}>
+                      <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${connector.enabled ? 'left-6 shadow-[0_0_10px_rgba(255,255,255,0.5)]' : 'left-0.5 opacity-50'}`} />
                     </button>
-                    <Button variant="ghost" size="icon" onClick={() => deleteConnector(connector.id)} className="text-red-500 hover:bg-red-500/10" title="Eliminar"><Trash2 className="w-4 h-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => deleteConnector(connector.id)} className="text-rose-500 hover:bg-rose-500/10" title="Eliminar"><Trash2 className="w-4 h-4" /></Button>
                   </div>
                 </div>
               </div>
@@ -395,7 +395,7 @@ export default function ConectoresPage() {
       {showCloudWizard && (
         <WhatsAppCloudWizard 
           onClose={() => setShowCloudWizard(false)} 
-          onSuccess={(config) => {
+          onSuccess={(config: Record<string, any>) => {
             const newC: Connector = {
               id: Date.now().toString(),
               name: 'WhatsApp Cloud API',
