@@ -80,10 +80,11 @@ export default function OperationsPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all ${
                 active
-                  ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/15"
-                  : "text-white/30 hover:text-white/50 hover:bg-white/[0.03] border border-transparent"
+                  ? "bg-cyan-500/[0.08] text-cyan-300/90 border border-cyan-500/[0.12]"
+                  // Inactivo: slate-400 en vez de white/30 — más legible, menos fa tigante
+                  : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.03] border border-transparent"
               }`}
             >
               <Icon className="h-3.5 w-3.5" />
@@ -102,7 +103,8 @@ export default function OperationsPage() {
           );
         })}
 
-        <div className="ml-auto flex items-center gap-2 text-[10px] font-bold text-white/15 uppercase tracking-widest">
+        {/* Breadcrumb path — muy discreto */}
+        <div className="ml-auto flex items-center gap-1.5 text-[11px] text-slate-600 font-medium">
           Yanua <ChevronRight className="w-3 h-3" /> Operaciones
         </div>
       </div>
@@ -153,11 +155,12 @@ function PriorityBar({ handoffs, hotLeads, totalActive, eventsToday }: {
   if (items.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-3 px-5 py-2.5 border-b border-white/5 bg-black/60 shrink-0 overflow-x-auto">
+    // Priority bar: solo aparece cuando hay items de prioridad (PriorityBar ya filtro)
+    <div className="flex items-center gap-2 px-4 py-2 border-b border-white/[0.04] bg-black/30 shrink-0 overflow-x-auto">
       {items.map((item, i) => {
         const Icon = item.icon;
         return (
-          <div key={i} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap ${item.color}`}>
+          <div key={i} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-semibold whitespace-nowrap ${item.color}`}>
             <Icon className="h-3 w-3" />
             {item.text}
           </div>

@@ -180,17 +180,22 @@ export function Sidebar({
             <Link
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all group",
+                // Base: 13px mínimo, sin shrink-0 agresivo
+                "flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-150 group",
+                "text-[13px] font-medium",
                 active
-                  ? "bg-cyan-500/10 text-cyan-400 shadow-[inset_0_1px_0_0_rgba(6,182,212,0.1)] border border-cyan-500/10"
-                  : "text-white/45 hover:bg-white/5 hover:text-white/80 border border-transparent",
+                  // Activo: borde + fondo muy sutil. Sin glow para no fatigar
+                  ? "bg-cyan-500/[0.08] text-cyan-300/90 border border-cyan-500/[0.12]"
+                  // Inactivo: texto slate-400 (legible sin brillar)
+                  : "text-slate-400 hover:bg-white/[0.04] hover:text-slate-200 border border-transparent",
                 collapsed && "justify-center px-2"
               )}
             >
               <Icon
                 className={cn(
-                  "h-[18px] w-[18px] flex-shrink-0 transition-colors",
-                  active ? "text-cyan-400" : "text-white/30 group-hover:text-white/60"
+                  "h-[17px] w-[17px] flex-shrink-0 transition-colors",
+                  // Icono activo: cyan suave. Inactivo: muy discreto
+                  active ? "text-cyan-400/80" : "text-slate-500 group-hover:text-slate-300"
                 )}
               />
               {!collapsed && (
@@ -226,8 +231,9 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "flex flex-col h-screen border-r border-white/5 bg-black/90 backdrop-blur-3xl text-white/90 transition-all duration-300",
-        collapsed ? "w-20" : "w-64"
+        // Sidebar: bg más neutro, borde más sutil
+        "flex flex-col h-screen border-r border-white/[0.04] bg-[#080c14] text-white transition-all duration-300",
+        collapsed ? "w-[72px]" : "w-60"
       )}
     >
       {/* Header: Logo + Tenant */}
@@ -264,9 +270,9 @@ export function Sidebar({
         <TooltipProvider delayDuration={200}>
           {MENU_SECTIONS.map((section, sectionIndex) => (
             <div key={section.id} className={cn(sectionIndex > 0 && "mt-4")}>
-              {/* Section Label */}
+              {/* Section Label — más legible: 10px tracking estricto */}
               {!collapsed && (
-                <p className="px-6 mb-2 text-[10px] font-bold uppercase tracking-[0.15em] text-white/20">
+                <p className="px-4 mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">
                   {section.label}
                 </p>
               )}
@@ -305,10 +311,12 @@ export function Sidebar({
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white/70 truncate">{userName}</p>
+              {/* Username: 13px, legible */}
+              <p className="text-[13px] font-semibold text-slate-300 truncate">{userName}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                <span className="text-[10px] text-white/30 font-medium">En línea</span>
+                {/* Dot sin animación — el verde siempre encendido no fatiga */}
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500/70" />
+                <span className="text-[11px] text-slate-600">En línea</span>
               </div>
             </div>
           </div>

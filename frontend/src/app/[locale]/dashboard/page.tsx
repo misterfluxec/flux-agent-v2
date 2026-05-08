@@ -9,12 +9,18 @@ import {
 import { Button } from '@/components/ui/button';
 import { useEventBus } from '@/providers/EventBusProvider';
 import { OnboardingWizard } from '@/components/system/OnboardingWizard';
+import { RecommendationFeed } from '@/components/insights/RecommendationFeed';
+import { useActivationMoments } from '@/hooks/useActivationMoments';
+import { FLUX_LEXICON } from '@/constants/lexicon';
 
 export default function DashboardPage() {
   const router = useRouter();
   const [isHydrated, setIsHydrated] = useState(false);
   
   const { isConnected, history } = useEventBus();
+  
+  // Activar micro-victorias en background (sin render visible)
+  useActivationMoments();
   
   // Mapeamos el history global del websocket a formato feed de la UI
   const feed = history.map((msg, index) => {
@@ -47,37 +53,40 @@ export default function DashboardPage() {
   if (!isHydrated) return null; // Zero-spinner rule (Progressive Hydration)
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-700 pb-12 px-4 md:px-8 max-w-7xl mx-auto pt-8">
+    <div className="space-y-5 animate-in fade-in duration-500 pb-12 px-6 md:px-8 max-w-6xl mx-auto pt-6">
       
       {/* ONBOARDING — First Victory Wizard */}
       <OnboardingWizard />
 
+      {/* RECOMMENDATIONS — Decision Center */}
+      <RecommendationFeed />
+
       {/* HEADER + NORTH STAR */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 relative mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-5 relative">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-3xl font-black tracking-tight text-white/90">Torre de Control</h1>
+            {/* Título: font-bold (no black) para reducir peso visual en lectura continua */}
+            <h1 className="text-2xl font-bold tracking-tight text-white/80">{FLUX_LEXICON.HOME}</h1>
             <div 
               onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
-              className="px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-xs text-white/50 font-medium flex items-center gap-1.5 cursor-pointer hover:bg-white/10 transition-colors"
+              className="px-2.5 py-1 rounded-md bg-white/[0.04] border border-white/[0.07] text-[11px] text-slate-500 font-medium flex items-center gap-1.5 cursor-pointer hover:bg-white/[0.07] transition-colors"
             >
               <Command className="w-3 h-3" /> K
             </div>
           </div>
-          <p className="text-white/50 text-sm">Resumen ejecutivo y pulso del sistema en vivo.</p>
+          <p className="text-slate-500 text-[13px] leading-relaxed">Pulso del sistema en vivo. Toma decisiones con contexto.</p>
         </div>
         
-        {/* NORTH-STAR METRIC */}
-        <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 pr-12 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-3xl -mr-10 -mt-10"></div>
-          <p className="text-xs font-semibold text-primary/80 uppercase tracking-wider mb-1">Valor Potencial Hoy</p>
+        {/* NORTH-STAR METRIC — sin blur glow masivo (reduce fatiga) */}
+        <div className="bg-cyan-500/[0.06] border border-cyan-500/[0.12] rounded-2xl p-4 pr-10 relative overflow-hidden">
+          <p className="text-[11px] font-bold text-cyan-400/50 uppercase tracking-widest mb-1">Valor Potencial Hoy</p>
           <div className="flex items-end gap-3">
-            <h2 className="text-3xl font-black text-white">$2,430</h2>
-            <span className="text-sm font-medium text-emerald-400 flex items-center mb-1">
-              <ArrowUpRight className="w-4 h-4 mr-0.5" /> 18%
+            <h2 className="text-2xl font-black text-white/80 tabular-nums">$2,430</h2>
+            <span className="text-[13px] font-semibold text-emerald-400/80 flex items-center mb-0.5">
+              <ArrowUpRight className="w-3.5 h-3.5 mr-0.5" /> 18%
             </span>
           </div>
-          <p className="text-xs text-white/50 mt-2">Basado en <span className="text-white/80 font-medium">3 leads calientes</span> en curso.</p>
+          <p className="text-[11px] text-slate-500 mt-1.5">Basado en <span className="text-slate-300 font-medium">3 leads calientes</span> en curso.</p>
         </div>
       </div>
 
@@ -86,37 +95,36 @@ export default function DashboardPage() {
         {/* MAIN COLUMN (8 cols) */}
         <div className="lg:col-span-8 space-y-6">
           
-          {/* SEMÁFORO DE ESTADO (System Traffic Light) */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-[#111827] border border-white/5 rounded-xl p-4 flex items-center gap-4">
+          {/* STATUS CARDS — tamaño y animación calibrados anti-fatiga */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-3.5 flex items-center gap-3">
               <div className="relative">
-                <div className={`w-3 h-3 rounded-full z-10 relative ${isConnected ? "bg-emerald-500" : "bg-amber-500"}`}></div>
-                {isConnected && <div className="w-3 h-3 rounded-full bg-emerald-500 absolute inset-0 animate-ping opacity-50"></div>}
+                <div className={`w-2.5 h-2.5 rounded-full ${isConnected ? "bg-emerald-500/80" : "bg-amber-500"}`}></div>
+                {/* Ping solo cuando NO está conectado (estado anormal) */}
+                {!isConnected && <div className="w-2.5 h-2.5 rounded-full bg-amber-500 absolute inset-0 animate-ping opacity-40"></div>}
               </div>
               <div>
-                <p className="text-xs text-white/50 font-medium">Event Bus WS</p>
-                <p className="text-sm text-white/90 font-semibold">{isConnected ? "Conectado" : "Conectando..."}</p>
+                <p className="text-[11px] text-slate-600 font-medium">Event Bus WS</p>
+                <p className="text-[13px] text-slate-300 font-semibold">{isConnected ? "Conectado" : "Conectando..."}</p>
               </div>
             </div>
             
-            <div className="bg-[#111827] border border-white/5 rounded-xl p-4 flex items-center gap-4">
-              <div className="relative">
-                <div className="w-3 h-3 rounded-full bg-emerald-500 z-10 relative"></div>
-              </div>
+            <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-3.5 flex items-center gap-3">
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/70"></div>
               <div>
-                <p className="text-xs text-white/50 font-medium">WhatsApp</p>
-                <p className="text-sm text-white/90 font-semibold">Conectado</p>
+                <p className="text-[11px] text-slate-600 font-medium">WhatsApp</p>
+                <p className="text-[13px] text-slate-300 font-semibold">Conectado</p>
               </div>
             </div>
             
-            <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-4 flex items-center gap-4 cursor-pointer hover:bg-red-500/10 transition-colors" onClick={() => router.push('/dashboard/conversations')}>
+            <div className="bg-red-500/[0.04] border border-red-500/[0.12] rounded-xl p-3.5 flex items-center gap-3 cursor-pointer hover:border-red-500/20 transition-colors" onClick={() => router.push('/dashboard/conversations')}>
               <div className="relative">
-                <div className="w-3 h-3 rounded-full bg-red-500 z-10 relative"></div>
-                <div className="w-3 h-3 rounded-full bg-red-500 absolute inset-0 animate-ping opacity-50"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500 z-10 relative"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500 absolute inset-0 animate-ping opacity-40"></div>
               </div>
               <div>
-                <p className="text-xs text-white/50 font-medium">Handoffs</p>
-                <p className="text-sm text-red-400 font-bold">2 Esperando</p>
+                <p className="text-[11px] text-slate-600 font-medium">Handoffs</p>
+                <p className="text-[13px] text-red-400 font-bold">2 Esperando</p>
               </div>
             </div>
           </div>

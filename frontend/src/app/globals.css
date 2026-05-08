@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ==========================================================================
+   FLUXAGENT OS — DESIGN SYSTEM BASE
+   Anti-fatiga visual para uso sostenido 8+ horas
+   Principio: Silencioso en verde. Expresivo en rojo.
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -27,30 +35,153 @@
   }
 
   .dark {
-    /* FluxAgent Premium Dark Palette */
-    --background: 222 47% 7%; /* #0a0e17 */
-    --foreground: 210 40% 98%; /* #f8fafc */
-    --card: 218 39% 11%; /* #111827 */
-    --card-foreground: 210 40% 98%;
-    --popover: 218 39% 11%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 188 94% 43%; /* Cyan Electric */
+    /* FluxAgent Premium Dark — Calibrado anti-fatiga */
+    --background: 222 47% 5%;       /* #080c14 — más profundo, menos contraste */
+    --foreground: 215 20% 82%;      /* #c8d0dc — blanco suavizado, no puro */
+    --card: 220 40% 8%;             /* #0f1520 */
+    --card-foreground: 215 20% 82%;
+    --popover: 222 47% 6%;
+    --popover-foreground: 215 20% 82%;
+    --primary: 188 80% 42%;         /* Cyan ligeramente más cálido */
     --primary-foreground: 0 0% 100%;
-    --secondary: 215 32% 17%; /* Slate 800 */
-    --secondary-foreground: 210 40% 98%;
-    --muted: 215 32% 17%;
-    --muted-foreground: 215 20% 65%; /* Slate 400 */
-    --accent: 188 94% 43%;
+    --secondary: 215 30% 15%;
+    --secondary-foreground: 215 20% 75%;
+    --muted: 215 28% 12%;
+    --muted-foreground: 215 16% 48%; /* Slate 500 — texto secundario legible */
+    --accent: 188 80% 42%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 52%;
     --destructive-foreground: 0 0% 100%;
-    --border: 215 32% 17%; /* glass border */
-    --input: 215 32% 17%;
-    --ring: 188 94% 43%;
+    --border: 215 28% 12%;
+    --input: 215 28% 12%;
+    --ring: 188 80% 42%;
   }
 }
 
 @layer base {
   * { @apply border-border; }
-  body { @apply bg-background text-foreground; }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    /* Base: 14px para trabajo sostenido (>13px mínimo operacional) */
+    font-size: 14px;
+    line-height: 1.6;             /* leading-relaxed — reduce fatiga en lectura */
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11'; /* Inter optical */
+  }
+
+  /* Scrollbar discreta — no distrae en trabajo prolongado */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { 
+    background: rgba(255,255,255,0.06); 
+    border-radius: 99px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.12); }
+
+  /* Texto de datos: tabular nums siempre para números alineados */
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  /* Focus ring visible sin ser agresivo */
+  :focus-visible {
+    outline: 2px solid rgba(6, 182, 212, 0.4);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+}
+
+@layer utilities {
+  /* ── Jerarquía tipográfica operacional ──────────────────────────────────── */
+
+  /* Títulos de sección: visible pero no grita */
+  .flux-title {
+    @apply text-base font-bold text-white/75 tracking-tight;
+  }
+
+  /* Label de campo: suficientemente legible en trabajo prolongado */
+  .flux-label {
+    font-size: 13px;
+    @apply font-semibold text-slate-400 leading-snug;
+  }
+
+  /* Cuerpo de datos: baseline para lectura sostenida */
+  .flux-body {
+    font-size: 13px;
+    @apply text-slate-300 leading-relaxed;
+  }
+
+  /* Metadata / timestamps / IDs */
+  .flux-meta {
+    font-size: 11px;
+    @apply text-slate-500 font-medium;
+  }
+
+  /* Caption crítico (alertas, errors) */
+  .flux-caption {
+    font-size: 11px;
+    @apply font-bold uppercase tracking-widest text-white/20;
+  }
+
+  /* ── Cards con densidad operacional ─────────────────────────────────────── */
+
+  /* Card base: fondo muy sutil, borde tenue */
+  .flux-card {
+    @apply bg-black/30 border border-white/[0.05] rounded-2xl;
+  }
+
+  /* Card activa / hover */
+  .flux-card-hover {
+    @apply flux-card hover:border-white/[0.09] hover:bg-black/40 transition-all duration-200;
+  }
+
+  /* Card de atención (warning/critical) */
+  .flux-card-alert {
+    @apply border border-amber-500/15 bg-amber-500/[0.04] rounded-2xl;
+  }
+  .flux-card-critical {
+    @apply border border-red-500/20 bg-red-500/[0.04] rounded-2xl;
+  }
+
+  /* ── Separadores cognitivoss ─────────────────────────────────────────────── */
+  .flux-divider {
+    @apply border-t border-white/[0.04];
+  }
+
+  /* ── Glassmorphism calibrado ─────────────────────────────────────────────── */
+  /* Uso: panels, overlays, tooltips */
+  .flux-glass {
+    @apply bg-slate-950/90 backdrop-blur-2xl border border-white/[0.08];
+  }
+
+  /* ── Glow SOLO para estados activos / críticos ───────────────────────────── */
+  /* Principio: sin glow en estado saludable → cero fatiga en el 95% del tiempo */
+  .flux-glow-green  { box-shadow: 0 0 0 1px rgba(16,185,129,0.08); }
+  .flux-glow-amber  { box-shadow: 0 0 12px rgba(245,158,11,0.12); }
+  .flux-glow-red    { box-shadow: 0 0 16px rgba(239,68,68,0.15), 0 0 0 1px rgba(239,68,68,0.15); }
+  .flux-glow-cyan   { box-shadow: 0 0 12px rgba(6,182,212,0.12); }
+
+  /* ── Animaciones solo cuando hay información nueva ───────────────────────── */
+  /* Nunca animar elementos en estado estable */
+  .flux-pulse { animation: flux-pulse 2s ease-in-out infinite; }
+
+  @keyframes flux-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* Fade-in suave para nueva información */
+  .flux-appear {
+    animation: flux-appear 0.3s ease-out both;
+  }
+
+  @keyframes flux-appear {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
 }
