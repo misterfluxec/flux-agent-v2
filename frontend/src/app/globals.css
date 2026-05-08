@@ -1,14 +1,15 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 /* ==========================================================================
    FLUXAGENT OS — DESIGN SYSTEM BASE
    Anti-fatiga visual para uso sostenido 8+ horas
    Principio: Silencioso en verde. Expresivo en rojo.
+   @import DEBE ir antes de @tailwind (regla CSS spec)
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+/* Inter font — cargado vía next/font en layout.tsx (más eficiente) */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
   :root {
@@ -69,7 +70,8 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    /* Inter inyectado por next/font en layout.tsx — var(--font-inter) disponible */
+    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
     /* Base: 14px para trabajo sostenido (>13px mínimo operacional) */
     font-size: 14px;
     line-height: 1.6;             /* leading-relaxed — reduce fatiga en lectura */

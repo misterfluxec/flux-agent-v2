@@ -3,11 +3,18 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { Providers } from '../providers';
 import '../globals.css';
-const inter = Inter({ subsets: ['latin'] });
+
+// Inter con todos los pesos operacionales — cargado por Next.js (sin @import manual)
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
+  display: 'swap',
+  variable: '--font-inter',  // expone como CSS var para globals.css
+});
 
 export const metadata = {
-  title: 'FluxAgent AI',
-  description: 'Plataforma de Agentes de Ventas IA',
+  title: 'FluxAgent OS — Sistema Operativo Comercial Inteligente',
+  description: 'Plataforma de Agentes de Ventas IA con gobernanza, observabilidad y Revenue Intelligence.',
 };
 
 export default async function RootLayout({
@@ -30,7 +37,8 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} className="dark" suppressHydrationWarning data-scroll-behavior="smooth">
-      <body className={inter.className}>
+      {/* inter.variable expone --font-inter, inter.className aplica font-family directo */}
+      <body className={`${inter.variable} ${inter.className} antialiased`}>
         <NextIntlClientProvider messages={messages} locale={locale}>
           <Providers>{children}</Providers>
         </NextIntlClientProvider>
