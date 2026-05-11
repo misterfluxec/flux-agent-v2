@@ -66,9 +66,16 @@ export const MENU_SECTIONS: MenuSection[] = [
       {
         id: "operations",
         label: "Operaciones",
+        href: "/dashboard/operations",
+        icon: MessageSquare,
+        description: "Mission Control — Timeline, Colas y Acciones",
+      },
+      {
+        id: "conversations",
+        label: "Conversaciones",
         href: "/dashboard/conversations",
         icon: MessageSquare,
-        description: "Centro de comando — Inbox, leads y handoffs",
+        description: "Inbox, leads y handoffs",
       },
     ],
   },

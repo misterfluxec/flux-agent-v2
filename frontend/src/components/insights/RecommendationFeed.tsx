@@ -7,7 +7,7 @@ import { useTenant } from "@/context/TenantContext";
 import { hasFeature } from "@/config/flags";
 import { TRACK } from "@/lib/telemetry";
 import { mockRecommendations, USE_MOCKS, type Insight } from "@/mocks/api";
-import { api } from "@/lib/api";
+import { insights as insightsApi } from "@/services/api";
 import { useEventBus } from "@/providers/EventBusProvider";
 import {
   Flame, Brain, TrendingUp, CheckSquare,
@@ -36,7 +36,12 @@ function RecommendationCard({ insight, onDismiss }: RecommendationCardProps) {
   const router = useRouter();
   const pathname = usePathname();
   const locale = pathname?.split("/")[1] || "es";
-  const cfg = TYPE_CONFIG[insight.type];
+  const cfg = TYPE_CONFIG[insight.type as keyof typeof TYPE_CONFIG] || {
+    icon: Sparkles,
+    color: "text-blue-400",
+    bg: "bg-blue-500/[0.06]",
+    border: "border-blue-500/15"
+  };
   const Icon = cfg.icon;
 
   const handleAction = (action: Insight["actions"][number]) => {
@@ -104,14 +109,11 @@ export function RecommendationFeed() {
     (async () => {
       try {
         let data: Insight[];
-        if (USE_MOCKS) {
-          data = await mockRecommendations();
-        } else {
-          const res = await api.get<Insight[]>("/insights/recommendations");
-          data = res.data;
-        }
+        // NOTE: Bypass mocks completely for Phase B Integration
+        const res = await insightsApi.getFeed();
+        data = res.feed as any[]; // casting to match frontend Insight typing temporarily
         setInsights(data);
-      } catch { /* silent */ }
+      } catch (err) { console.error("Error loading feed", err); }
       finally { setLoaded(true); }
     })();
   }, [canSeeRecommendations]);
@@ -130,7 +132,7 @@ export function RecommendationFeed() {
         context: `Score ${lastEvent.data?.score ?? "alto"} — requiere atención inmediata.`,
         priority: "high",
         actions: [
-          { label: "🔥 Ver Operaciones", variant: "primary", href: "/dashboard/conversations" },
+          { label: "🔥 Ver Operaciones", variant: "primary", href: "/dashboard/operations" },
           { label: "Ignorar", variant: "dismiss" },
         ],
       };

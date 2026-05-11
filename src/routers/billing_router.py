@@ -104,8 +104,8 @@ async def get_subscription(usuario: PayloadToken = Depends(get_usuario_actual)):
         await db.execute(text(f"SET app.current_tenant_id = '{usuario.tenant_id}'"))
         
         result = await db.execute(text("""
-            SELECT plan, estado, contract_start, contract_end, 
-                   max_agentes, max_messages_month, price
+            SELECT plan, estado, contrato_inicio as contract_start, contrato_fin as contract_end, 
+                   max_agentes, max_mensajes_mes as max_messages_month, 0 as price
             FROM tenants
             WHERE id = :tid
         """), {"tid": usuario.tenant_id})

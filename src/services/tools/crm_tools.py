@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.services.tool_registry import ToolDefinition, ToolCategory
+from services.tool_registry import ToolDefinition, ToolCategory
 
 class UpdateLeadStatusInput(BaseModel):
     lead_id: str = Field(..., description="UUID del lead")

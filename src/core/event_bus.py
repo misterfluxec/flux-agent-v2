@@ -5,8 +5,8 @@ from typing import Callable, Any
 from redis.asyncio import Redis
 from pydantic import ValidationError
 
-from src.domain.events import DomainEvent, EventType, EventMetadata
-from src.config import obtener_config
+from domain.events import DomainEvent, EventType, EventMetadata
+from config import obtener_config
 
 settings = obtener_config()
 
@@ -41,11 +41,22 @@ class EventBus:
         """
         stream_data = event.to_redis_stream()
         
+        # Determine dynamic MAXLEN based on severity
+        severity = event.metadata.severity
+        if severity == "critical":
+            dynamic_maxlen = 15000
+        elif severity == "high":
+            dynamic_maxlen = 10000
+        elif severity == "medium":
+            dynamic_maxlen = 5000
+        else:
+            dynamic_maxlen = 2000
+        
         # Publicar en stream global
         global_id = await self.redis.xadd(
             self.STREAM_GLOBAL,
             stream_data,
-            maxlen=settings.event_stream_maxlen,
+            maxlen=dynamic_maxlen,
             approximate=True,
         )
         
@@ -56,9 +67,13 @@ class EventBus:
         await self.redis.xadd(
             tenant_stream,
             stream_data,
-            maxlen=settings.event_stream_maxlen,
+            maxlen=dynamic_maxlen,
             approximate=True,
         )
+        
+        # Establecer TTL agresivo (4 horas = 14400 segundos) para evitar memory leak
+        await self.redis.expire(self.STREAM_GLOBAL, 14400)
+        await self.redis.expire(tenant_stream, 14400)
         
         await self._log_event_published(event, global_id)
         

@@ -69,7 +69,7 @@ const STEPS: Step[] = [
     label: "Recibir tu Primer Lead",
     desc: "Prueba tu agente desde el chat web o envía un mensaje de WhatsApp",
     icon: MessageSquare,
-    href: "/dashboard/conversations",
+    href: "/dashboard/operations",
     check: async () => {
       // For now, check localStorage flag or agents with test activity
       return localStorage.getItem("flux_first_lead") === "true";

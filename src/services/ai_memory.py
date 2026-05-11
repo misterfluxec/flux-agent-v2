@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Dict, Optional
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.config import obtener_config
+from config import obtener_config
 
 settings = obtener_config()
 

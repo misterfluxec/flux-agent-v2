@@ -35,17 +35,24 @@ async def parse_file_upload(
     try:
         content = await file.read()
         headers, preview_rows = [], []
+        
+        # Guardar localmente para el job de sync
+        import os
+        os.makedirs("uploads/temp", exist_ok=True)
+        local_path = os.path.join("uploads/temp", f"local_{filename}")
+        with open(local_path, "wb") as f:
+            f.write(content)
 
         # 2. Extracción según tipo
         if ext in ["csv", "xlsx", "xls"]:
             if ext == "csv":
                 # Intentar detectar separador si falla el default
                 try:
-                    df = pd.read_csv(io.BytesIO(content), sep=",", nrows=10)
+                    df = pd.read_csv(local_path, sep=",", nrows=10)
                 except:
-                    df = pd.read_csv(io.BytesIO(content), sep=";", nrows=10)
+                    df = pd.read_csv(local_path, sep=";", nrows=10)
             else:
-                df = pd.read_excel(io.BytesIO(content), nrows=10)
+                df = pd.read_excel(local_path, nrows=10)
             
             df = df.dropna(how="all")
             headers = [str(col).strip() for col in df.columns]

@@ -56,6 +56,10 @@ export function OperationalHealthBar() {
   // ─── Polling + Fórmula 40/40/20 ─────────────────────────────────────────
   useEffect(() => {
     const compute = async () => {
+      // Guard: no API calls without token (avoids 401 storm on public pages)
+      const token = typeof window !== "undefined" ? localStorage.getItem("flux_token") : null;
+      if (!token) return;
+
       try {
         // 1. Infra (40%) — desde /health existente + resilience
         const infraData = await fetchHealth();
@@ -138,7 +142,7 @@ export function OperationalHealthBar() {
     };
 
     compute();
-    const interval = setInterval(compute, 30_000);
+    const interval = setInterval(compute, 120_000); // 2 min — reduce server load
     return () => clearInterval(interval);
   }, [isConnected]);
 

@@ -32,6 +32,12 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchPlan = async () => {
+    // Skip if no token — avoid 401 storm on public pages (login, landing, register)
+    const token = typeof window !== "undefined" ? localStorage.getItem("flux_token") : null;
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
     try {
       const { data } = await api.get("/billing/subscription");
       setPlan(normalizePlan(data?.plan || data?.plan_id));

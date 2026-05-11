@@ -172,30 +172,34 @@ async def _execute_rag_sync(
     """Task background: Extrae -> Vectoriza -> Inserta en knowledge_chunks"""
     async with obtener_sesion() as db:
         try:
-            # 1. Obtener tokens decifrados
-            account = await db.execute(text("""
-                SELECT provider, access_token_encrypted, refresh_token_encrypted, token_expires_at
-                FROM connected_accounts
-                WHERE id = :account_id AND tenant_id = :tenant_id AND is_active = TRUE
-            """), {"account_id": account_id, "tenant_id": tenant_id})
-            acc_row = account.fetchone()
-            
-            if not acc_row:
-                raise ValueError("Cuenta OAuth no válida o inactiva")
-            
-            access_token = EncryptionService.decrypt(acc_row.access_token_encrypted)
-            
-            # 2. Fetch datos crudos de la hoja
-            source = await db.execute(text("SELECT source_id, source_type FROM synced_sources WHERE id = :id"), {"id": source_id})
-            src_row = source.fetchone()
-            
-            if src_row.source_type == "google_sheets":
-                headers, rows = await RAGSyncEngine.fetch_google_sheet_data(access_token, src_row.source_id)
+            if account_id == "local" or source_id.startswith("local_"):
+                # Procesar archivo local subido previamente
+                headers, rows = await RAGSyncEngine.fetch_local_file_data(source_id)
             else:
-                headers, rows = await RAGSyncEngine.fetch_excel_online_data(access_token, src_row.source_id)
+                # 1. Obtener tokens decifrados
+                account = await db.execute(text("""
+                    SELECT provider, access_token_encrypted, refresh_token_encrypted, token_expires_at
+                    FROM connected_accounts
+                    WHERE id = :account_id AND tenant_id = :tenant_id AND is_active = TRUE
+                """), {"account_id": account_id, "tenant_id": tenant_id})
+                acc_row = account.fetchone()
+                
+                if not acc_row:
+                    raise ValueError("Cuenta OAuth no válida o inactiva")
+                
+                access_token = EncryptionService.decrypt(acc_row.access_token_encrypted)
+                
+                # 2. Fetch datos crudos de la hoja
+                source = await db.execute(text("SELECT source_id, source_type FROM synced_sources WHERE id = :id"), {"id": source_id})
+                src_row = source.fetchone()
+                
+                if src_row.source_type == "google_sheets":
+                    headers, rows = await RAGSyncEngine.fetch_google_sheet_data(access_token, src_row.source_id)
+                else:
+                    headers, rows = await RAGSyncEngine.fetch_excel_online_data(access_token, src_row.source_id)
             
             if not rows:
-                raise ValueError("La hoja está vacía o no tiene datos válidos")
+                raise ValueError("La fuente está vacía o no tiene datos válidos")
             
             # 3. LLAMAR AL MOTOR RAG (Vectorización + Inserción)
             stats = await RAGSyncEngine.process_sheet_for_rag(

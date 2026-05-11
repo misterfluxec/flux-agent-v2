@@ -55,3 +55,4 @@ prometheus-client==0.21.0
 # --- Tareas Programadas ---
 APScheduler==3.10.4        # Cron jobs para reset automático de cuotas
 apscheduler==3.10.4
+mercadopago>=2.2.0

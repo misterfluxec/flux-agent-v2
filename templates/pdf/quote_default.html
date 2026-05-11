@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Cotización</title>
+    <style>
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid {{ theme_color|default('#2563eb') }}; }
+        .logo { max-width: 150px; max-height: 80px; }
+        .company-details { text-align: right; }
+        .title { font-size: 24px; font-weight: bold; margin: 0 0 10px 0; color: {{ theme_color|default('#2563eb') }}; }
+        .quote-info { margin-bottom: 30px; display: flex; justify-content: space-between; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        th { background-color: #f8fafc; color: #475569; font-weight: 600; text-align: left; padding: 12px; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+        .totals { width: 50%; float: right; }
+        .totals table th { background: transparent; text-align: right; border-bottom: none; }
+        .totals table td { text-align: right; font-weight: bold; font-size: 18px; border-bottom: none; }
+        .footer { clear: both; margin-top: 60px; font-size: 12px; color: #64748b; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            {% if logo_url %}
+            <img src="{{ logo_url }}" class="logo" alt="Logo">
+            {% else %}
+            <h1 style="margin:0; font-size: 28px;">{{ tenant_name }}</h1>
+            {% endif %}
+        </div>
+        <div class="company-details">
+            <h2 class="title">COTIZACIÓN COMERCIAL</h2>
+            <p style="margin: 0;">ID: {{ quote.id[:8]|upper }}</p>
+            <p style="margin: 0;">Fecha: {{ date }}</p>
+            <p style="margin: 0;">Válido hasta: {{ quote.valid_until }}</p>
+        </div>
+    </div>
+
+    <div class="quote-info">
+        <div>
+            <strong>Cliente:</strong><br>
+            {% if customer_name %}{{ customer_name }}<br>{% endif %}
+            {% if customer_email %}{{ customer_email }}<br>{% endif %}
+            {% if customer_phone %}{{ customer_phone }}{% endif %}
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Descripción</th>
+                <th>Cant.</th>
+                <th>Precio Unit.</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.description_override or ('Ítem ' + item.catalog_item_id) }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>${{ "%.2f"|format(item.unit_price) }}</td>
+                <td>${{ "%.2f"|format(item.subtotal) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <table>
+            <tr>
+                <th>TOTAL:</th>
+                <td>${{ "%.2f"|format(quote.total) }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="footer">
+        <p>Documento generado automáticamente por FluxAgent OS. Sin validez fiscal hasta confirmación de pago.</p>
+        {% if legal_text %}
+        <p>{{ legal_text }}</p>
+        {% endif %}
+    </div>
+</body>
+</html>

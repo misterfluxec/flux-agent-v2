@@ -1,7 +1,7 @@
 from uuid import UUID
 from datetime import datetime, timedelta
 from redis.asyncio import Redis
-from src.domain.usage import QuotaCheckRequest, QuotaCheckResponse, UsageResource, QuotaDefinition, UsageTier
+from domain.usage import QuotaCheckRequest, QuotaCheckResponse, UsageResource, QuotaDefinition, UsageTier
 
 class QuotaManager:
     """

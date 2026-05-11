@@ -191,3 +191,6 @@ async def cerrar_db() -> None:
     """Cierra el pool de conexiones. Llamar en el shutdown de la app."""
     await engine.dispose()
     logger.info("🔌 Pool de conexiones PostgreSQL cerrado")
+
+# Alias para mantener compatibilidad con routers generados
+get_db = obtener_sesion

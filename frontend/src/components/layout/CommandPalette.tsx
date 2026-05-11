@@ -107,7 +107,7 @@ export function CommandPalette() {
   // Navigation items
   const NAV_ITEMS = [
     { icon: LayoutDashboard, label: "Control — Torre de Control", href: "/dashboard", group: "Navegar" },
-    { icon: MessageSquare, label: "Operaciones — Centro de Comando", href: "/dashboard/conversations", group: "Navegar" },
+    { icon: MessageSquare, label: "Operaciones — Centro de Comando", href: "/dashboard/operations", group: "Navegar" },
     { icon: Users2, label: "Agentes IA — Workforce", href: "/dashboard/agents", group: "Navegar" },
     { icon: Brain, label: "Inteligencia — Conocimiento", href: "/dashboard/data-ingestion", group: "Navegar" },
     { icon: Plug, label: "Canales — Conectores", href: "/dashboard/connectors", group: "Navegar" },
@@ -118,7 +118,7 @@ export function CommandPalette() {
 
   const ACTIONS = [
     { icon: Sparkles, label: "Preguntarle a Yanua...", action: () => { setMode("chat"); setQuery(""); }, group: "IA", color: "text-cyan-400" },
-    { icon: AlertTriangle, label: "Ver handoffs pendientes", action: () => runCommand(() => router.push("/dashboard/conversations")), group: "Urgente", color: "text-red-400" },
+    { icon: AlertTriangle, label: "Ver handoffs pendientes", action: () => runCommand(() => router.push("/dashboard/operations?tab=queue")), group: "Urgente", color: "text-red-400" },
     { icon: Zap, label: "Aumentar límite de tokens", action: () => runCommand(() => router.push("/dashboard/settings")), group: "Urgente", color: "text-amber-400" },
   ];
 

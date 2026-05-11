@@ -1,8 +1,8 @@
 from fastapi import Depends
 from redis.asyncio import Redis, from_url
 
-from src.config import obtener_config
-from src.core.event_bus import EventBus
+from config import obtener_config
+from core.event_bus import EventBus
 
 settings = obtener_config()
 

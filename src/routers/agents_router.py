@@ -127,6 +127,46 @@ class AgentResponse(BaseModel):
     last_sync_at: Optional[str] = None
 
 
+class GenerateIdentityRequest(BaseModel):
+    descripcion_negocio: str
+    agent_type: str
+    tono: str
+
+@router.post("/generate-identity", summary="Genera instrucciones de sistema óptimas usando IA")
+async def generate_identity(
+    req: GenerateIdentityRequest,
+    usuario: PayloadToken = Depends(get_usuario_actual)
+):
+    from core.llm.router import llm_router
+    
+    prompt = f"""
+Eres un ingeniero de prompts experto creando la "Identidad de Sistema" para un agente de IA en la plataforma FluxAgent.
+El usuario tiene este negocio: "{req.descripcion_negocio}"
+Tipo de operación (Agent Type): {req.agent_type}
+Tono de personalidad deseado: {req.tono}
+
+Crea unas instrucciones en PRIMERA PERSONA para este agente ("Eres un asistente...").
+El resultado debe ser únicamente el texto del prompt, directo y sin introducciones.
+
+DEBES INCLUIR OBLIGATORIAMENTE LAS SIGUIENTES REGLAS DE GOBERNANZA AL FINAL:
+- Nunca inventes precios o stock; consulta siempre la herramienta de Catálogo (check_availability).
+- Si detectas frustración en el usuario, solicita intervención humana inmediatamente.
+- No realices reembolsos ni cambios de configuración de cuenta, indica que esos procesos son manuales.
+
+Haz que el prompt sea profesional, conciso y listo para copiarse y pegarse.
+"""
+    try:
+        resultado = await llm_router.generate(
+            messages=[{"role": "user", "content": prompt}],
+            model="qwen2.5:3b", # Usamos el local por defecto
+            temperature=0.7
+        )
+        texto = resultado if isinstance(resultado, str) else resultado.get("content", "")
+        return {"instructions": texto.strip()}
+    except Exception as e:
+        logger.error(f"Error generating identity: {e}")
+        raise HTTPException(status_code=500, detail="Error al generar identidad")
+
 # =============================================================================
 # GET /api/v1/agents — Lista agentes del tenant
 # =============================================================================

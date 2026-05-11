@@ -46,6 +46,19 @@ class EventType(StrEnum):
     # Orchestrator & Policies
     ORCHESTRATOR_STARTED = "orchestrator.started"
     ORCHESTRATOR_STEP_COMPLETED = "orchestrator.step_completed"
+
+    # Commerce & Ops
+    QUOTE_GENERATED = "quote.generated"
+    QUOTE_ACCEPTED = "quote.accepted"
+    QUOTE_EXPIRED = "quote.expired"
+    ORDER_CREATED = "order.created"
+    ORDER_PAID = "order.paid"
+    ORDER_FULFILLED = "order.fulfilled"
+    BOOKING_CONFIRMED = "booking.confirmed"
+    BOOKING_CANCELLED = "booking.cancelled"
+    FOLLOWUP_SCHEDULED = "followup.scheduled"
+    SLA_RISK = "sla.risk"
+    LEAD_HOT = "lead.hot"
     POLICY_VIOLATION = "policy.violation"
     TOOL_EXECUTED = "tool.executed"
     RESPONSE_GENERATED = "response.generated"
@@ -53,6 +66,18 @@ class EventType(StrEnum):
     # Billing & Usage
     BILLING_ALERT = "billing.alert"
     TENANT_QUOTA_EXHAUSTED = "tenant.quota_exhausted"
+
+    # Pagos y Commerce
+    PAYMENT_COMPLETED = "payment.completed"
+    PAYMENT_FAILED = "payment.failed"
+
+    # ERP Connector Framework
+    CONNECTOR_SYNC_STARTED = "connector.sync_started"
+    CONNECTOR_SYNC_COMPLETED = "connector.sync_completed"
+    CONNECTOR_SYNC_FAILED = "connector.sync_failed"
+    INVENTORY_SYNCED = "inventory.synced"
+    CATALOG_SYNCED = "catalog.synced"
+    CUSTOMERS_SYNCED = "customers.synced"
 
 
 class EventMetadata(BaseModel):
@@ -64,6 +89,17 @@ class EventMetadata(BaseModel):
     agent_id: UUID | None = None
     conversation_id: UUID | None = None
     customer_id: UUID | None = None
+    
+    # Event Sourcing Context
+    aggregate_type: str = Field(default="system")
+    aggregate_id: UUID | None = None
+    
+    # Operational Intelligence
+    severity: str = Field(default="low")         # low, medium, high, critical
+    business_impact: str | None = None           # revenue, ops, retention, security
+    priority_score: int = Field(default=0)       # 0-100, para sorting/queues/Copilot
+    tags: list[str] = Field(default_factory=list)  # ["vip", "payment", "sla-risk"]
+    
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     correlation_id: UUID | None = None  # Para tracing distribuido
     causation_id: UUID | None = None    # Para reconstruir causalidad
@@ -170,6 +206,16 @@ class BillingAlertPayload(BaseModel):
     actionable: bool
     created_at: datetime
 
+class PaymentCompletedPayload(BaseModel):
+    order_id: str
+    amount: float
+    method: str
+    old_status: str
+
+class PaymentFailedPayload(BaseModel):
+    order_id: str
+    reason: str
+
 # Union de todos los payloads para tipado seguro
 EventPayload = Union[
     MessageReceivedPayload,
@@ -183,7 +229,9 @@ EventPayload = Union[
     PolicyViolationPayload,
     ToolExecutedPayload,
     ResponseGeneratedPayload,
-    BillingAlertPayload
+    BillingAlertPayload,
+    PaymentCompletedPayload,
+    PaymentFailedPayload
 ]
 
 

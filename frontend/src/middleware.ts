@@ -155,20 +155,12 @@ export default function middleware(request: NextRequest) {
   }
 
   // =============================================================================
-  // 5. ONBOARDING CHECK
+  // 5. ONBOARDING CHECK (REMOVED)
+  // El OnboardingWizard ahora vive nativamente dentro de /dashboard (Sprint 5B)
+  // Por lo que el redirect forzoso causaba un loop infinito.
   // =============================================================================
   
   const response = intlMiddleware(request);
-  
-  const onboardingComplete = request.cookies.get('onboarding_complete');
-  if (pathname.includes('/dashboard') && !onboardingComplete) {
-    const segments = pathname.split('/');
-    const pathLocale = segments[1];
-    const isLocale = SUPPORTED_LOCALES.includes(pathLocale);
-    const onboardingPath = isLocale ? `/${pathLocale}/onboarding` : `/${locale}/onboarding`;
-    
-    return NextResponse.redirect(new URL(onboardingPath, request.url));
-  }
 
   // =============================================================================
   // 6. HEADERS DE SEGURIDAD Y OBSERVABILIDAD

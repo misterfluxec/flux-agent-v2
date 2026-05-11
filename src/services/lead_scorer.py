@@ -1,7 +1,7 @@
 from typing import Dict
 from redis.asyncio import Redis
-from src.domain.events import DomainEvent, EventType
-from src.core.event_bus import EventBus
+from domain.events import DomainEvent, EventType
+from core.event_bus import EventBus
 
 class LeadScorer:
     """
@@ -51,7 +51,7 @@ class LeadScorer:
         # Si es un lead caliente/crítico, forzar notificación al Event Bus
         if score >= 80:
             # Re-emitimos como LEAD_QUALIFIED para que el WS Bridge lo detecte y envíe a la UI
-            from src.domain.events import EventMetadata, LeadQualifiedPayload
+            from domain.events import EventMetadata, LeadQualifiedPayload
             
             hot_event = DomainEvent(
                 metadata=EventMetadata(

@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from redis.asyncio import Redis
 
-from src.domain.policies import PolicyRule, PolicyEvaluationRequest, PolicyEvaluationResult, PolicyEngineOutput, PolicyAction
+from domain.policies import PolicyRule, PolicyEvaluationRequest, PolicyEvaluationResult, PolicyEngineOutput, PolicyAction
 
 class PolicyEngine:
     def __init__(self, redis: Redis, db: AsyncSession):

@@ -5,9 +5,9 @@ from uuid import UUID
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from src.domain.conversation_state import ConversationState, ConversationContext, VALID_TRANSITIONS
-from src.domain.events import DomainEvent, EventMetadata, EventType, HandoffRequestedPayload, MessageReceivedPayload
-from src.core.event_bus import EventBus
+from domain.conversation_state import ConversationState, ConversationContext, VALID_TRANSITIONS
+from domain.events import DomainEvent, EventMetadata, EventType, HandoffRequestedPayload, MessageReceivedPayload
+from core.event_bus import EventBus
 
 class ConversationEngine:
     def __init__(self, redis_client: redis.Redis, event_bus: EventBus):

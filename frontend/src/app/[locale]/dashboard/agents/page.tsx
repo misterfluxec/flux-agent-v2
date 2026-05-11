@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
-  fetchAgents, createAgent, updateAgent, deleteAgent, testAgent,
+  fetchAgents, createAgent, updateAgent, deleteAgent, testAgent, generateAgentIdentity,
   AgentResponse, AgentCreate,
 } from "@/lib/api";
 
@@ -280,6 +280,29 @@ function CreateAgentModal({ onClose, onCreated }: { onClose: () => void; onCreat
     instrucciones: "",
   });
 
+  const [showForge, setShowForge] = useState(false);
+  const [forgeDesc, setForgeDesc] = useState("");
+  const [forgeLoading, setForgeLoading] = useState(false);
+
+  const handleForgeIdentity = async () => {
+    if (!forgeDesc.trim()) { toast.error("Describe tu negocio primero"); return; }
+    setForgeLoading(true);
+    try {
+      const res = await generateAgentIdentity({
+        descripcion_negocio: forgeDesc,
+        agent_type: form.agent_type,
+        tono: form.tono
+      });
+      setForm(f => ({ ...f, instrucciones: res.instructions }));
+      setShowForge(false);
+      toast.success("¡Identidad forjada exitosamente! ✨");
+    } catch {
+      toast.error("Error al forjar la identidad. Intenta de nuevo.");
+    } finally {
+      setForgeLoading(false);
+    }
+  };
+
   const handleCreate = async () => {
     if (!form.nombre.trim()) { toast.error("Nombre es requerido"); return; }
     setSaving(true);
@@ -435,9 +458,41 @@ function CreateAgentModal({ onClose, onCreated }: { onClose: () => void; onCreat
                 </div>
               </div>
               <div>
-                <label className="text-xs font-bold text-white/40 mb-1.5 block">Instrucciones personalizadas (opcional)</label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-white/40 block">Instrucciones personalizadas (opcional)</label>
+                  <button 
+                    onClick={() => setShowForge(!showForge)}
+                    className="text-xs font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1 bg-cyan-500/10 px-2 py-1 rounded-lg"
+                  >
+                    <Sparkles className="h-3 w-3" /> Forjar Identidad con IA
+                  </button>
+                </div>
+                
+                {showForge && (
+                  <div className="mb-3 p-3 bg-cyan-900/20 border border-cyan-500/30 rounded-xl space-y-3 animate-in fade-in duration-300">
+                    <div>
+                      <label className="text-[11px] font-bold text-cyan-400 mb-1 block">¿De qué trata tu negocio y qué quieres lograr?</label>
+                      <textarea 
+                        value={forgeDesc} 
+                        onChange={e => setForgeDesc(e.target.value)}
+                        placeholder="Ej: Somos una pizzería artesanal. Queremos que el agente tome los pedidos de forma amigable y sugiera postres."
+                        className="w-full bg-black/40 border border-cyan-500/20 rounded-lg px-3 py-2 text-xs text-white placeholder:text-white/20 focus:outline-none focus:border-cyan-500/50 resize-none"
+                        rows={2}
+                      />
+                    </div>
+                    <Button 
+                      onClick={handleForgeIdentity} 
+                      disabled={forgeLoading || !forgeDesc.trim()}
+                      className="w-full bg-cyan-500 hover:bg-cyan-600 text-black font-bold h-8 text-xs rounded-lg gap-1"
+                    >
+                      {forgeLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                      Generar Instrucciones Mágicas
+                    </Button>
+                  </div>
+                )}
+                
                 <textarea value={form.instrucciones} onChange={e => setForm(f => ({ ...f, instrucciones: e.target.value }))}
-                  rows={3} placeholder="Ej: Siempre ofrece el producto premium primero..."
+                  rows={4} placeholder="Ej: Siempre ofrece el producto premium primero..."
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-cyan-500/40 resize-none" />
               </div>
             </div>

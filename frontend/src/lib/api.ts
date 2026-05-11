@@ -344,3 +344,39 @@ export async function testAgent(id: string, mensaje: string): Promise<{ agente: 
   return data;
 }
 
+export interface GenerateIdentityRequest {
+  descripcion_negocio: string;
+  agent_type: string;
+  tono: string;
+}
+
+export interface GenerateIdentityResponse {
+  instructions: string;
+}
+
+export async function generateAgentIdentity(req: GenerateIdentityRequest): Promise<GenerateIdentityResponse> {
+  const { data } = await api.post<GenerateIdentityResponse>("/agents/generate-identity", req);
+  return data;
+}
+
+export class ApiClient {
+  static async get(endpoint: string) {
+    const url = process.env.NEXT_PUBLIC_API_URL || "http://localhost:9000/api/v1";
+    const res = await fetch(`${url}${endpoint}`, {
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!res.ok) throw new Error(`API error: ${res.status} ${res.statusText}`);
+    return res.json();
+  }
+  static async post(endpoint: string, data: any) {
+    const url = process.env.NEXT_PUBLIC_API_URL || "http://localhost:9000/api/v1";
+    const res = await fetch(`${url}${endpoint}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(`API error: ${res.status} ${res.statusText}`);
+    return res.json();
+  }
+}
+

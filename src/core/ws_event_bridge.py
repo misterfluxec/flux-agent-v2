@@ -1,6 +1,6 @@
 import json
-from src.domain.events import DomainEvent, EventType
-from src.core.realtime_gateway import RealtimeGateway
+from domain.events import DomainEvent, EventType
+from core.realtime_gateway import RealtimeGateway
 
 class WSRealtimeBridge:
     """
@@ -11,12 +11,26 @@ class WSRealtimeBridge:
     # Mapeo: EventType → Tipo de mensaje UI
     UI_MAPPING = {
         EventType.LEAD_QUALIFIED: "LEAD_HOT",
-        EventType.HANDOFF_REQUESTED: "CONVERSATION_HANDOFF",
+        EventType.HANDOFF_REQUESTED: "handoff.requested",
         EventType.VOICE_TRANSCRIPTION_CHUNK: "VOICE_LIVE_TRANSCRIPT",
         EventType.AGENT_INTERRUPTED: "VOICE_INTERRUPTED",
         EventType.ALERT_IA_DETECTED: "SYSTEM_ALERT",
         EventType.ORCHESTRATOR_STEP_COMPLETED: "ORCHESTRATOR_STEP",
         EventType.BILLING_ALERT: "BILLING_ALERT",
+        # Nuevos eventos de commerce y operaciones:
+        EventType.QUOTE_GENERATED: "quote.generated",
+        EventType.QUOTE_ACCEPTED: "quote.accepted",
+        EventType.QUOTE_EXPIRED: "quote.expired",
+        EventType.ORDER_CREATED: "order.created",
+        EventType.ORDER_PAID: "order.paid",
+        EventType.ORDER_FULFILLED: "order.fulfilled",
+        EventType.BOOKING_CONFIRMED: "booking.confirmed",
+        EventType.BOOKING_CANCELLED: "booking.cancelled",
+        EventType.FOLLOWUP_SCHEDULED: "followup.scheduled",
+        EventType.SLA_RISK: "sla.risk",
+        EventType.LEAD_HOT: "lead.hot",
+        EventType.MESSAGE_RECEIVED: "message.received",
+        EventType.MESSAGE_SENT: "message.sent",
     }
     
     def __init__(self, ws_manager: RealtimeGateway):

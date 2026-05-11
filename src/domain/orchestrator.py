@@ -92,7 +92,7 @@ class OrchestratorOutput(BaseModel):
     model_config = ConfigDict(json_encoders={datetime: lambda v: v.isoformat()})
     
     def to_event_payload(self):
-        from src.domain.events import ResponseGeneratedPayload
+        from domain.events import ResponseGeneratedPayload
         return ResponseGeneratedPayload(
             conversation_id=uuid4(), # This should be matched with the original conversation_id in the orchestrator flow
             response_preview=(self.response[:197] + "...") if self.response and len(self.response) > 200 else (self.response or ""),

@@ -4,8 +4,8 @@ from typing import List, Dict, Optional
 from uuid import UUID
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.domain.usage import UsageRecord, UsageResource
-from src.config import obtener_config
+from domain.usage import UsageRecord, UsageResource
+from config import obtener_config
 
 settings = obtener_config()
 

@@ -1,7 +1,8 @@
 from uuid import UUID
 from datetime import datetime, timedelta
-from src.domain.usage import BillingAlert, BillingAlertType, UsageResource
-from src.domain.events import EventBus, DomainEvent, EventMetadata, EventType, BillingAlertPayload, EmptyPayload
+from domain.usage import BillingAlert, BillingAlertType, UsageResource
+from core.event_bus import EventBus
+from domain.events import DomainEvent, EventMetadata, EventType, BillingAlertPayload, EmptyPayload
 
 class BillingAlertService:
     THRESHOLDS = [0.8, 1.0, 1.2]

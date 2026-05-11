@@ -18,8 +18,9 @@ class LLMProvider(ABC):
         messages: List[Dict[str, str]], 
         model: str, 
         temperature: float = 0.7,
-        max_tokens: int = 2048
-    ) -> str:
+        max_tokens: int = 2048,
+        tools: Optional[List[Dict[str, Any]]] = None
+    ) -> str | Dict:
         pass
     
     @abstractmethod
@@ -41,8 +42,9 @@ class OllamaProvider(LLMProvider):
         messages: List[Dict[str, str]], 
         model: str = "qwen2.5:3b",
         temperature: float = 0.7,
-        max_tokens: int = 2048
-    ) -> str:
+        max_tokens: int = 2048,
+        tools: Optional[List[Dict[str, Any]]] = None
+    ) -> str | Dict:
         try:
             async with httpx.AsyncClient(timeout=config.ollama_timeout) as client:
                 payload = {
@@ -55,9 +57,18 @@ class OllamaProvider(LLMProvider):
                     },
                     "keep_alive": "5m"
                 }
+                if tools:
+                    payload["tools"] = tools
+                    
                 resp = await client.post(f"{config.ollama_base_url}/api/chat", json=payload)
                 resp.raise_for_status()
-                return resp.json().get("message", {}).get("content", "")
+                response_data = resp.json()
+                message = response_data.get("message", {})
+                
+                if message.get("tool_calls"):
+                    return {"tool_calls": message["tool_calls"], "content": message.get("content", "")}
+                
+                return message.get("content", "")
         except Exception as e:
             logger.error(f"Ollama error: {e}")
             raise
@@ -112,8 +123,9 @@ class OpenAIProvider(LLMProvider):
         messages: List[Dict[str, str]], 
         model: str = "gpt-4o-mini",
         temperature: float = 0.7,
-        max_tokens: int = 2048
-    ) -> str:
+        max_tokens: int = 2048,
+        tools: Optional[List[Dict[str, Any]]] = None
+    ) -> str | Dict:
         if not self.api_key:
             raise ValueError("OPENAI_API_KEY no configurado")
         
@@ -192,8 +204,9 @@ class AnthropicProvider(LLMProvider):
         messages: List[Dict[str, str]], 
         model: str = "claude-3-haiku-20240307",
         temperature: float = 0.7,
-        max_tokens: int = 2048
-    ) -> str:
+        max_tokens: int = 2048,
+        tools: Optional[List[Dict[str, Any]]] = None
+    ) -> str | Dict:
         if not self.api_key:
             raise ValueError("ANTHROPIC_API_KEY no configurado")
         
@@ -314,8 +327,9 @@ class LLMRouter:
         model: Optional[str] = None,
         provider: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: int = 2048
-    ) -> str:
+        max_tokens: int = 2048,
+        tools: Optional[List[Dict[str, Any]]] = None
+    ) -> str | Dict:
         """
         Genera respuesta usando el proveedor configurado.
         """
@@ -326,7 +340,7 @@ class LLMRouter:
         else:
             effective_model = model or config.ollama_modelo_chat
         
-        return await prov.generate(messages, effective_model, temperature, max_tokens)
+        return await prov.generate(messages, effective_model, temperature, max_tokens, tools)
     
     async def generate_streaming(
         self, 

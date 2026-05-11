@@ -6,7 +6,7 @@ import { useTenant } from "@/context/TenantContext";
 import { hasFeature } from "@/config/flags";
 import { TRACK } from "@/lib/telemetry";
 import { mockExplain, USE_MOCKS, type ExplanationResponse } from "@/mocks/api";
-import { api } from "@/lib/api";
+import { explain as explainApi } from "@/services/api";
 import {
   HelpCircle, X, Loader2, ChevronRight,
   Zap, BookOpen, Shield, BarChart2,
@@ -59,14 +59,9 @@ export function ExplainabilityOverlay({
 
     try {
       let result: ExplanationResponse;
-      if (USE_MOCKS) {
-        result = await mockExplain(context, entityId);
-      } else {
-        const res = await api.get<ExplanationResponse>(
-          `/yana/explain?context=${context}&entity_id=${entityId}`
-        );
-        result = res.data;
-      }
+      // NOTE: Bypass mocks completely for Phase B Integration
+      const res = await explainApi.getDecision(context, entityId);
+      result = res as any;
       setData(result);
       TRACK.EXPLAIN_RESPONSE(context, Math.round(performance.now() - t0));
     } catch {

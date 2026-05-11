@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   MessageSquare, Zap, Bot, ArrowUpRight, ShieldCheck, 
-  Wifi, Activity, AlertCircle, Circle, Command, PhoneOff
+  Wifi, Activity, AlertCircle, Circle, Command, PhoneOff, CheckCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEventBus } from '@/providers/EventBusProvider';
@@ -12,45 +12,36 @@ import { OnboardingWizard } from '@/components/system/OnboardingWizard';
 import { RecommendationFeed } from '@/components/insights/RecommendationFeed';
 import { useActivationMoments } from '@/hooks/useActivationMoments';
 import { FLUX_LEXICON } from '@/constants/lexicon';
+import { useOperationsTimeline } from '@/hooks/useOperationsTimeline';
+import { useOperationsHealth } from '@/hooks/useOperationsHealth';
+import { TimelineEvent } from '@/types/operations';
 
 export default function DashboardPage() {
   const router = useRouter();
   const [isHydrated, setIsHydrated] = useState(false);
   
-  const { isConnected, history } = useEventBus();
+  const { isConnected } = useEventBus();
   
   // Activar micro-victorias en background (sin render visible)
   useActivationMoments();
   
-  // Mapeamos el history global del websocket a formato feed de la UI
-  const feed = history.map((msg, index) => {
-    let text = "Evento desconocido";
-    let iconType = "system";
-    
-    if (msg.type === "SYSTEM_ALERT") { text = msg.data?.message || "Alerta del sistema"; iconType = "insight"; }
-    else if (msg.type === "ORCHESTRATOR_STEP") { text = `Orquestador: Fase ${msg.data?.step} completada.`; iconType = "action"; }
-    else if (msg.type === "BILLING_ALERT") { text = `Facturación: ${msg.data?.alert_type} - ${msg.data?.resource}`; iconType = "policy"; }
-    else if (msg.type === "LEAD_HOT") { text = `¡Lead Caliente Detectado! Score: ${msg.data?.score}`; iconType = "insight"; }
-    else if (msg.type === "CONVERSATION_HANDOFF") { text = `Handoff solicitado por agente. Motivo: ${msg.data?.reason}`; iconType = "insight"; }
-    else if (msg.type === "VOICE_LIVE_TRANSCRIPT") { text = `Voz: "${msg.data?.text}"`; iconType = "action"; }
-    else if (msg.type === "VOICE_INTERRUPTED") { text = "Interrupción de voz detectada."; iconType = "insight"; }
-
-    // Generar tiempo (mockeado rápido para la UI)
-    const timeText = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : "Ahora";
-    
-    return {
-      id: msg.event_id || `msg-${index}`,
-      type: iconType,
-      text: text,
-      time: timeText
-    };
+  // Feed operacional unificado
+  const { events: timelineEvents, isLoading: isTimelineLoading } = useOperationsTimeline({
+    limit: 10,
+    realtime: true
   });
+
+  // Estado de salud operacional
+  const { report: healthReport } = useOperationsHealth();
 
   useEffect(() => {
     setIsHydrated(true);
   }, []);
 
   if (!isHydrated) return null; // Zero-spinner rule (Progressive Hydration)
+
+  // Derive critical count from health report or fallback
+  const criticalCount = healthReport?.critical_count || 0;
 
   return (
     <div className="space-y-5 animate-in fade-in duration-500 pb-12 px-6 md:px-8 max-w-6xl mx-auto pt-6">
@@ -117,14 +108,16 @@ export default function DashboardPage() {
               </div>
             </div>
             
-            <div className="bg-red-500/[0.04] border border-red-500/[0.12] rounded-xl p-3.5 flex items-center gap-3 cursor-pointer hover:border-red-500/20 transition-colors" onClick={() => router.push('/dashboard/conversations')}>
+            <div className={`bg-${criticalCount > 0 ? 'red' : 'white'}-500/[0.04] border border-${criticalCount > 0 ? 'red-500/[0.12]' : 'white/[0.05]'} rounded-xl p-3.5 flex items-center gap-3 cursor-pointer hover:border-white/10 transition-colors`} onClick={() => router.push('/dashboard/operations?tab=queue')}>
               <div className="relative">
-                <div className="w-2.5 h-2.5 rounded-full bg-red-500 z-10 relative"></div>
-                <div className="w-2.5 h-2.5 rounded-full bg-red-500 absolute inset-0 animate-ping opacity-40"></div>
+                <div className={`w-2.5 h-2.5 rounded-full ${criticalCount > 0 ? 'bg-red-500' : 'bg-emerald-500/80'} z-10 relative`}></div>
+                {criticalCount > 0 && <div className="w-2.5 h-2.5 rounded-full bg-red-500 absolute inset-0 animate-ping opacity-40"></div>}
               </div>
               <div>
-                <p className="text-[11px] text-slate-600 font-medium">Handoffs</p>
-                <p className="text-[13px] text-red-400 font-bold">2 Esperando</p>
+                <p className="text-[11px] text-slate-600 font-medium">Ops Críticas</p>
+                <p className={`text-[13px] ${criticalCount > 0 ? 'text-red-400' : 'text-slate-300'} font-bold`}>
+                  {criticalCount > 0 ? `${criticalCount} Pendientes` : 'Todo al día'}
+                </p>
               </div>
             </div>
           </div>
@@ -139,29 +132,38 @@ export default function DashboardPage() {
               <span className="text-[10px] uppercase font-bold text-emerald-500 tracking-wider bg-emerald-500/10 px-2 py-1 rounded">Live</span>
             </div>
             <div className="p-4 space-y-1">
-              {feed.length === 0 ? (
+              {isTimelineLoading ? (
                 <div className="p-8 text-center text-white/30 text-sm">Escuchando eventos en tiempo real...</div>
+              ) : timelineEvents.length === 0 ? (
+                <div className="p-8 text-center text-white/30 text-sm">No hay eventos recientes.</div>
               ) : (
-                feed.slice(0, 8).map((item) => (
-                  <div key={item.id} className="flex gap-4 p-3 rounded-lg hover:bg-white/[0.02] transition-colors group">
+                timelineEvents.slice(0, 8).map((event: TimelineEvent) => {
+                  const time = new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                  return (
+                  <div key={event.id} className="flex gap-4 p-3 rounded-lg hover:bg-white/[0.02] transition-colors group">
                     <div className="pt-0.5">
-                      {item.type === "insight" && <AlertCircle className="w-4 h-4 text-amber-400" />}
-                      {item.type === "system" && <Wifi className="w-4 h-4 text-blue-400" />}
-                      {item.type === "policy" && <ShieldCheck className="w-4 h-4 text-purple-400" />}
-                      {item.type === "action" && <Bot className="w-4 h-4 text-primary" />}
+                      {event.category === "ops" && <AlertCircle className="w-4 h-4 text-amber-400" />}
+                      {event.category === "billing" && <ShieldCheck className="w-4 h-4 text-purple-400" />}
+                      {event.category === "commerce" && <Activity className="w-4 h-4 text-emerald-400" />}
+                      {event.category === "interaction" && <MessageSquare className="w-4 h-4 text-blue-400" />}
+                      {event.category === "automation" && <Bot className="w-4 h-4 text-primary" />}
+                      {event.category === "system" && <Wifi className="w-4 h-4 text-slate-500" />}
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm text-white/80">{item.text}</p>
-                      <p className="text-xs text-white/40 mt-1">{item.time}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white/80 truncate">{event.summary}</p>
+                      <p className="text-xs text-white/40 mt-1">{time}</p>
                     </div>
-                    {item.type === "insight" && (
-                      <Button size="sm" variant="outline" className="opacity-0 group-hover:opacity-100 h-7 text-xs bg-transparent border-white/10 hover:bg-white/10" onClick={() => router.push('/dashboard/conversations')}>
-                        Ver Detalles
-                      </Button>
-                    )}
+                    <Button size="sm" variant="outline" className="opacity-0 group-hover:opacity-100 h-7 text-xs bg-transparent border-white/10 hover:bg-white/10" onClick={() => router.push(`/dashboard/operations?event=${event.id}`)}>
+                      Ver Detalles
+                    </Button>
                   </div>
-                ))
+                )})
               )}
+            </div>
+            <div className="p-3 border-t border-white/5 text-center">
+               <Button variant="ghost" className="w-full text-xs text-slate-400 hover:text-white" onClick={() => router.push('/dashboard/operations')}>
+                 Ver Timeline Completo →
+               </Button>
             </div>
           </div>
 

@@ -1,0 +1,8 @@
+codigo,detalle_servicio,valor_servicio,impuesto_ley,tiempo_estimado,valor_total
+MAN-001,Manicura Basica,12.0,1.8,30 min,13.8
+MAN-002,Manicura Semi-permanente,20.0,3.0,45 min,23.0
+MAN-003,Sistema Acrilico Completo,35.0,5.25,90 min,40.25
+MAN-004,Sistema Gel o Polygel,40.0,6.0,90 min,46.0
+MAN-005,Spa de Manos y Parafina,25.0,3.75,50 min,28.75
+MAN-006,Mantenimiento y Retirado,15.0,2.25,40 min,17.25
+MAN-007,Nail Art Avanzado,3.0,0.45,15 min,3.45

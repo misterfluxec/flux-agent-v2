@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, Header
 from uuid import UUID
 from typing import Optional
 
-from src.core.dependencies import get_redis, get_event_bus
-from src.services.conversation_engine import ConversationEngine
-from src.domain.conversation_state import ConversationState
+from core.dependencies import get_redis, get_event_bus
+from services.conversation_engine import ConversationEngine
+from domain.conversation_state import ConversationState
 
 router = APIRouter(prefix="/api/conversations", tags=["handoff"])
 

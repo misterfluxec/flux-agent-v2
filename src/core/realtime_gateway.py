@@ -4,7 +4,7 @@ from typing import Dict, Set, Optional
 from fastapi import WebSocket, WebSocketDisconnect
 from starlette.responses import StreamingResponse
 from redis.asyncio import Redis
-from src.config import obtener_config
+from config import obtener_config
 
 settings = obtener_config()
 
@@ -50,12 +50,18 @@ class RealtimeGateway:
 
     async def broadcast_to_tenant(self, tenant_id: str, message: dict):
         """Método de retrocompatibilidad para ws_event_bridge.py"""
+        if not tenant_id or tenant_id == "None":
+            return
+            
         event_type = message.get("type", "*")
         event_id = message.get("event_id", "")
         await self.publish_to_tenant(tenant_id, event_type, message, event_id)
 
     async def publish_to_tenant(self, tenant_id: str, event_type: str, payload: dict, event_id: str):
         """Publicación optimizada usando las suscripciones de cada usuario."""
+        if not tenant_id or tenant_id == "None":
+            return
+            
         targets = []
         # Si no hay subscriptions registradas pero hay conexiones activas, hacer broadcast general (compatibilidad)
         active_users = self.active_connections.get(tenant_id, {})

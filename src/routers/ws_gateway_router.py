@@ -1,7 +1,7 @@
 import logging
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from typing import Optional
-from src.core.realtime_gateway import RealtimeGateway
+from core.realtime_gateway import RealtimeGateway
 
 logger = logging.getLogger(__name__)
 

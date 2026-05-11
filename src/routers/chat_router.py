@@ -93,8 +93,48 @@ async def procesar_mensaje_entrante(
             rol_llm = "assistant" if msg.rol == "asistente" else "user"
             mensajes_llm.append({"role": rol_llm, "content": msg.contenido})
             
-        # 6. Llamar a Ollama
-        respuesta_texto = await llamar_ollama(mensajes_llm, agente.modelo, agente.temperatura)
+        # 6. Llamar a Ollama (Loop de tools)
+        import json
+        from services.tool_executor import ToolExecutor
+        from core.tool_registry import COMMERCE_TOOLS
+        
+        executor = ToolExecutor()
+        for tool in COMMERCE_TOOLS:
+            executor.register(tool)
+            
+        commerce_schemas = executor.get_all_tools_schema()
+        
+        respuesta_llm = await llamar_ollama(mensajes_llm, agente.modelo, agente.temperatura, tools=commerce_schemas)
+        
+        while isinstance(respuesta_llm, dict) and "tool_calls" in respuesta_llm:
+            tool_calls = respuesta_llm["tool_calls"]
+            mensajes_llm.append({
+                "role": "assistant",
+                "content": respuesta_llm.get("content", ""),
+                "tool_calls": tool_calls
+            })
+            
+            for tool_call in tool_calls:
+                function_name = tool_call["function"]["name"]
+                arguments = tool_call["function"]["arguments"]
+                if isinstance(arguments, str):
+                    arguments = json.loads(arguments)
+                
+                logger.info(f"LLM llamando a tool: {function_name} con args {arguments}")
+                
+                res = await executor.execute(function_name, arguments, str(tenant_id))
+                tool_result = json.dumps(res)
+                    
+                mensajes_llm.append({
+                    "role": "tool",
+                    "name": function_name,
+                    "content": tool_result
+                })
+            
+            # Segunda llamada al LLM con los resultados
+            respuesta_llm = await llamar_ollama(mensajes_llm, agente.modelo, agente.temperatura, tools=commerce_schemas)
+            
+        respuesta_texto = respuesta_llm if isinstance(respuesta_llm, str) else respuesta_llm.get("content", "")
         
         # 7. Guardar la respuesta del asistente
         await db.execute(text("""
@@ -123,7 +163,7 @@ async def buscar_contexto_rag(db: AsyncSession, tenant_id: UUID, agent_id: UUID,
                     res = await db.execute(text("""
                         SELECT contenido FROM knowledge_chunks
                         WHERE tenant_id = :tid 
-                        ORDER BY embedding <-> :vec::vector LIMIT 3
+                        ORDER BY embedding <-> CAST(:vec AS vector) LIMIT 3
                     """), {"tid": str(tenant_id), "vec": vector_str})
                     
                     chunks = [row.contenido for row in res.fetchall()]
@@ -134,15 +174,91 @@ async def buscar_contexto_rag(db: AsyncSession, tenant_id: UUID, agent_id: UUID,
     return ""
 
 
-async def llamar_ollama(mensajes: list, modelo: str, temperatura: float) -> str:
+COMMERCE_TOOLS_SCHEMA = [
+    {
+        "type": "function",
+        "function": {
+            "name": "check_availability",
+            "description": "Verifica si un producto está disponible en inventario y obtiene su precio.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "product_name": {
+                        "type": "string",
+                        "description": "Nombre del producto a buscar"
+                    }
+                },
+                "required": ["product_name"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "create_quote",
+            "description": "Crea una cotización oficial para un cliente.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "catalog_item_id": {"type": "string"},
+                                "quantity": {"type": "integer"},
+                                "unit_price": {"type": "number"}
+                            },
+                            "required": ["catalog_item_id", "quantity", "unit_price"]
+                        }
+                    }
+                },
+                "required": ["items"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "create_order",
+            "description": "Crea un pedido u orden de compra.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "catalog_item_id": {"type": "string"},
+                                "quantity": {"type": "integer"},
+                                "unit_price": {"type": "number"}
+                            },
+                            "required": ["catalog_item_id", "quantity", "unit_price"]
+                        }
+                    },
+                    "quote_id": {
+                        "type": "string",
+                        "description": "ID de la cotización si la hay"
+                    }
+                },
+                "required": ["items"]
+            }
+        }
+    }
+]
+
+async def llamar_ollama(mensajes: list, modelo: str, temperatura: float, tools: list = None):
     """Llama al LLM (Ollama local o cloud) y obtiene la respuesta."""
     try:
         return await llm_router.generate(
             messages=mensajes,
             model=modelo,
             temperature=temperatura,
-            max_tokens=2048
+            max_tokens=2048,
+            tools=tools
         )
     except Exception as e:
         logger.error(f"Error en LLM: {e}")
         return "Lo siento, mi servicio cognitivo no está disponible temporalmente."
+

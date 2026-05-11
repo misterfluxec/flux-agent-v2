@@ -1,0 +1,4 @@
+nombre,sku,precio,stock,categoria,descripcion
+"Cámara de Seguridad WiFi",CAM-001,45.99,15,"Seguridad","Cámara 1080p con visión nocturna y sensor de movimiento."
+"Sensor de Puerta Zigbee",SENS-002,15.50,50,"Seguridad","Sensor magnético para puertas y ventanas, requiere hub."
+"Hub Inteligente Multiprotocolo",HUB-100,89.00,5,"Domótica","Hub central compatible con Zigbee, Z-Wave y WiFi."

@@ -6,7 +6,19 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { EventBusProvider } from "@/providers/EventBusProvider";
 import { Toaster } from "@/components/ui/sonner";
-import { TenantProvider } from "@/context/TenantContext";
+import { TenantProvider, useTenant } from "@/context/TenantContext";
+
+import { CriticalEventToaster } from "@/components/operations/CriticalEventToaster";
+
+function EventBusWrapper({ children }: { children: React.ReactNode }) {
+  const { tenantId } = useTenant();
+  return (
+    <EventBusProvider tenantId={tenantId || "demo-tenant-1"}>
+      {children}
+      <CriticalEventToaster />
+    </EventBusProvider>
+  );
+}
 
 export function Providers({ children, ...props }: ThemeProviderProps) {
   const [queryClient] = useState(() => new QueryClient({
@@ -22,9 +34,9 @@ export function Providers({ children, ...props }: ThemeProviderProps) {
       <NextThemesProvider attribute="class" defaultTheme="system" enableSystem {...props}>
         <TooltipProvider delayDuration={300}>
           <TenantProvider>
-            <EventBusProvider tenantId="demo-tenant-1">
+            <EventBusWrapper>
               {children}
-            </EventBusProvider>
+            </EventBusWrapper>
           </TenantProvider>
         </TooltipProvider>
       </NextThemesProvider>

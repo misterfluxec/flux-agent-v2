@@ -21,7 +21,7 @@ from auth import get_tenant_actual, get_tenant_actual_opcional, get_usuario_actu
 from core.plan_manager import PlanManager
 from routers.auth_router import router as auth_router
 # from routers.stats_router import router as stats_router  # Legacy - reemplazado por analytics_router
-from routers.products_router import router as products_router
+from routers.catalog_router import router as catalog_router
 from routers.whatsapp_router import router as whatsapp_router
 from routers.webhooks_router import router as webhooks_router
 from routers.leads_router import router as leads_router
@@ -45,6 +45,19 @@ from routers.billing_router import router as billing_router
 from routers.plans_router import router as plans_router
 from routers.handoff_router import router as handoff_router
 from routers.ws_gateway_router import router as ws_gateway_router
+from routers.insights_router import router as insights_router
+from routers.explain_router import router as explain_router
+from routers.yanua_router import router as yanua_router
+from routers.commerce_router import router as commerce_router
+from routers.checkout_router import router as checkout_router
+from routers.onboarding_router import router as onboarding_router
+from routers.timeline_router import router as timeline_router
+from routers.capabilities_router import router as capabilities_router
+from routers.playbooks_router import router as playbooks_router
+from routers.health_router import router as health_router
+from routers.event_actions_router import router as event_actions_router
+from routers.connectors_router import router as connectors_router
+from routers.ai_copilot_router import router as ai_copilot_router
 # Nota: chat_router no tiene un APIRouter registrado, provee la función lógica a webhooks
 
 from core.metrics import start_metrics_server
@@ -62,20 +75,21 @@ config = obtener_config()
 # =============================================================================
 # CICLO DE VIDA
 # =============================================================================
-from src.core.dependencies import get_redis
-from src.core.event_bus import EventBus
-from src.core.ws_event_bridge import WSRealtimeBridge
-from src.core.realtime_gateway import RealtimeGateway
-from src.services.lead_scorer import LeadScorer
-from src.services.tool_executor import ToolExecutor
-from src.services.tools.crm_tools import TOOL_UPDATE_LEAD
-from src.services.ai_memory import AIMemoryManager
-from src.services.policy_engine import PolicyEngine
-from src.services.ai_orchestrator import AIOrchestrator
-from src.domain.events import EventType
-from src.services.usage_tracker import UsageTracker
-from src.services.quota_manager import QuotaManager
-from src.routers.usage_router import router as usage_router
+from core.dependencies import get_redis
+from core.event_bus import EventBus
+from core.ws_event_bridge import WSRealtimeBridge
+from core.realtime_gateway import RealtimeGateway
+from services.lead_scorer import LeadScorer
+from services.tool_executor import ToolExecutor
+from services.tools.crm_tools import TOOL_UPDATE_LEAD
+from services.ai_memory import AIMemoryManager
+from services.policy_engine import PolicyEngine
+from services.ai_orchestrator import AIOrchestrator
+from domain.events import EventType
+from core.event_bus import EventBus
+from services.usage_tracker import UsageTracker
+from services.quota_manager import QuotaManager
+from routers.usage_router import router as usage_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -108,9 +122,10 @@ async def lifespan(app: FastAPI):
     app.state.lead_scorer = lead_scorer
     
     # Motor de Herramientas
-    # Nota: db_session se inyecta en los endpoints (vía dependenices)
-    tool_executor = ToolExecutor(redis_conn, db=None) 
-    tool_executor.register(TOOL_UPDATE_LEAD)
+    tool_executor = ToolExecutor() 
+    from core.tool_registry import COMMERCE_TOOLS
+    for tool in COMMERCE_TOOLS:
+        tool_executor.register(tool)
     app.state.tool_executor = tool_executor
 
     # === NUEVO: AI Orchestrator + Policy Engine ===
@@ -151,7 +166,7 @@ async def lifespan(app: FastAPI):
     app.state.quota_manager = quota_manager
     
     # Manejar Kill Switch
-    from src.services.billing_alert_service import BillingAlertService
+    from services.billing_alert_service import BillingAlertService
     billing_alert = BillingAlertService(event_bus, redis_conn, None)
     app.state.billing_alert = billing_alert
 
@@ -192,9 +207,60 @@ async def lifespan(app: FastAPI):
         
     # Iniciar scheduler de RAG Sync (Sheets/Excel)
     try:
+        from tasks.rag_scheduler import scheduler
         start_rag_scheduler()
+        
+        # Inyectar el scheduler global al gestor de followups
+        from tasks.followups import set_followup_scheduler
+        set_followup_scheduler(scheduler)
+        
     except Exception as e:
         logger.warning(f"⚠️  RAG Sync scheduler no iniciado: {e}")
+        
+    # Inicializar handlers del event_bus (Payment Followups, etc)
+    try:
+        # EventBus is globally imported
+        from domain.events import DomainEvent
+        from tasks.followups import schedule_followup
+        
+        # Función para registrar los handlers
+        async def handle_payment_completed(event: DomainEvent):
+            customer_phone = event.payload.dict().get("customer_phone") or "desconocido"
+            order_id = event.payload.dict().get("order_id")
+            # Programar survey a las 72h
+            schedule_followup(customer_phone, "post_purchase_survey", {"order_id": order_id}, delay_hours=72)
+            # Programar confirmación inmediata
+            schedule_followup(customer_phone, "order_confirmation", {"order_id": order_id}, delay_minutes=1)
+            
+        async def handle_payment_failed(event: DomainEvent):
+            customer_phone = event.payload.dict().get("customer_phone") or "desconocido"
+            order_id = event.payload.dict().get("order_id")
+            schedule_followup(customer_phone, "payment_pending", {"order_id": order_id}, delay_minutes=5)
+            
+        await event_bus.subscribe([EventType.PAYMENT_COMPLETED], handle_payment_completed, "followups_worker")
+        await event_bus.subscribe([EventType.PAYMENT_FAILED], handle_payment_failed, "followups_worker")
+        
+        from core.event_listeners import persist_event_to_timeline
+        from database import obtener_sesion
+        
+        async def timeline_wrapper(event):
+            from database import SessionLocal
+            async with SessionLocal() as db:
+                await persist_event_to_timeline(event, db, redis_conn)
+                
+        # Suscribir a los eventos que queremos en el timeline unificado
+        timeline_events = [
+            EventType.MESSAGE_RECEIVED, EventType.MESSAGE_SENT,
+            EventType.QUOTE_GENERATED, EventType.QUOTE_ACCEPTED,
+            EventType.ORDER_CREATED, EventType.PAYMENT_COMPLETED,
+            EventType.PAYMENT_FAILED, EventType.BOOKING_CONFIRMED,
+            EventType.HANDOFF_REQUESTED, EventType.FOLLOWUP_SCHEDULED
+        ]
+        await event_bus.subscribe(timeline_events, timeline_wrapper, "timeline_worker")
+        
+        logger.info("✅ EventBus handlers para followups registrados.")
+    except Exception as e:
+        logger.warning(f"⚠️ Error registrando handlers de EventBus: {e}")
     
     yield
     logger.info("🛑 Cerrando FluxAgent V2...")
@@ -246,8 +312,12 @@ app.add_middleware(
     allow_origins=config.cors_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "X-Tenant-ID"],
+    allow_headers=["Authorization", "Content-Type", "X-Tenant-ID", "X-Correlation-ID"],
 )
+
+# Correlation middleware: auto-propagates X-Correlation-ID en todos los requests
+from core.correlation import CorrelationMiddleware
+app.add_middleware(CorrelationMiddleware)
 
 
 from core.middleware.tenant_isolation import setup_middlewares
@@ -261,10 +331,10 @@ setup_middlewares(app)
 # =============================================================================
 
 app.include_router(auth_router)
-from src.routers.usage_router import router as usage_router
+from routers.usage_router import router as usage_router
 app.include_router(usage_router)
 # app.include_router(stats_router)  # Legacy - reemplazado por analytics_router
-app.include_router(products_router)
+app.include_router(catalog_router)
 app.include_router(whatsapp_router)
 app.include_router(webhooks_router)
 app.include_router(leads_router)
@@ -289,6 +359,19 @@ app.include_router(billing_router)
 app.include_router(plans_router)
 app.include_router(ws_gateway_router)
 app.include_router(handoff_router)
+app.include_router(insights_router, prefix="/api/v1")
+app.include_router(explain_router, prefix="/api/v1")
+app.include_router(yanua_router, prefix="/api/v1")
+app.include_router(commerce_router)
+app.include_router(checkout_router)
+app.include_router(onboarding_router)
+app.include_router(timeline_router)
+app.include_router(capabilities_router)
+app.include_router(playbooks_router)
+app.include_router(health_router)
+app.include_router(event_actions_router)
+app.include_router(connectors_router)
+app.include_router(ai_copilot_router)
 
 # =============================================================================
 # HANDLERS DE EXCEPCIONES ESPECÍFICOS
