@@ -7,6 +7,7 @@ from pydantic import ValidationError
 
 from domain.events import DomainEvent, EventType, EventMetadata
 from config import obtener_config
+from core.observability import get_observability_context
 
 settings = obtener_config()
 
@@ -39,6 +40,21 @@ class EventBus:
         Returns:
             event_id: El ID del evento en Redis Streams para tracking
         """
+        # Auto-inject observability context if missing in metadata
+        obs_ctx = get_observability_context()
+        if not event.metadata.correlation_id and obs_ctx["correlation_id"]:
+            # Need to create a new event because metadata is frozen
+            from uuid import UUID
+            new_metadata = event.metadata.model_copy(update={
+                "correlation_id": UUID(obs_ctx["correlation_id"]) if isinstance(obs_ctx["correlation_id"], str) else obs_ctx["correlation_id"],
+                "actor_id": event.metadata.actor_id or obs_ctx["actor_id"],
+                "request_origin": event.metadata.request_origin or obs_ctx["request_origin"],
+                "country_code": event.metadata.country_code or obs_ctx["country_code"],
+                "currency": event.metadata.currency or obs_ctx["currency"],
+                "timezone": event.metadata.timezone or obs_ctx["timezone"]
+            })
+            event = event.model_copy(update={"metadata": new_metadata})
+
         stream_data = event.to_redis_stream()
         
         # Determine dynamic MAXLEN based on severity

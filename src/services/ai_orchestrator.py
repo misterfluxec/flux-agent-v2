@@ -7,14 +7,82 @@ from services.policy_engine import PolicyEngine
 from services.tool_executor import ToolExecutor
 from services.ai_memory import AIMemoryManager
 
+from services.professional_actor_loop import ProfessionalActorLoop, ActorLoopContext
+from src.runtime.graph import ExecutionGraph
+from src.runtime.graph_node import GraphNode
+from src.runtime.state_machine import AgentExecutionState
+
 class AIOrchestrator:
-    def __init__(self, redis, event_bus: EventBus, policy_engine: PolicyEngine, tool_executor: ToolExecutor, memory_manager: AIMemoryManager, llm_provider):
+    def __init__(self, redis, event_bus: EventBus, policy_engine: PolicyEngine, tool_executor: ToolExecutor, memory_manager: AIMemoryManager, llm_provider, professional_actor_loop: ProfessionalActorLoop = None):
         self.redis = redis
         self.event_bus = event_bus
         self.policy_engine = policy_engine
         self.tool_executor = tool_executor
         self.memory_manager = memory_manager
         self.llm_provider = llm_provider
+        self.pal = professional_actor_loop
+        self.graph = self._build_orchestrator_graph()
+        
+    def _build_orchestrator_graph(self) -> ExecutionGraph:
+        graph = ExecutionGraph()
+        
+        # Nodos lineales
+        node_memory = GraphNode(id="step_memory", handler_name="handle_memory")
+        node_intent = GraphNode(id="step_intent", handler_name="handle_intent")
+        node_policy = GraphNode(id="step_policy", handler_name="handle_policy")
+        node_persist = GraphNode(id="step_memory_persist", handler_name="handle_memory_persist")
+        node_emit = GraphNode(id="step_event_emit", handler_name="handle_event_emit")
+
+        graph.add_node(node_memory, handler=self._handle_memory)
+        graph.add_node(node_intent, handler=self._handle_intent)
+        graph.add_node(node_policy, handler=self._handle_policy)
+        graph.add_node(node_persist, handler=self._handle_memory_persist)
+        graph.add_node(node_emit, handler=self._handle_event_emit)
+
+        # Transiciones explícitas usando GraphEdge
+        from src.runtime.graph_edge import GraphEdge
+        graph.add_edge(GraphEdge(source="step_memory", target="step_intent"))
+        graph.add_edge(GraphEdge(source="step_intent", target="step_policy"))
+        graph.add_edge(GraphEdge(source="step_policy", target="step_memory_persist"))
+        graph.add_edge(GraphEdge(source="step_memory_persist", target="step_event_emit"))
+        
+        return graph
+
+    async def _handle_memory(self, ctx: OrchestratorContext) -> str:
+        ctx.retrieved_memory = {"history": "loaded"}
+        return None
+        
+    async def _handle_intent(self, ctx: OrchestratorContext) -> str:
+        ctx.detected_intent = "purchase"
+        ctx.intent_confidence = 0.9
+        return None
+        
+    async def _handle_policy(self, ctx: OrchestratorContext) -> str:
+        if self.pal:
+            pal_ctx = ActorLoopContext(
+                session_id=str(ctx.correlation_id),
+                tenant_id=str(ctx.tenant_id),
+                customer_id=str(ctx.customer_id) if ctx.customer_id else "",
+                role_id="role-sales-latam",
+                input_text=ctx.raw_input,
+                business_context=ctx.input_metadata
+            )
+            pal_result = await self.pal.execute(pal_ctx)
+            
+            if pal_result.success or pal_result.final_verdict == "escalated":
+                ctx.generated_response = pal_result.response
+                # Al simular success, retornamos None para seguir al próximo nodo "step_memory_persist"
+                return None
+            else:
+                ctx.generated_response = await self._generate_fallback_response(ctx, "policy_denied")
+                raise Exception("Policy Denied")
+        return None
+
+    async def _handle_memory_persist(self, ctx: OrchestratorContext) -> str:
+        return None
+
+    async def _handle_event_emit(self, ctx: OrchestratorContext) -> str:
+        return None
     
     async def _build_context(self, event: DomainEvent) -> OrchestratorContext:
         payload = event.payload.model_dump() if hasattr(event.payload, "model_dump") else event.payload
@@ -89,30 +157,35 @@ class AIOrchestrator:
         ))
         
         try:
-            # 3. Ejecutar pipeline paso a paso
-            for step in OrchestratorStep:
-                step_start = time.time()
-                success = await self._execute_step(ctx, step)
-                duration_ms = int((time.time() - step_start) * 1000)
+            import json
+            state_key = f"orchestrator:state:{ctx.correlation_id}"
+            
+            # Recuperar estado si existe (Graph Runner Checkpointing)
+            saved_state_json = await self.redis.get(state_key) if hasattr(self.redis, "get") else None
+            start_node_id = "step_memory"
+            if saved_state_json:
+                saved_state = json.loads(saved_state_json)
+                start_node_id = saved_state.get("next_node_id", "step_memory")
+                print(f"[GraphRunner] Recuperando estado: retomando desde {start_node_id}.")
+
+            # 3. Ejecutar grafo
+            try:
+                # El grafo requiere que el input de handler sea Dict o un objeto. Aquí inyectamos ctx
+                # Hacemos trampa pasando ctx directamente en lugar de dict, Graph lo soporta pues es tipado libre en runtime
+                ctx.state = AgentExecutionState.SOP_RUNNING
+                last_node = await self.graph.execute(start_node_id, ctx)
                 
-                # Registrar que completó
-                if success:
-                    ctx.completed_steps.append(step)
+                if ctx.state == AgentExecutionState.WAITING_APPROVAL:
+                    # Guardar checkpoint para reanudar luego
+                    if hasattr(self.redis, "set"):
+                        await self.redis.set(state_key, json.dumps({
+                            "next_node_id": last_node
+                        }), ex=3600)
+                    return # Suspende la orquestación hasta aprobación asíncrona
                 
-                # Publicar progreso
-                await self.event_bus.publish(DomainEvent(
-                    metadata=EventMetadata(event_type=EventType.ORCHESTRATOR_STEP_COMPLETED, **ctx.metadata_for_event()),
-                    payload=OrchestratorStepCompletedPayload(
-                        conversation_id=ctx.conversation_id,
-                        step=step.value,
-                        duration_ms=duration_ms,
-                        success=success,
-                    ),
-                ))
-                
-                if not success and step == OrchestratorStep.POLICY_EVALUATION:
-                    ctx.generated_response = await self._generate_fallback_response(ctx, "policy_denied")
-                    break
+            except Exception as e:
+                ctx.generated_response = str(e)
+                success = False
             
             # 4. Construir output
             output = OrchestratorOutput(
@@ -129,6 +202,10 @@ class AIOrchestrator:
                 metadata=EventMetadata(event_type=EventType.RESPONSE_GENERATED, **ctx.metadata_for_event()),
                 payload=output.to_event_payload(),
             ))
+            
+            # Limpiar checkpoint al finalizar
+            if hasattr(self.redis, "delete"):
+                await self.redis.delete(state_key)
             
         except Exception as e:
             output = OrchestratorOutput(

@@ -31,6 +31,12 @@ try:
 except ImportError:
     OPENTELEMETRY_AVAILABLE = False
     logging.warning("OpenTelemetry not available. Tracing will be disabled.")
+    class SpanKind(Enum):
+        INTERNAL = "INTERNAL"
+        SERVER = "SERVER"
+        CLIENT = "CLIENT"
+        PRODUCER = "PRODUCER"
+        CONSUMER = "CONSUMER"
 
 logger = logging.getLogger(__name__)
 
@@ -46,8 +52,8 @@ class SpanContext:
     """Contexto de span para tracing"""
     trace_id: str
     span_id: str
-    parent_span_id: Optional[str] = None
     operation_name: str
+    parent_span_id: Optional[str] = None
     start_time: float = field(default_factory=time.time)
     end_time: Optional[float] = None
     status: TraceStatus = TraceStatus.STARTED

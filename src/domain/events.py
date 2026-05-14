@@ -103,6 +103,13 @@ class EventMetadata(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     correlation_id: UUID | None = None  # Para tracing distribuido
     causation_id: UUID | None = None    # Para reconstruir causalidad
+    actor_id: str | None = None         # Quién inició la acción (user_id, system)
+    request_origin: str | None = None   # Origen (web, mobile, api, webhook)
+    
+    # LATAM Context
+    country_code: str | None = None
+    currency: str | None = None
+    timezone: str | None = None
     
     model_config = ConfigDict(frozen=True)
 

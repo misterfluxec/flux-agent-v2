@@ -15,6 +15,11 @@ from .metrics import (
 )
 from .logging import StructuredLogger, get_logger
 from .tracing import TracingManager, trace_function
+from .context import (
+    get_observability_context,
+    set_correlation_id,
+    bind_context
+)
 
 __all__ = [
     "PrometheusMetrics",
@@ -26,5 +31,8 @@ __all__ = [
     "StructuredLogger",
     "get_logger",
     "TracingManager",
-    "trace_function"
+    "trace_function",
+    "get_observability_context",
+    "set_correlation_id",
+    "bind_context"
 ]
