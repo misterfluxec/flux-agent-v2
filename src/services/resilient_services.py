@@ -147,7 +147,7 @@ def apply_to_voice_services():
     """Aplica resiliencia a servicios de voz"""
     
     # Aplicar a funciones de voz existentes
-    from app.services.voice_pipeline_service import process_audio_stream
+    from services.voice.pipeline import process_audio_stream
     
     @make_resilient("voice", "process_audio")
     async def resilient_process_audio(audio_bytes: bytes, tenant_id: str, **kwargs):

@@ -49,7 +49,7 @@ from routers.quota_router import router as quota_router
 from routers.oauth_sync_router import router as oauth_sync_router
 from routers.sync_router import router as sync_router
 from routers.upload_router import router as upload_router
-from app.routers.sales_agent_router import router as sales_router
+from routers.sales_agent_router import router as sales_router
 from routers.analytics_router_cached import router as analytics_router
 from routers.billing_router import router as billing_router
 from routers.plans_router import router as plans_router

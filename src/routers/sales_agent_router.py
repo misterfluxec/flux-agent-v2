@@ -4,8 +4,8 @@ from typing import Optional
 import os
 
 # Importar servicios creados arriba
-from app.services.sales_agent import SalesAgent
-from app.services.voice_pipeline_service import VoicePipelineService
+from services.sales_agent import SalesAgent
+from services.voice.pipeline import VoicePipelineService
 
 router = APIRouter(prefix="/sales", tags=["Sales Agent"])
 
