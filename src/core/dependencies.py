@@ -1,15 +1,16 @@
-from fastapi import Depends
-from redis.asyncio import Redis, from_url
+from fastapi import Depends, Request
+from redis.asyncio import Redis
 
-from config import obtener_config
 from core.event_bus import EventBus
 
-settings = obtener_config()
 
-async def get_redis() -> Redis:
-    """Dependencia para obtener conexión Redis"""
-    redis = await from_url(settings.redis_url, decode_responses=False)
-    return redis
+async def get_redis(request: Request) -> Redis:
+    """Retorna el pool singleton de Redis desde app.state.
+    El pool se inicializa en el lifespan de main.py — una sola
+    instancia compartida para todo el ciclo de vida del servidor.
+    """
+    return request.app.state.redis
+
 
 async def get_event_bus(redis: Redis = Depends(get_redis)) -> EventBus:
     """Dependencia para obtener Event Bus"""

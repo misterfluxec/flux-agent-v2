@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, HttpUrl
 from sqlalchemy.ext.asyncio import AsyncSession
+from redis.asyncio import Redis, ConnectionPool
 
 from config import obtener_config
 from database import cerrar_db, configurar_rls, inicializar_db, obtener_sesion
@@ -104,9 +105,20 @@ async def lifespan(app: FastAPI):
 
     await inicializar_db()
 
-    # Inicializar Redis, Gateway y Event Bus
-    redis_conn = await get_redis()
-    
+    # ─── REDIS POOL SINGLETON ───
+    # Un solo ConnectionPool compartido para todo el ciclo de vida del servidor.
+    # Elimina la creación de conexiones por request (anti-patrón anterior).
+    redis_pool = ConnectionPool.from_url(
+        config.redis_url,
+        max_connections=20,
+        socket_keepalive=True,
+        socket_keepalive_options={},
+        health_check_interval=30,
+        decode_responses=True,
+    )
+    app.state.redis = Redis(connection_pool=redis_pool)
+    redis_conn = app.state.redis
+
     # Nuevo Gateway Unificado de Tiempo Real
     realtime_gateway = RealtimeGateway(redis_conn)
     app.state.realtime_gateway = realtime_gateway
@@ -171,11 +183,8 @@ async def lifespan(app: FastAPI):
     app.state.billing_alert = billing_alert
 
     try:
-        import redis.asyncio as aioredis
-        r = aioredis.from_url(config.redis_url, decode_responses=True)
-        await r.ping()
-        await r.aclose()
-        logger.info("✅ Redis disponible")
+        await redis_conn.ping()
+        logger.info("✅ Redis disponible (pool singleton activo)")
     except Exception as exc:
         logger.warning(f"⚠️  Redis no disponible: {exc}")
 
@@ -283,7 +292,13 @@ async def lifespan(app: FastAPI):
         
     if hasattr(app.state, "event_bus"):
         await app.state.event_bus.close()
-        
+
+    # Cerrar pool Redis — liberar conexiones limpias
+    if hasattr(app.state, "redis"):
+        await app.state.redis.aclose()
+        await redis_pool.aclose()
+        logger.info("🔴 Redis pool cerrado")
+
     await cerrar_db()
 
 
@@ -582,10 +597,7 @@ async def health_check():
         estado_servicios["postgres"] = "error"
 
     try:
-        import redis.asyncio as aioredis
-        r = aioredis.from_url(config.redis_url)
-        await r.ping()
-        await r.aclose()
+        await request.app.state.redis.ping()
         estado_servicios["redis"] = "ok"
     except Exception:
         estado_servicios["redis"] = "error"
