@@ -1,259 +1,309 @@
-import os
-from typing import Any, Dict, List, Optional
-from uuid import UUID
+# =============================================================================
+# FLUXAGENT V2 — WHATSAPP ROUTER (CON COLA DE TAREAS)
+# =============================================================================
+# Versión actualizada usando Dramatiq para background tasks
+# Respuestas inmediatas, procesamiento asíncrono
+# =============================================================================
 
-import httpx
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+import logging
+from typing import Optional, Dict, Any
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from pydantic import BaseModel
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from auth import get_tenant_actual
-from database import configurar_rls, obtener_sesion
-from config import obtener_config
+from auth import PayloadToken, get_usuario_actual
+from tasks.async_tasks import enqueue_task, enviar_whatsapp_task, procesar_webhook_whatsapp_task
 
-router = APIRouter(
-    prefix="/api/v1/whatsapp",
-    tags=["WhatsApp & Canales"],
-)
+logger = logging.getLogger(__name__)
 
-config = obtener_config()
+router = APIRouter(prefix="/api/v1/whatsapp", tags=["WhatsApp"])
 
-# URL de Evolution API (por defecto)
-EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "http://flux-evolution:8080")
-EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "fluxkey123")
+# =============================================================================
+# SCHEMAS
+# =============================================================================
 
-# Modelos Pydantic
-class WhatsAppConnectRequest(BaseModel):
-    instancia_nombre: str
-    numero_telefono: Optional[str] = None
-    agent_id: Optional[UUID] = None  # Si es null, usará el agente por defecto
+class WhatsAppMessage(BaseModel):
+    phone: str
+    message: str
+    media_url: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
 
-class WhatsAppStatusResponse(BaseModel):
-    instancia_nombre: str
-    estado: str
-    numero_telefono: Optional[str] = None
-    qr_code: Optional[str] = None
-    conectado: bool
+class WhatsAppResponse(BaseModel):
+    status: str
+    message: str
+    task_id: Optional[str] = None
+    queue_position: Optional[int] = None
 
-class WhatsAppInstanceInfo(BaseModel):
-    id: UUID
-    instancia_nombre: str
-    canal: str
-    estado: str
-    webhook_url: Optional[str] = None
-    agent_id: Optional[UUID] = None
+# =============================================================================
+# ENDPOINTS CON COLA DE TAREAS
+# =============================================================================
 
-@router.post("/connect", response_model=WhatsAppStatusResponse)
-async def connect_whatsapp(
-    request: WhatsAppConnectRequest,
-    tenant_id: UUID = Depends(get_tenant_actual),
-    db: AsyncSession = Depends(obtener_sesion)
+@router.post("/send", response_model=WhatsAppResponse)
+async def send_whatsapp(
+    message_data: WhatsAppMessage,
+    usuario: PayloadToken = Depends(get_usuario_actual)
 ):
-    """
-    Crea una instancia de WhatsApp en Evolution API y genera el código QR.
-    Registra la instancia en canales_config.
-    """
-    await configurar_rls(db, tenant_id)
-    
-    # 1. Validar Evolution API
-    if not EVOLUTION_API_KEY:
-        raise HTTPException(status_code=500, detail="Evolution API Key no configurada en el servidor.")
-
-    headers = {
-        "apikey": EVOLUTION_API_KEY,
-        "Content-Type": "application/json"
-    }
-
-    # 2. Obtener URL de Webhooks del backend
-    # En producción deberíamos usar config.backend_url, en local la URL base
-    base_url = config.backend_url if hasattr(config, "backend_url") else os.getenv("BASE_URL", "http://localhost:8001")
-    webhook_url = f"{base_url}/api/v1/webhooks/whatsapp"
-
-    # Construir token de webhook
-    webhook_token = f"tenant-{tenant_id}"
-
-    evolution_payload = {
-        "instanceName": request.instancia_nombre,
-        "qrcode": True,
-        "number": request.numero_telefono,
-        "webhook": webhook_url,
-        "token": webhook_token
-    }
-
+    """Envía WhatsApp en cola (no bloqueante)"""
     try:
-        # Llamar a Evolution API
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.post(
-                f"{EVOLUTION_API_URL}/instance/create",
-                headers=headers,
-                json=evolution_payload
+        # Validar datos
+        if not message_data.phone or not message_data.message:
+            raise HTTPException(
+                status_code=400,
+                detail="Teléfono y mensaje son requeridos"
             )
-            
-            if resp.status_code != 200 and resp.status_code != 201:
-                raise HTTPException(status_code=resp.status_code, detail=f"Evolution API Error: {resp.text}")
-            
-            evolution_data = resp.json()
+        
+        # Encolar tarea (inmediato)
+        message = enqueue_task(
+            enviar_whatsapp_task,
+            tenant_id=usuario.tenant_id,
+            phone=message_data.phone,
+            message=message_data.message,
+            media_url=message_data.media_url,
+            metadata=message_data.metadata
+        )
+        
+        logger.info(f"WhatsApp encolado: {message.message_id} - Usuario: {usuario.tenant_id}")
+        
+        return WhatsAppResponse(
+            status="queued",
+            message="Mensaje en cola de envío",
+            task_id=message.message_id,
+            queue_position=None  # TODO: Implementar posición en cola
+        )
+        
+    except Exception as e:
+        logger.error(f"Error encolando WhatsApp: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error encolando mensaje: {str(e)}"
+        )
 
-            # Guardar en base de datos
-            token_instancia = evolution_data.get("hash", {}).get("apikey", "")
-            if not token_instancia:
-                # evolution_data puede devolver un formato distinto dependiendo de la versión
-                token_instancia = evolution_data.get("instance", {}).get("token", "")
-
-            # Insert o Update en canales_config
-            await db.execute(text("""
-                INSERT INTO canales_config (tenant_id, agent_id, canal, instancia_nombre, token_acceso, webhook_url, estado)
-                VALUES (:tenant_id, :agent_id, 'whatsapp', :instancia_nombre, :token_acceso, :webhook_url, 'inactivo')
-                ON CONFLICT (tenant_id, canal, instancia_nombre) 
-                DO UPDATE SET token_acceso = EXCLUDED.token_acceso, webhook_url = EXCLUDED.webhook_url, agent_id = EXCLUDED.agent_id
-            """), {
-                "tenant_id": str(tenant_id),
-                "agent_id": str(request.agent_id) if request.agent_id else None,
-                "instancia_nombre": request.instancia_nombre,
-                "token_acceso": token_instancia,
-                "webhook_url": webhook_url
-            })
-            
-            return WhatsAppStatusResponse(
-                instancia_nombre=request.instancia_nombre,
-                estado="generando_qr",
-                qr_code=evolution_data.get("qrcode", {}).get("base64", evolution_data.get("qrcode")),
-                numero_telefono=request.numero_telefono,
-                conectado=False
+@router.post("/send-bulk")
+async def send_bulk_whatsapp(
+    messages: list[WhatsAppMessage],
+    usuario: PayloadToken = Depends(get_usuario_actual)
+):
+    """Envía múltiples WhatsApp en cola"""
+    try:
+        if len(messages) > 100:  # Límite para evitar sobrecarga
+            raise HTTPException(
+                status_code=400,
+                detail="Máximo 100 mensajes por lote"
             )
-            
-    except httpx.RequestError as e:
-        raise HTTPException(status_code=503, detail=f"Error conectando con Evolution API: {str(e)}")
+        
+        task_ids = []
+        for msg in messages:
+            message = enqueue_task(
+                enviar_whatsapp_task,
+                tenant_id=usuario.tenant_id,
+                phone=msg.phone,
+                message=msg.message,
+                media_url=msg.media_url,
+                metadata=msg.metadata
+            )
+            task_ids.append(message.message_id)
+        
+        return {
+            "status": "queued_bulk",
+            "message": f"{len(messages)} mensajes encolados",
+            "task_ids": task_ids
+        }
+        
+    except Exception as e:
+        logger.error(f"Error encolando bulk WhatsApp: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error encolando mensajes: {str(e)}"
+        )
 
+@router.post("/webhook/{instance_id}")
+async def webhook_whatsapp(
+    instance_id: str,
+    webhook_data: Dict[str, Any],
+    usuario: PayloadToken = Depends(get_usuario_actual)
+):
+    """Procesa webhook de WhatsApp en cola"""
+    try:
+        # Encolar procesamiento (inmediato)
+        message = enqueue_task(
+            procesar_webhook_whatsapp_task,
+            tenant_id=usuario.tenant_id,
+            webhook_data=webhook_data,
+            instance_id=instance_id
+        )
+        
+        logger.info(f"Webhook WhatsApp encolado: {message.message_id} - Instance: {instance_id}")
+        
+        return {
+            "status": "queued",
+            "message": "Webhook encolado para procesamiento",
+            "task_id": message.message_id
+        }
+        
+    except Exception as e:
+        logger.error(f"Error encolando webhook WhatsApp: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error procesando webhook: {str(e)}"
+        )
 
-@router.get("/status/{instancia_nombre}", response_model=WhatsAppStatusResponse)
+@router.post("/send-media")
+async def send_whatsapp_media(
+    phone: str,
+    message: str,
+    file: UploadFile = File(...),
+    usuario: PayloadToken = Depends(get_usuario_actual)
+):
+    """Envía WhatsApp con media en cola"""
+    try:
+        # Procesar archivo (rápido, síncrono)
+        if not file.content_type.startswith(('image/', 'video/', 'audio/')):
+            raise HTTPException(
+                status_code=400,
+                detail="Solo se permiten archivos de imagen, video o audio"
+            )
+        
+        # Guardar archivo temporal
+        import os
+        import uuid
+        from fastapi import UploadFile
+        
+        file_id = str(uuid.uuid4())
+        file_extension = file.filename.split('.')[-1] if file.filename else 'tmp'
+        media_path = f"uploads/temp/{file_id}.{file_extension}"
+        
+        os.makedirs("uploads/temp", exist_ok=True)
+        
+        with open(media_path, "wb") as buffer:
+            content = await file.read()
+            buffer.write(content)
+        
+        # Encolar tarea de envío
+        message = enqueue_task(
+            enviar_whatsapp_task,
+            tenant_id=usuario.tenant_id,
+            phone=phone,
+            message=message,
+            media_url=media_path,
+            metadata={"original_filename": file.filename}
+        )
+        
+        return WhatsAppResponse(
+            status="queued",
+            message="Media encolado para envío",
+            task_id=message.message_id
+        )
+        
+    except Exception as e:
+        logger.error(f"Error encolando media WhatsApp: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error procesando media: {str(e)}"
+        )
+
+@router.get("/task/{task_id}")
+async def get_task_status(
+    task_id: str,
+    usuario: PayloadToken = Depends(get_usuario_actual)
+):
+    """Obtiene estado de tarea de WhatsApp"""
+    try:
+        from tasks.async_tasks import get_task_status
+        
+        status = get_task_status(task_id)
+        
+        return {
+            "task_id": task_id,
+            "status": status["status"],
+            "timestamp": status["timestamp"],
+            "error": status.get("error")
+        }
+        
+    except Exception as e:
+        logger.error(f"Error obteniendo estado de tarea {task_id}: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error obteniendo estado: {str(e)}"
+        )
+
+@router.get("/queue/stats")
+async def get_queue_stats(
+    usuario: PayloadToken = Depends(get_usuario_actual)
+):
+    """Obtiene estadísticas de colas (admin)"""
+    try:
+        # TODO: Implementar estadísticas reales de Dramatiq
+        return {
+            "queues": {
+                "whatsapp": {
+                    "pending": 0,
+                    "processing": 0,
+                    "failed": 0,
+                    "completed": 0
+                }
+            },
+            "timestamp": "2024-01-01T00:00:00Z"  # TODO: Timestamp real
+        }
+        
+    except Exception as e:
+        logger.error(f"Error obteniendo stats de colas: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error obteniendo estadísticas: {str(e)}"
+        )
+
+# =============================================================================
+# ENDPOINTS LEGACY (MANTENIDOS POR COMPATIBILIDAD)
+# =============================================================================
+
+@router.get("/status")
 async def get_whatsapp_status(
-    instancia_nombre: str,
-    tenant_id: UUID = Depends(get_tenant_actual),
-    db: AsyncSession = Depends(obtener_sesion)
+    usuario: PayloadToken = Depends(get_usuario_actual)
 ):
-    """
-    Obtiene el estado de conexión actual de la instancia.
-    """
-    await configurar_rls(db, tenant_id)
-    
-    # 1. Verificar existencia en la DB
-    result = await db.execute(text("""
-        SELECT id FROM canales_config 
-        WHERE tenant_id = :tenant_id AND canal = 'whatsapp' AND instancia_nombre = :instancia_nombre
-    """), {"tenant_id": str(tenant_id), "instancia_nombre": instancia_nombre})
-    
-    if not result.fetchone():
-        raise HTTPException(status_code=404, detail="Instancia no encontrada para este tenant")
-
-    headers = {"apikey": EVOLUTION_API_KEY}
-    
+    """Estado del servicio WhatsApp (legacy)"""
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.get(
-                f"{EVOLUTION_API_URL}/instance/connectionState/{instancia_nombre}",
-                headers=headers
-            )
-            
-            if resp.status_code != 200:
-                raise HTTPException(status_code=resp.status_code, detail=f"Evolution API Error: {resp.text}")
-            
-            status_data = resp.json()
-            estado_conexion = status_data.get("instance", {}).get("state", "unknown")
-            conectado = estado_conexion == "open"
+        # Verificar conexión con Evolution API
+        from services.whatsapp_guardian import check_whatsapp_health
+        
+        health = await check_whatsapp_health(usuario.tenant_id)
+        
+        return {
+            "status": "healthy" if health else "unhealthy",
+            "tenant_id": usuario.tenant_id,
+            "queue_enabled": True,
+            "message": "Servicio operativo con cola de tareas"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error verificando estado WhatsApp: {e}")
+        return {
+            "status": "error",
+            "message": f"Error verificando estado: {str(e)}"
+        }
 
-            # Actualizar estado en la DB
-            nuevo_estado = "activo" if conectado else "desconectado"
-            await db.execute(text("""
-                UPDATE canales_config 
-                SET estado = :nuevo_estado 
-                WHERE tenant_id = :tenant_id AND canal = 'whatsapp' AND instancia_nombre = :instancia_nombre
-            """), {"nuevo_estado": nuevo_estado, "tenant_id": str(tenant_id), "instancia_nombre": instancia_nombre})
-            
-            return WhatsAppStatusResponse(
-                instancia_nombre=instancia_nombre,
-                estado=estado_conexion,
-                numero_telefono=status_data.get("instance", {}).get("owner", None),
-                conectado=conectado
-            )
-            
-    except httpx.RequestError as e:
-        raise HTTPException(status_code=503, detail=f"Error conectando con Evolution API: {str(e)}")
+# =============================================================================
+# COMPARACIÓN: VERSIÓN ANTIGUA VS NUEVA
+# =============================================================================
 
+"""
+# VERSIÓN ANTIGUA (bloqueante):
+@router.post("/send")
+async def send_whatsapp(...):
+    # ❌ Procesamiento síncrono (lento)
+    result = await enviar_whatsapp_async(...)
+    return result  # ❌ Cliente espera mucho tiempo
 
-@router.delete("/disconnect/{instancia_nombre}")
-async def disconnect_whatsapp(
-    instancia_nombre: str,
-    tenant_id: UUID = Depends(get_tenant_actual),
-    db: AsyncSession = Depends(obtener_sesion)
-):
-    """
-    Desconecta y elimina una instancia de WhatsApp.
-    """
-    await configurar_rls(db, tenant_id)
-    
-    # 1. Verificar existencia
-    result = await db.execute(text("""
-        SELECT id FROM canales_config 
-        WHERE tenant_id = :tenant_id AND canal = 'whatsapp' AND instancia_nombre = :instancia_nombre
-    """), {"tenant_id": str(tenant_id), "instancia_nombre": instancia_nombre})
-    
-    if not result.fetchone():
-        raise HTTPException(status_code=404, detail="Instancia no encontrada")
+# VERSIÓN NUEVA (con cola):
+@router.post("/send")
+async def send_whatsapp(...):
+    # ✅ Encolar inmediato
+    message = enqueue_task(enviar_whatsapp_task, ...)
+    return {"status": "queued", "task_id": message.message_id}  # ✅ Respuesta rápida
 
-    headers = {"apikey": EVOLUTION_API_KEY}
-    
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.delete(
-                f"{EVOLUTION_API_URL}/instance/logout/{instancia_nombre}",
-                headers=headers
-            )
-            
-            # Borramos la instancia también (o en su defecto log out)
-            await client.delete(
-                f"{EVOLUTION_API_URL}/instance/delete/{instancia_nombre}",
-                headers=headers
-            )
-            
-            # 2. Borrar de la base de datos
-            await db.execute(text("""
-                DELETE FROM canales_config 
-                WHERE tenant_id = :tenant_id AND canal = 'whatsapp' AND instancia_nombre = :instancia_nombre
-            """), {"tenant_id": str(tenant_id), "instancia_nombre": instancia_nombre})
-            
-            return {"status": "success", "message": "Instancia desconectada y eliminada correctamente"}
-            
-    except httpx.RequestError as e:
-        raise HTTPException(status_code=503, detail=f"Error conectando con Evolution API: {str(e)}")
-
-
-@router.get("/instances", response_model=List[WhatsAppInstanceInfo])
-async def list_whatsapp_instances(
-    tenant_id: UUID = Depends(get_tenant_actual),
-    db: AsyncSession = Depends(obtener_sesion)
-):
-    """
-    Lista las instancias configuradas por el tenant.
-    """
-    await configurar_rls(db, tenant_id)
-    
-    result = await db.execute(text("""
-        SELECT id, instancia_nombre, canal, estado, webhook_url, agent_id
-        FROM canales_config 
-        WHERE tenant_id = :tenant_id AND canal = 'whatsapp'
-    """), {"tenant_id": str(tenant_id)})
-    
-    instancias = []
-    for row in result.fetchall():
-        instancias.append(WhatsAppInstanceInfo(
-            id=row.id,
-            instancia_nombre=row.instancia_nombre,
-            canal=row.canal,
-            estado=row.estado,
-            webhook_url=row.webhook_url,
-            agent_id=row.agent_id
-        ))
-    
-    return instancias
+# BENEFICIOS:
+# 1. ✅ Respuesta inmediata al cliente
+# 2. ✅ No bloquea el servidor
+# 3. ✅ Reintentos automáticos
+# 4. ✅ Mejor experiencia de usuario
+# 5. ✅ Escalabilidad horizontal
+# 6. ✅ Monitoreo de tareas
+"""

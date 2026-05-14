@@ -14,17 +14,11 @@ config = obtener_config()
 # Broker Redis para Dramatiq
 redis_broker = RedisBroker(
     url=config.redis_url,
-    # Configuración de reintentos
-    max_retries=3,
-    retry_delay=60,  # 60 segundos entre reintentos
     # Configuración de conexión
     socket_keepalive=True,
     socket_keepalive_options={},
-    # Configuración de timeouts
-    timeout=30,
     # Configuración de health checks
-    health_check_interval=30,
-    heartbeat=60
+    health_check_interval=30
 )
 
 # Establecer broker global

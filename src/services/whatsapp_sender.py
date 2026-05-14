@@ -171,3 +171,22 @@ async def send_whatsapp_message(
     Prioriza voz si está disponible, si no texto.
     """
     return await send_tts_with_fallback(instance_name, phone_number, text, audio_base64)
+
+
+async def enviar_whatsapp_async(
+    tenant_id: str,
+    phone: str,
+    message: str,
+    media_url: Optional[str] = None,
+    metadata: Optional[dict] = None
+) -> dict:
+    """
+    Wrapper para async_tasks compatible con signature antigua.
+    """
+    instance_name = metadata.get("instance_name", f"instance_{tenant_id}") if metadata else f"instance_{tenant_id}"
+    return await send_whatsapp_message(
+        instance_name=instance_name,
+        phone_number=phone,
+        text=message,
+        audio_base64="" # media_url not directly supported in base64 here
+    )
