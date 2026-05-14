@@ -398,7 +398,17 @@ app.include_router(ai_copilot_router)
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import DBAPIError, IntegrityError
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from core.exceptions import FluxError
 # from auth import TenantNotFoundError, AuthenticationError
+
+@app.exception_handler(FluxError)
+async def flux_error_handler(request: Request, exc: FluxError):
+    """Handler global RFC 7807 para toda la jerarquía FluxError."""
+    return JSONResponse(
+        status_code=exc.http_status,
+        content=exc.to_problem(path=str(request.url.path)),
+        headers={"Content-Type": "application/problem+json"},
+    )
 
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
