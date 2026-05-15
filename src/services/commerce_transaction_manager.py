@@ -1,6 +1,6 @@
 import json
 from typing import Any, Dict, Optional, Callable
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from contextlib import contextmanager
 import logging
@@ -16,7 +16,7 @@ class CommerceTransactionManager:
     3. Escribe el Audit Trail (Trazabilidad estricta).
     4. Hace COMMIT de todo atómicamente, o ROLLBACK total.
     """
-    def __init__(self, db: Session, tenant_id: str):
+    def __init__(self, db: AsyncSession, tenant_id: str):
         self.db = db
         self.tenant_id = tenant_id
 
