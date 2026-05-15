@@ -54,33 +54,192 @@ class AIMemoryManager:
         await self.redis.hset(key, mapping=profile)
         await self.redis.expire(key, self.TTL_SEMANTIC)
 
-    async def get_full_context(self, customer_id: str, agent_id: str, agent_name: str = "Asistente") -> Dict:
-        """Combina memoria episódica + semántica + RAG documental para el prompt"""
-        episodic = await self.get_episodic_context(customer_id, agent_id)
-        semantic_raw = await self.redis.hgetall(self.SEMANTIC_KEY.format(customer=customer_id))
-        semantic = {k.decode(): json.loads(v.decode()) for k, v in semantic_raw.items()}
-        
+    async def get_full_context(
+        self,
+        customer_id: str,
+        agent_id: str,
+        agent_name: str = "Asistente",
+        query: str | None = None,
+    ) -> dict:
+        episodic = await self.get_episodic_context(
+            customer_id, agent_id
+        )
+        semantic_raw = await self.redis.hgetall(
+            self.SEMANTIC_KEY.format(customer=customer_id)
+        )
+        semantic = {
+            k.decode(): json.loads(v.decode())
+            for k, v in semantic_raw.items()
+        }
+
+        # RAG: búsqueda semántica si hay query
+        rag_results: list[dict] = []
+        if query:
+            rag_results = await self.search_semantic_memory(
+                query=query,
+                customer_id=customer_id,
+                limit=3,
+            )
+
         return {
             "episodic": episodic,
             "semantic": semantic,
-            "instructions": self._build_system_prompt(semantic, agent_name)
+            "rag": rag_results,
+            "instructions": self._build_system_prompt(
+                semantic, agent_name, rag_results
+            ),
         }
 
-    def _build_system_prompt(self, semantic: Dict, agent_name: str) -> str:
-        """Construye el prompt base inyectando la memoria semántica del cliente"""
-        profile_str = ", ".join([f"{k}: {v}" for k, v in semantic.items()])
-        return f"""
-        Eres {agent_name}, asistente comercial experto. 
-        Contexto del cliente: {profile_str if profile_str else "Cliente nuevo, sin historial previo."}
-        - Mantén coherencia con conversaciones previas.
-        - Prioriza soluciones basadas en su historial.
-        - Si detectas frustración o algo fuera de tu alcance, escala suavemente a un humano.
-        """
-        
-    async def persist_to_vector_db(self, customer_id: str, agent_id: str):
-        """
-        [Potenciación]
-        Mueve interacciones antiguas de Redis a PostgreSQL con pgvector 
-        para memoria a largo plazo (RAG).
-        """
-        pass
+    def _build_system_prompt(
+        self,
+        semantic: dict,
+        agent_name: str,
+        rag_results: list[dict] | None = None,
+    ) -> str:
+        profile_str = ", ".join(
+            f"{k}: {v}" for k, v in semantic.items()
+        )
+        rag_section = ""
+        if rag_results:
+            rag_lines = "\n".join(
+                f"  - {r['content'][:200]}"
+                for r in rag_results
+                if r.get("similarity", 0) > 0.75
+            )
+            if rag_lines:
+                rag_section = (
+                    f"\nContexto relevante de conversaciones anteriores:\n"
+                    f"{rag_lines}"
+                )
+        return (
+            f"Eres {agent_name}, asistente comercial experto.\n"
+            f"Perfil del cliente: "
+            f"{profile_str or 'Cliente nuevo, sin historial.'}"
+            f"{rag_section}\n"
+            f"- Mantén coherencia con conversaciones previas.\n"
+            f"- Prioriza soluciones basadas en su historial.\n"
+            f"- Si detectas frustración, escala a un humano."
+        )
+
+    async def _get_embedding(
+        self, text: str
+    ) -> list[float] | None:
+        import httpx
+        model = getattr(
+            settings, "ollama_embedding_model",
+            "nomic-embed-text"
+        )
+        base_url = getattr(
+            settings, "ollama_base_url",
+            "http://localhost:11434"
+        )
+        try:
+            async with httpx.AsyncClient(
+                timeout=30.0
+            ) as client:
+                r = await client.post(
+                    f"{base_url}/api/embeddings",
+                    json={"model": model, "prompt": text},
+                )
+                r.raise_for_status()
+                return r.json().get("embedding")
+        except Exception as exc:
+            import logging
+            logging.getLogger("flux.ai_memory").warning(
+                "embedding_generation_failed",
+                extra={"error": str(exc)},
+            )
+            return None
+
+    async def persist_to_vector_db(
+        self, customer_id: str, agent_id: str,
+        tenant_id: str | None = None
+    ) -> int:
+        from sqlalchemy import text
+        interactions = await self.get_episodic_context(
+            customer_id, agent_id, limit=50
+        )
+        saved = 0
+        for turn in interactions:
+            content = turn.get("content", "").strip()
+            if not content or len(content) < 10:
+                continue
+            embedding = await self._get_embedding(content)
+            if not embedding:
+                continue
+            try:
+                await self.db.execute(
+                    text("""
+                        INSERT INTO flux_semantic_memory
+                          (tenant_id, customer_id, agent_id,
+                           content, role, embedding, metadata)
+                        VALUES
+                          (:tid::uuid, :cid, :aid, :content,
+                           :role, :emb::vector, :meta::jsonb)
+                    """),
+                    {
+                        "tid": tenant_id,
+                        "cid": customer_id,
+                        "aid": agent_id,
+                        "content": content,
+                        "role": turn.get("role", "user"),
+                        "emb": str(embedding),
+                        "meta": json.dumps(
+                            turn.get("metadata", {})
+                        ),
+                    },
+                )
+                saved += 1
+            except Exception as exc:
+                import logging
+                logging.getLogger("flux.ai_memory").warning(
+                    "persist_embedding_failed",
+                    extra={"error": str(exc)},
+                )
+        await self.db.commit()
+        return saved
+
+    async def search_semantic_memory(
+        self,
+        query: str,
+        customer_id: str,
+        limit: int = 5,
+    ) -> list[dict]:
+        from sqlalchemy import text
+        embedding = await self._get_embedding(query)
+        if not embedding:
+            return []
+        try:
+            result = await self.db.execute(
+                text("""
+                    SELECT content, role, metadata,
+                           1 - (embedding <=> :emb::vector)
+                           AS similarity
+                    FROM flux_semantic_memory
+                    WHERE customer_id = :cid
+                      AND embedding IS NOT NULL
+                    ORDER BY embedding <=> :emb::vector
+                    LIMIT :limit
+                """),
+                {
+                    "cid": customer_id,
+                    "emb": str(embedding),
+                    "limit": limit,
+                },
+            )
+            return [
+                {
+                    "content": r.content,
+                    "role": r.role,
+                    "similarity": round(float(r.similarity), 3),
+                    "metadata": r.metadata or {},
+                }
+                for r in result.fetchall()
+            ]
+        except Exception as exc:
+            import logging
+            logging.getLogger("flux.ai_memory").warning(
+                "semantic_search_failed",
+                extra={"error": str(exc)},
+            )
+            return []
