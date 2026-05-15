@@ -108,6 +108,18 @@ class Configuracion(BaseSettings):
     evolution_api_key: str = "fluxkey123"
 
     # -------------------------------------------------------------------------
+    # URLs Públicas del Sistema
+    # -------------------------------------------------------------------------
+    backend_url: str = "http://localhost:9000"     # URL pública del backend (para webhooks)
+    frontend_url: str = "http://localhost:4000"    # URL pública del frontend (para back_urls MP)
+
+    # -------------------------------------------------------------------------
+    # MercadoPago
+    # -------------------------------------------------------------------------
+    mp_access_token: str = ""
+    mp_webhook_secret: str = ""  # Vacío = validación desactivada (solo dev/local)
+
+    # -------------------------------------------------------------------------
     # LLM Cloud Providers (desactivados por defecto)
     # -------------------------------------------------------------------------
     llm_mode: str = "local"           # local | cloud

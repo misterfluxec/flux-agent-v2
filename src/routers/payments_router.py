@@ -11,7 +11,7 @@ import json
 from datetime import datetime, timedelta
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Header, Request, status, BackgroundTasks
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,6 +20,7 @@ import httpx
 from auth import PayloadToken, get_usuario_actual, get_tenant_actual, solo_admin
 from database import obtener_sesion, configurar_rls
 from config import obtener_config
+from services.payments.mercadopago_provider import _validate_mp_signature
 
 logger = logging.getLogger(__name__)
 config = obtener_config()
@@ -334,26 +335,41 @@ async def validate_coupon(
 
 @router.post("/webhook/mercadopago", summary="Webhook de Mercado Pago")
 async def mercadopago_webhook(
-    request: dict,
+    request: Request,
     background_tasks: BackgroundTasks,
+    x_signature: str = Header(default="", alias="x-signature"),
+    x_request_id: str = Header(default="", alias="x-request-id"),
 ):
     """
-    Receives payment notifications from Mercado Pago.
-    Updates subscription status based on payment results.
+    Recibe notificaciones de pago de MercadoPago.
+    Valida la firma HMAC x-signature antes de procesar.
+    Actualiza estado de suscripciones en background.
     """
     try:
-        topic = request.get("topic")
-        resource_id = request.get("resource_id")
-        
-        logger.info(f"MP Webhook: topic={topic}, resource={resource_id}")
-        
+        payload = await request.json()
+        data_id = str(payload.get("data", {}).get("id", ""))
+
+        # Validar firma HMAC — lanza WebhookValidationError si falla
+        cfg = obtener_config()
+        _validate_mp_signature(
+            x_signature=x_signature,
+            x_request_id=x_request_id,
+            data_id=data_id,
+            webhook_secret=cfg.mp_webhook_secret,
+        )
+
+        topic = payload.get("topic")
+        resource_id = payload.get("resource_id")
+
+        logger.info(f"MP Webhook validado: topic={topic}, resource={resource_id}")
+
         if topic == "payment":
             background_tasks.add_task(procesar_pago_mp, resource_id)
-        
+
         return {"received": True}
     except Exception as e:
         logger.error(f"Error en webhook MP: {e}")
-        return {"error": str(e)}
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 async def procesar_pago_mp(payment_id: str):
