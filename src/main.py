@@ -64,11 +64,18 @@ from routers.ai_copilot_router import router as ai_copilot_router
 from core.metrics import start_metrics_server
 from tasks.rag_scheduler import start_scheduler as start_rag_scheduler, stop_scheduler as stop_rag_scheduler
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-    datefmt="%Y-%m-%dT%H:%M:%S",
-)
+# Configurar logging estructurado JSON (usa el formatter de observability)
+from core.observability.logging import StructuredLogHandler, StructuredLogFormatter
+_log_handler = StructuredLogHandler()
+_log_handler.setFormatter(StructuredLogFormatter())
+_log_handler.setLevel(logging.INFO)
+logging.root.handlers.clear()
+logging.root.addHandler(_log_handler)
+logging.root.setLevel(logging.INFO)
+# Silenciar loggers ruidosos
+for _noisy in ("uvicorn.access", "httpx", "httpcore"):
+    logging.getLogger(_noisy).setLevel(logging.WARNING)
+
 logger = logging.getLogger(__name__)
 config = obtener_config()
 
