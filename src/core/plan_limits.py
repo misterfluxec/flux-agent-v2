@@ -1,73 +1,107 @@
-from fastapi import HTTPException
-from functools import wraps
-from typing import Callable, Any
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import text
+from __future__ import annotations
 import logging
+from functools import wraps
+from typing import Callable
 
-logger = logging.getLogger(__name__)
+from fastapi import HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+from redis.asyncio import Redis
 
-PLAN_LIMITS = {
-    "starter": {
-        "max_agents": 1,
-        "max_active_quotes": 5,
-        "monthly_interactions": 100,  # Límite real de costo (LLM + TTS)
-        "allowed_workflows": ["cart_recovery"]
-    },
-    "growth": {
-        "max_agents": 3,
-        "max_active_quotes": 50,
-        "monthly_interactions": 1000,
-        "allowed_workflows": ["cart_recovery", "appointment_reminder_24h", "quote_followup_48h"]
-    },
-    "enterprise": {
-        "max_agents": -1,  # Ilimitado
-        "max_active_quotes": -1,
-        "monthly_interactions": -1,
-        "allowed_workflows": "*"  # Todos
-    }
+from core.plan_manager import PlanManager
+
+logger = logging.getLogger("flux.plan_limits")
+
+# PLAN_LIMITS conservado como fallback offline únicamente
+PLAN_LIMITS_FALLBACK = {
+    "free":       {"max_agents": 1,  "max_active_quotes": 5,
+                   "monthly_interactions": 100,
+                   "allowed_workflows": ["cart_recovery"]},
+    "starter":    {"max_agents": 1,  "max_active_quotes": 5,
+                   "monthly_interactions": 100,
+                   "allowed_workflows": ["cart_recovery"]},
+    "pro":        {"max_agents": 3,  "max_active_quotes": 50,
+                   "monthly_interactions": 1000,
+                   "allowed_workflows": [
+                       "cart_recovery",
+                       "appointment_reminder_24h",
+                       "quote_followup_48h"
+                   ]},
+    "enterprise": {"max_agents": -1, "max_active_quotes": -1,
+                   "monthly_interactions": -1,
+                   "allowed_workflows": None},
 }
 
-async def get_current_agents_count(tenant_id: str, db: AsyncSession) -> int:
-    query = text("SELECT COUNT(*) FROM agents WHERE tenant_id = :tenant_id AND status != 'deleted'")
-    result = await db.execute(query, {"tenant_id": tenant_id})
+async def get_plan_limits(
+    plan_key: str,
+    redis: Redis | None = None,
+    db: AsyncSession | None = None,
+) -> dict:
+    if redis and db:
+        try:
+            manager = PlanManager(redis=redis, db=db)
+            features = await manager.get_plan(plan_key)
+            return features.__dict__
+        except Exception as exc:
+            logger.warning("plan_manager_fallback",
+                          extra={"plan": plan_key,
+                                 "error": str(exc)})
+    return PLAN_LIMITS_FALLBACK.get(
+        plan_key, PLAN_LIMITS_FALLBACK["free"]
+    )
+
+async def get_current_agents_count(
+    tenant_id: str, db: AsyncSession
+) -> int:
+    from sqlalchemy import text
+    result = await db.execute(
+        text("SELECT COUNT(*) FROM agents "
+             "WHERE tenant_id = :tid AND status != 'deleted'"),
+        {"tid": tenant_id},
+    )
     return result.scalar() or 0
 
-def check_plan_limits(plan_key_extractor: Callable[..., str] = lambda kwargs: "starter"):
-    """
-    Decorador para restringir funcionalidad según el plan del tenant.
-    Requiere que kwargs incluya `tenant_id` y `db` si hay que consultar la BD.
-    """
+def check_plan_limits(
+    plan_key_extractor: Callable[..., str] = lambda kw: "free"
+):
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
-            # Obtener el plan del tenant (en un sistema real podría inyectarse desde el token JWT)
             plan = plan_key_extractor(kwargs)
-            limits = PLAN_LIMITS.get(plan, PLAN_LIMITS["starter"])
-            
+            redis = kwargs.get("redis")
+            db = kwargs.get("db")
+            limits = await get_plan_limits(plan, redis, db)
+
             tenant_id = None
             if "usuario" in kwargs:
                 tenant_id = kwargs["usuario"].tenant_id
             elif "tenant_id" in kwargs:
                 tenant_id = kwargs["tenant_id"]
-                
-            db = kwargs.get("db")
-            
-            # Verificar límite de agentes
-            if "create_agent" in func.__name__ and limits["max_agents"] != -1:
+
+            if ("create_agent" in func.__name__
+                    and limits.get("max_agents", 1) != -1):
                 if tenant_id and db:
-                    current_count = await get_current_agents_count(tenant_id, db)
-                    if current_count >= limits["max_agents"]:
-                        logger.warning(f"Tenant {tenant_id} alcanzó el límite de agentes para plan {plan}")
-                        raise HTTPException(403, f"Límite de {limits['max_agents']} agentes alcanzado. Mejora tu plan.")
-            
-            # Verificar workflows
-            if "create_workflow" in func.__name__ or "enable_workflow" in func.__name__:
-                if limits["allowed_workflows"] != "*":
-                    workflow_name = kwargs.get("workflow_name")
-                    if workflow_name and workflow_name not in limits["allowed_workflows"]:
-                        raise HTTPException(403, f"El workflow '{workflow_name}' requiere el plan Growth o Enterprise.")
-            
+                    count = await get_current_agents_count(
+                        tenant_id, db
+                    )
+                    if count >= limits["max_agents"]:
+                        raise HTTPException(
+                            403,
+                            f"Límite de {limits['max_agents']} "
+                            "agentes alcanzado. Mejora tu plan."
+                        )
+
+            if ("create_workflow" in func.__name__
+                    or "enable_workflow" in func.__name__):
+                wf = limits.get("allowed_workflows")
+                if wf is not None:
+                    wf_name = kwargs.get("workflow_name")
+                    if wf_name and wf_name not in wf:
+                        raise HTTPException(
+                            403,
+                            f"El workflow '{wf_name}' "
+                            "requiere plan Pro o Enterprise."
+                        )
+
             return await func(*args, **kwargs)
         return wrapper
     return decorator

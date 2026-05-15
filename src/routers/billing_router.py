@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel
 from typing import Optional, List
 from sqlalchemy import text
@@ -6,6 +6,7 @@ from datetime import datetime
 from database import sesion_db
 from routers.auth_router import get_usuario_actual
 from auth import PayloadToken
+from core.plan_manager import PlanManager
 
 router = APIRouter(prefix="/api/v1/billing", tags=["billing"])
 
@@ -206,27 +207,19 @@ async def get_billing_history(
 @router.post("/upgrade")
 async def upgrade_plan(
     new_plan: str,
+    request: Request,
     usuario: PayloadToken = Depends(get_usuario_actual)
 ):
     """Mejorar plan de suscripción"""
-    valid_plans = ["free", "basic", "pro", "enterprise"]
-    if new_plan not in valid_plans:
-        raise HTTPException(
-            status_code=400, 
-            detail=f"Plan inválido. Opciones: {', '.join(valid_plans)}"
-        )
-    
-    plan_limits = {
-        "free": {"max_agentes": 1, "max_messages_month": 100},
-        "basic": {"max_agentes": 2, "max_messages_month": 2000},
-        "pro": {"max_agentes": 5, "max_messages_month": 10000},
-        "enterprise": {"max_agentes": 20, "max_messages_month": 100000}
-    }
-    
-    plan_prices = {"free": 0, "basic": 29, "pro": 99, "enterprise": 299}
-    
+    # PlanManager para obtener límites y precios desde DB/Redis
     async with sesion_db() as db:
         await db.execute(text(f"SET app.current_tenant_id = '{usuario.tenant_id}'"))
+        
+        manager = PlanManager(redis=request.app.state.redis, db=db)
+        try:
+            features = await manager.get_plan(new_plan)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))
         
         await db.execute(text("""
             UPDATE tenants
@@ -239,15 +232,16 @@ async def upgrade_plan(
         """), {
             "tid": usuario.tenant_id,
             "plan": new_plan,
-            **plan_limits[new_plan],
-            "price": plan_prices[new_plan]
+            "max_agentes": features.max_agents,
+            "max_messages": features.max_messages_month,
+            "price": features.price_usd
         })
         await db.commit()
     
     return {
         "message": f"Plan mejorado a {new_plan}", 
         "plan": new_plan,
-        "price": plan_prices[new_plan]
+        "price": features.price_usd
     }
 
 
