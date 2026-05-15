@@ -15,3 +15,8 @@
 
 ## Registrado en
 - Paso 1.4 — 2026-05-14
+
+## Prioridad Media (deuda arquitectónica)
+- [ ] `social_auth.py` y `unified_oauth.py` comparten lógica
+      `code → token → userinfo` duplicada. Extraer a `OAuth2Helper`
+      compartido. (Paso 2.1 — aplazado por scope)
