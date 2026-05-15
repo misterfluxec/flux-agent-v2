@@ -1,32 +1,134 @@
+import json
+import logging
 import uuid
 from typing import List, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
 from redis.asyncio import Redis
 
 from domain.policies import PolicyRule, PolicyEvaluationRequest, PolicyEvaluationResult, PolicyEngineOutput, PolicyAction
+
+logger = logging.getLogger("flux.policy_engine")
 
 class PolicyEngine:
     def __init__(self, redis: Redis, db: AsyncSession):
         self.redis = redis
         self.db = db
-        # In a real app, this would be an LRU cache or fetched from DB
-        self._rules_cache: List[PolicyRule] = []
+        self._cache: dict[str, list[PolicyRule]] = {}
 
-    async def create_rule(self, rule: PolicyRule):
-        """Para pruebas y scaffolding. En prod, esto va a DB."""
-        self._rules_cache.append(rule)
+    async def create_rule(self, rule: PolicyRule,
+                          tenant_id: str | None = None) -> None:
+        await self.db.execute(
+            text("""
+                INSERT INTO flux_policies
+                  (id, tenant_id, name, description, conditions,
+                   action, priority, enabled, tenant_plans,
+                   industries, tools, modifications)
+                VALUES
+                  (:id, :tid, :name, :desc, :conds::jsonb,
+                   :action, :priority, :enabled,
+                   :plans::jsonb, :industries::jsonb,
+                   :tools::jsonb, :mods::jsonb)
+                ON CONFLICT (id) DO NOTHING
+            """),
+            {
+                "id": str(rule.id),
+                "tid": tenant_id,
+                "name": rule.name,
+                "desc": rule.description,
+                "conds": json.dumps([
+                    {"field": c.field,
+                     "operator": c.operator.value,
+                     "value": c.value}
+                    for c in rule.conditions
+                ]),
+                "action": rule.action.value,
+                "priority": rule.priority,
+                "enabled": rule.enabled,
+                "plans": json.dumps(rule.tenant_plans or []),
+                "industries": json.dumps(rule.industries or []),
+                "tools": json.dumps(rule.tools)
+                         if rule.tools is not None else None,
+                "mods": json.dumps(rule.modifications or {}),
+            },
+        )
+        await self.db.commit()
+        self._cache.pop(tenant_id or "global", None)
 
-    async def _get_applicable_rules(self, tenant_id: str, tool_name: str) -> List[PolicyRule]:
-        # En prod: SELECT * FROM policies WHERE tenant_id = tenant_id AND (tools IS NULL OR tool_name = ANY(tools))
-        # Por ahora usamos la cache de prueba
-        applicable = []
-        for r in self._rules_cache:
-            if not r.enabled:
-                continue
-            if r.tools is not None and tool_name not in r.tools:
-                continue
-            applicable.append(r)
-        return applicable
+    async def _get_applicable_rules(
+        self, tenant_id: str, tool_name: str
+    ) -> list[PolicyRule]:
+        from domain.policies import PolicyCondition, PolicyOperator
+
+        cache_key = f"{tenant_id}:{tool_name}"
+        if cache_key in self._cache:
+            return self._cache[cache_key]
+
+        result = await self.db.execute(
+            text("""
+                SELECT id, name, description, conditions,
+                       action, priority, enabled,
+                       tenant_plans, industries,
+                       tools, modifications
+                FROM flux_policies
+                WHERE enabled = TRUE
+                  AND (tenant_id IS NULL
+                       OR tenant_id = :tid::uuid)
+                  AND (tools IS NULL
+                       OR tools @> :tool_filter::jsonb)
+                ORDER BY priority DESC
+            """),
+            {
+                "tid": tenant_id,
+                "tool_filter": json.dumps([tool_name]),
+            },
+        )
+        rows = result.fetchall()
+
+        rules: list[PolicyRule] = []
+        for r in rows:
+            try:
+                conds = [
+                    PolicyCondition(
+                        field=c["field"],
+                        operator=PolicyOperator(c["operator"]),
+                        value=c["value"],
+                    )
+                    for c in (r.conditions or [])
+                ]
+                rules.append(PolicyRule(
+                    id=r.id,
+                    name=r.name,
+                    description=r.description or "",
+                    conditions=conds,
+                    action=PolicyAction(r.action),
+                    priority=r.priority,
+                    enabled=r.enabled,
+                    tenant_plans=r.tenant_plans or [],
+                    industries=r.industries or [],
+                    tools=r.tools,
+                    modifications=r.modifications or {},
+                ))
+            except Exception as e:
+                logger.warning(
+                    "policy_rule_deserialize_error",
+                    extra={"rule_name": r.name, "error": str(e)}
+                )
+
+        if not rules:
+            rules = [PolicyRule(
+                id=str(uuid.uuid4()),
+                name="default-allow",
+                description="Permiso por defecto (sin reglas en DB)",
+                conditions=[],
+                action=PolicyAction.ALLOW,
+                priority=0,
+                enabled=True,
+                tenant_plans=["basic", "pro", "enterprise"],
+            )]
+
+        self._cache[cache_key] = rules
+        return rules
 
     def _map_action_to_decision(self, action: PolicyAction) -> str:
         if action == PolicyAction.ALLOW:
@@ -39,9 +141,47 @@ class PolicyEngine:
             return "modified"
         return "allowed"
 
-    async def _log_evaluation(self, request: PolicyEvaluationRequest, evaluations: List[PolicyEvaluationResult], final_decision: str) -> str:
+    async def _log_evaluation(
+        self,
+        request: PolicyEvaluationRequest,
+        evaluations: List[PolicyEvaluationResult],
+        final_decision: str,
+    ) -> str:
         audit_id = str(uuid.uuid4())
-        # En prod: Insertar log asíncrono o empujar al Event Bus
+        try:
+            await self.db.execute(
+                text("""
+                    INSERT INTO flux_policy_audit_log
+                      (id, tenant_id, tool_name,
+                       final_decision, evaluations)
+                    VALUES
+                      (:id, :tid::uuid, :tool,
+                       :decision, :evals::jsonb)
+                """),
+                {
+                    "id": audit_id,
+                    "tid": str(request.tenant_id),
+                    "tool": request.tool_name,
+                    "decision": final_decision,
+                    "evals": json.dumps([
+                        {
+                            "rule_id": str(e.rule_id),
+                            "rule_name": e.rule_name,
+                            "matched": e.matched,
+                            "action": e.action.value
+                                if hasattr(e.action, "value")
+                                else str(e.action),
+                            "decision": e.decision,
+                            "reason": e.reason,
+                        }
+                        for e in evaluations
+                    ]),
+                },
+            )
+            await self.db.commit()
+        except Exception as exc:
+            logger.warning("policy_audit_log_failed",
+                          extra={"error": str(exc)})
         return audit_id
 
     async def evaluate_tool_execution(self, request: PolicyEvaluationRequest) -> PolicyEngineOutput:
