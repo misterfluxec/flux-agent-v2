@@ -1,4 +1,7 @@
 import time
+import logging
+import re
+import json
 from uuid import uuid4
 from domain.orchestrator import OrchestratorContext, OrchestratorOutput, OrchestratorStep
 from domain.events import DomainEvent, EventMetadata, EventType, OrchestratorStartedPayload, OrchestratorStepCompletedPayload
@@ -11,6 +14,8 @@ from services.professional_actor_loop import ProfessionalActorLoop, ActorLoopCon
 from src.runtime.graph import ExecutionGraph
 from src.runtime.graph_node import GraphNode
 from src.runtime.state_machine import AgentExecutionState
+
+logger = logging.getLogger("flux.ai_orchestrator")
 
 class AIOrchestrator:
     def __init__(self, redis, event_bus: EventBus, policy_engine: PolicyEngine, tool_executor: ToolExecutor, memory_manager: AIMemoryManager, llm_provider, professional_actor_loop: ProfessionalActorLoop = None):
@@ -48,14 +53,72 @@ class AIOrchestrator:
         
         return graph
 
-    async def _handle_memory(self, ctx: OrchestratorContext) -> str:
-        ctx.retrieved_memory = {"history": "loaded"}
-        return None
-        
-    async def _handle_intent(self, ctx: OrchestratorContext) -> str:
-        ctx.detected_intent = "purchase"
-        ctx.intent_confidence = 0.9
-        return None
+    async def _handle_memory(self, ctx: OrchestratorContext) -> None:
+        try:
+            # Nota: get_full_context en ai_memory.py no acepta tenant_id actualmente,
+            # pero lo incluimos según la especificación Enterprise para futura compatibilidad.
+            full_context = await self.memory_manager.get_full_context(
+                customer_id=str(ctx.customer_id),
+                agent_id=str(ctx.agent_id)
+            )
+            ctx.retrieved_memory = full_context
+        except Exception as exc:
+            logger.warning(
+                "memory_retrieval_failed",
+                extra={
+                    "error": str(exc),
+                    "conversation_id": str(ctx.conversation_id),
+                },
+            )
+            ctx.retrieved_memory = {
+                "episodic": [], "semantic": {}, "instructions": ""
+            }
+
+    async def _handle_intent(self, ctx: OrchestratorContext) -> None:
+        import json, re
+
+        system_prompt = (
+            "Eres un clasificador de intenciones para un agente "
+            "de ventas LATAM. Analiza el mensaje y responde "
+            "ÚNICAMENTE con JSON válido, sin texto adicional:\n"
+            '{"intent": "<tipo>", "confidence": <0.0-1.0>}\n\n'
+            "Tipos: purchase, inquiry, complaint, booking, "
+            "greeting, farewell, support, price_check, out_of_scope"
+        )
+
+        messages = [{"role": "system", "content": system_prompt}]
+
+        # Agregar últimas 3 interacciones como contexto
+        memory = ctx.retrieved_memory or {}
+        for turn in (memory.get("episodic") or [])[-3:]:
+            messages.append({
+                "role": turn.get("role", "user"),
+                "content": turn.get("content", ""),
+            })
+
+        messages.append({
+            "role": "user",
+            "content": ctx.raw_input or "",
+        })
+
+        try:
+            raw = await self.llm_provider.generate(
+                messages=messages,
+                temperature=0.1,
+                max_tokens=60,
+            )
+            content = raw.get("content", "") if isinstance(raw, dict) else str(raw)
+            match = re.search(r"\{[^}]+\}", content, re.DOTALL)
+            data = json.loads(match.group() if match else content)
+            ctx.detected_intent = data.get("intent", "inquiry")
+            ctx.intent_confidence = float(data.get("confidence", 0.5))
+        except Exception as exc:
+            logger.warning(
+                "intent_detection_failed",
+                extra={"error": str(exc)},
+            )
+            ctx.detected_intent = "inquiry"
+            ctx.intent_confidence = 0.5
         
     async def _handle_policy(self, ctx: OrchestratorContext) -> str:
         if self.pal:
@@ -78,6 +141,76 @@ class AIOrchestrator:
                 raise Exception("Policy Denied")
         return None
 
+    async def _handle_response(self, ctx: OrchestratorContext) -> None:
+        memory = ctx.retrieved_memory or {}
+        system_content = (
+            memory.get("instructions")
+            or "Eres un agente de ventas profesional. "
+               "Responde en el idioma del cliente, "
+               "de forma concisa, amable y útil."
+        )
+
+        messages = [{"role": "system", "content": system_content}]
+
+        # Historial reciente (últimas 5 interacciones)
+        for turn in (memory.get("episodic") or [])[-5:]:
+            messages.append({
+                "role": turn.get("role", "user"),
+                "content": turn.get("content", ""),
+            })
+
+        # Contexto de herramientas si hay resultados previos
+        if ctx.tool_results:
+            tool_ctx = "\n".join(
+                f"- {r.get('tool','tool')}: {r.get('result','')}"
+                for r in ctx.tool_results
+            )
+            messages.append({
+                "role": "system",
+                "content": f"Información disponible:\n{tool_ctx}",
+            })
+
+        messages.append({
+            "role": "user",
+            "content": ctx.raw_input or "",
+        })
+
+        raw = await self.llm_provider.generate(
+            messages=messages,
+            temperature=0.7,
+            max_tokens=500,
+        )
+
+        # Manejo de tool_calls
+        if isinstance(raw, dict) and raw.get("tool_calls"):
+            tool_results = []
+            for tc in raw["tool_calls"]:
+                fn = tc.get("function", {})
+                try:
+                    result = await self.tool_executor.execute(
+                        tool_name=fn.get("name", ""),
+                        arguments=fn.get("arguments", {}),
+                        tenant_id=str(ctx.tenant_id),
+                    )
+                    tool_results.append({
+                        "tool": fn.get("name"),
+                        "result": result,
+                    })
+                except Exception as exc:
+                    logger.warning(
+                        "tool_call_failed",
+                        extra={"tool": fn.get("name"), "error": str(exc)},
+                    )
+            ctx.tool_results = (ctx.tool_results or []) + tool_results
+            # Segunda llamada con resultados de herramientas
+            await self._handle_response(ctx)
+            return
+
+        content = (
+            raw.get("content", "") if isinstance(raw, dict) else str(raw)
+        )
+        ctx.generated_response = content or "No pude generar una respuesta."
+
     async def _handle_memory_persist(self, ctx: OrchestratorContext) -> str:
         return None
 
@@ -97,41 +230,23 @@ class AIOrchestrator:
             correlation_id=event.metadata.correlation_id or uuid4()
         )
 
-    async def _execute_step(self, ctx: OrchestratorContext, step: OrchestratorStep) -> bool:
-        """Lógica de cada paso. Devuelve True si es exitoso."""
+    async def _execute_step(
+        self, step: OrchestratorStep, ctx: OrchestratorContext
+    ) -> None:
         if step == OrchestratorStep.MEMORY_RETRIEVAL:
-            # Ejemplo simplificado
-            ctx.retrieved_memory = {"history": "loaded"}
-            return True
-            
+            await self._handle_memory(ctx)
+
         elif step == OrchestratorStep.INTENT_DETECTION:
-            ctx.detected_intent = "purchase"
-            ctx.intent_confidence = 0.9
-            return True
-            
-        elif step == OrchestratorStep.POLICY_EVALUATION:
-            # Aquí llamamos a Policy Engine
-            return True
-            
-        elif step == OrchestratorStep.TOOL_SELECTION:
-            ctx.selected_tools = []
-            return True
-            
-        elif step == OrchestratorStep.TOOL_EXECUTION:
-            return True
-            
+            await self._handle_intent(ctx)
+
         elif step == OrchestratorStep.RESPONSE_GENERATION:
-            # Stub de LLM
-            ctx.generated_response = "Esta es una respuesta simulada por el Orquestador."
-            return True
-            
-        elif step == OrchestratorStep.MEMORY_PERSISTENCE:
-            return True
-            
-        elif step == OrchestratorStep.EVENT_EMISSION:
-            return True
-            
-        return False
+            await self._handle_response(ctx)
+
+        else:
+            logger.warning(
+                "orchestrator_unknown_step",
+                extra={"step": str(step)},
+            )
 
     async def _generate_fallback_response(self, ctx: OrchestratorContext, reason: str) -> str:
         if reason == "policy_denied":
