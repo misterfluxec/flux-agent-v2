@@ -122,7 +122,7 @@ class PolicyEngine:
                 description="Permiso por defecto (sin reglas en DB)",
                 conditions=[],
                 action=PolicyAction.ALLOW,
-                priority=0,
+                priority=1,
                 enabled=True,
                 tenant_plans=["basic", "pro", "enterprise"],
             )]
