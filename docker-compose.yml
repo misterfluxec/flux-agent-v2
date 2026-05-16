@@ -76,7 +76,7 @@ services:
     ports:
       - "11434:11434"
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags >/dev/null || exit 1"]
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -114,6 +114,12 @@ services:
         condition: service_healthy
       ollama:
         condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     volumes:
       - ./src:/app
       - ./data/media:/app/data/media
@@ -123,6 +129,43 @@ services:
         limits:
           memory: 4G
           cpus: '3.0'
+    networks:
+      - fluxagent-net
+
+  # --- ASYNC WORKER (Dramatiq) ---
+  worker:
+    build:
+      context: ./src
+      dockerfile: Dockerfile
+    container_name: fluxagent-worker
+    restart: always
+    command: dramatiq tasks.async_tasks tasks.followup_worker
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+      - DB_NAME=${DB_NAME:-fluxagent_v2}
+      - DB_USER=${DB_USER:-fluxadmin}
+      - DB_PASSWORD=${DB_PASSWORD:-fluxsecure2026}
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redisflux2026}
+      - OLLAMA_URL=http://ollama:11434
+      - EVOLUTION_API_URL=${EVOLUTION_API_URL:-http://flux-evolution:8080}
+      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY:-fluxkey123}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import dramatiq; print('ok')"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     networks:
       - fluxagent-net
 
@@ -142,7 +185,8 @@ services:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:9000/api/v1}
       - NODE_ENV=development
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
   # --- TTS CLEANUP (Cron) ---
   tts-cleanup:
@@ -163,6 +207,58 @@ services:
     networks:
       - fluxagent-net
 
+  # --- OBSERVABILITY (Loki, Promtail, Prometheus, Grafana) ---
+  loki:
+    image: grafana/loki:latest
+    container_name: fluxagent-loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - fluxagent-net
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: fluxagent-promtail
+    volumes:
+      - ./data/logs:/var/log/fluxagent
+      - ./promtail-config.yaml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - fluxagent-net
+    depends_on:
+      - loki
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: fluxagent-prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - "9090:9090"
+    networks:
+      - fluxagent-net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: fluxagent-grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=adminflux2026
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      - fluxagent-net
+    depends_on:
+      - loki
+      - prometheus
+
 volumes:
   postgres_data:
     name: fluxagent_postgres_data
@@ -170,6 +266,10 @@ volumes:
     name: fluxagent_redis_data
   ollama_data:
     name: fluxagent_ollama_data
+  prometheus_data:
+    name: fluxagent_prometheus_data
+  grafana_data:
+    name: fluxagent_grafana_data
 
 networks:
   fluxagent-net:
