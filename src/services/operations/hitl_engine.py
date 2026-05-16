@@ -1,101 +1,240 @@
+from __future__ import annotations
 import logging
-from typing import Dict, Any, List
-from datetime import datetime, timezone
-from sqlalchemy.orm import Session
 import uuid
+from typing import Any
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.events.action_governance import ActionGovernanceRegistry
-# Simulating the outbox service for event publishing
-# from services.events.outbox import publish_event 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("flux.hitl_engine")
+
 
 class HITLEngine:
     """
-    Fase 5A — Sprint 5A.2: Human-in-the-Loop Execution Engine.
-    
-    El orquestador que valida permisos (Action Governance), 
-    y traza el Operational State Journal (action.approved -> action.executed)
-    antes de mutar cualquier estado.
+    Human-in-the-Loop Execution Engine — versión async.
+    Valida gobernanza, registra el Operational State Journal
+    y despacha acciones aprobadas.
     """
 
-    def __init__(self, db: Session, tenant_id: str, user_id: str, user_roles: List[str]):
+    def __init__(
+        self,
+        db: AsyncSession,
+        tenant_id: str,
+        user_id: str,
+        user_roles: list[str],
+        event_bus=None,
+    ):
         self.db = db
         self.tenant_id = tenant_id
         self.user_id = user_id
         self.user_roles = user_roles
+        self.event_bus = event_bus
 
-    def execute_action(self, action_name: str, payload: Dict[str, Any], ai_audit_log_id: str = None) -> Dict[str, Any]:
-        """
-        Flujo de ejecución de acción gobernada.
-        """
+    async def execute_action(
+        self,
+        action_name: str,
+        payload: dict[str, Any],
+        ai_audit_log_id: str | None = None,
+    ) -> dict[str, Any]:
         correlation_id = f"hitl_{uuid.uuid4().hex[:8]}"
 
-        # 1. State Journal: action.proposed (Intent by human based on AI context)
-        self._publish_state_event(
+        await self._publish_state_event(
             "action.proposed",
             correlation_id,
-            {"action": action_name, "ai_audit_log_id": ai_audit_log_id, "payload": payload}
+            {
+                "action": action_name,
+                "ai_audit_log_id": ai_audit_log_id,
+                "payload": payload,
+            },
         )
 
-        # 2. Validate Governance Policy
-        if not ActionGovernanceRegistry.can_user_execute(action_name, self.user_roles):
-            # Rechazado por permisos
-            self._publish_state_event(
+        if not ActionGovernanceRegistry.can_user_execute(
+            action_name, self.user_roles
+        ):
+            await self._publish_state_event(
                 "action.rejected",
                 correlation_id,
-                {"action": action_name, "reason": "Insufficient RBAC permissions based on Governance Policy"}
+                {
+                    "action": action_name,
+                    "reason": "Insufficient RBAC permissions",
+                    "user_roles": self.user_roles,
+                },
             )
-            return {"status": "error", "message": "Access Denied by Action Governance Layer."}
+            return {
+                "status": "error",
+                "message": "Acceso denegado por la capa de Gobernanza.",
+                "correlation_id": correlation_id,
+            }
 
-        # 3. State Journal: action.approved (Passed Governance)
-        self._publish_state_event(
+        policy = ActionGovernanceRegistry.get_policy(action_name)
+        if policy and policy.requires_approval:
+            await self._publish_state_event(
+                "action.pending_approval",
+                correlation_id,
+                {
+                    "action": action_name,
+                    "payload": payload,
+                    "requested_by": self.user_id,
+                },
+            )
+            return {
+                "status": "pending_approval",
+                "message": (
+                    f"Acción '{action_name}' requiere "
+                    "aprobación humana."
+                ),
+                "correlation_id": correlation_id,
+            }
+
+        await self._publish_state_event(
             "action.approved",
             correlation_id,
-            {"action": action_name, "approved_by": self.user_id, "roles": self.user_roles}
+            {"action": action_name, "approved_by": self.user_id},
         )
 
-        # 4. Dispatch Execution
         try:
-            execution_result = self._dispatch_to_handler(action_name, payload)
-            
-            # 5. State Journal: action.executed
-            self._publish_state_event(
+            result = await self._dispatch(
+                action_name, payload
+            )
+            await self._publish_state_event(
                 "action.executed",
                 correlation_id,
-                {"action": action_name, "result": execution_result}
+                {"action": action_name, "result": result},
             )
-            return {"status": "success", "result": execution_result, "correlation_id": correlation_id}
-            
-        except Exception as e:
-            logger.error(f"Execution failed for {action_name}: {e}")
-            self._publish_state_event(
-                "action.rejected",
+            return {
+                "status": "success",
+                "result": result,
+                "correlation_id": correlation_id,
+            }
+        except NotImplementedError:
+            await self._publish_state_event(
+                "action.failed",
                 correlation_id,
-                {"action": action_name, "reason": f"Execution Error: {str(e)}"}
+                {
+                    "action": action_name,
+                    "reason": "Handler no implementado",
+                },
             )
-            return {"status": "error", "message": f"Execution failed: {str(e)}"}
+            return {
+                "status": "error",
+                "message": f"Handler para '{action_name}' no implementado.",
+                "correlation_id": correlation_id,
+            }
+        except Exception as exc:
+            logger.exception(
+                "hitl_dispatch_error",
+                extra={"action": action_name, "error": str(exc)},
+            )
+            await self._publish_state_event(
+                "action.failed",
+                correlation_id,
+                {"action": action_name, "reason": str(exc)},
+            )
+            return {
+                "status": "error",
+                "message": str(exc),
+                "correlation_id": correlation_id,
+            }
 
-    def _dispatch_to_handler(self, action_name: str, payload: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Enruta la acción a su handler específico.
-        En una arquitectura real, esto podría ser un worker asíncrono o un command bus.
-        """
-        logger.info(f"Dispatching action {action_name} with payload {payload}")
-        if action_name == "REPLAY_WEBHOOK":
-            return {"recovered_event_id": payload.get("event_id"), "status": "requeued_successfully"}
-        elif action_name == "RELEASE_RESERVATION":
-            return {"released_sku": payload.get("sku"), "quantity": payload.get("quantity")}
-        elif action_name == "SYNC_CONNECTOR":
-            return {"connector_id": payload.get("connector_id"), "status": "sync_triggered"}
-        else:
-            raise NotImplementedError(f"Handler for {action_name} not implemented.")
+    async def _dispatch(
+        self, action_name: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        handlers = {
+            "REPLAY_WEBHOOK": self._handle_replay_webhook,
+            "RELEASE_RESERVATION": self._handle_release_reservation,
+            "SYNC_CONNECTOR": self._handle_sync_connector,
+            "ESCALATE_AGENT": self._handle_escalate_agent,
+            "CANCEL_ORDER": self._handle_cancel_order,
+            "EXPORT_CUSTOMER_DATA": self._handle_export_data,
+        }
+        handler = handlers.get(action_name)
+        if not handler:
+            raise NotImplementedError(action_name)
+        return await handler(payload)
 
-    def _publish_state_event(self, event_type: str, correlation_id: str, payload: Dict[str, Any]):
-        """
-        Registra la transición de estado en el EventOutbox (que luego pasa al Store).
-        Esto conforma el 'Operational State Journal' solicitado.
-        """
-        logger.info(f"HITL Journal -> [{event_type}] {payload}")
-        # publish_event(self.db, self.tenant_id, event_type, payload, correlation_id)
-        pass
+    async def _handle_replay_webhook(
+        self, payload: dict
+    ) -> dict:
+        return {
+            "recovered_event_id": payload.get("event_id"),
+            "status": "requeued_successfully",
+        }
+
+    async def _handle_release_reservation(
+        self, payload: dict
+    ) -> dict:
+        return {
+            "released_sku": payload.get("sku"),
+            "quantity": payload.get("quantity"),
+            "status": "released",
+        }
+
+    async def _handle_sync_connector(
+        self, payload: dict
+    ) -> dict:
+        return {
+            "connector_id": payload.get("connector_id"),
+            "status": "sync_triggered",
+        }
+
+    async def _handle_escalate_agent(
+        self, payload: dict
+    ) -> dict:
+        return {
+            "conversation_id": payload.get("conversation_id"),
+            "escalated_to": payload.get("operator_id", "queue"),
+            "status": "escalated",
+        }
+
+    async def _handle_cancel_order(
+        self, payload: dict
+    ) -> dict:
+        return {
+            "order_id": payload.get("order_id"),
+            "status": "cancellation_queued",
+        }
+
+    async def _handle_export_data(
+        self, payload: dict
+    ) -> dict:
+        return {
+            "export_id": str(uuid.uuid4()),
+            "customer_segment": payload.get("segment", "all"),
+            "status": "export_queued",
+        }
+
+    async def _publish_state_event(
+        self,
+        event_type: str,
+        correlation_id: str,
+        payload: dict[str, Any],
+    ) -> None:
+        logger.info(
+            "hitl_journal",
+            extra={
+                "event": event_type,
+                "correlation_id": correlation_id,
+                "tenant_id": self.tenant_id,
+                "payload": payload,
+            },
+        )
+        if self.event_bus:
+            try:
+                from domain.events import EventType
+                await self.event_bus.publish(
+                    event_type=EventType.HITL_STATE_TRANSITION
+                    if hasattr(EventType, "HITL_STATE_TRANSITION")
+                    else event_type,
+                    tenant_id=self.tenant_id,
+                    payload={
+                        "journal_event": event_type,
+                        "correlation_id": correlation_id,
+                        **payload,
+                    },
+                )
+            except Exception as exc:
+                logger.warning(
+                    "hitl_journal_publish_failed",
+                    extra={"error": str(exc)},
+                )
