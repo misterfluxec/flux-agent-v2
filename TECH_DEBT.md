@@ -1,5 +1,11 @@
 # Tech Debt Tracker — FluxAgent Enterprise Refactor
 
+## Prioridad Alta (seguridad)
+- [ ] governance /approval/respond publica evento sin 
+      verificar que correlation_id existe en estado 
+      PENDING en DB. Añadir validación previa para 
+      prevenir inyección de eventos huérfanos.
+
 ## Prioridad Alta (bloquean escala async)
 - [ ] 4 servicios usan `with SessionLocal() as db` síncrono — 
       bloquean el event loop bajo carga:
