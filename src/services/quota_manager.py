@@ -91,3 +91,73 @@ class QuotaManager:
             if now.month == 12:
                 return now.replace(year=now.year+1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
             return now.replace(month=now.month+1, day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    async def get_summary(self, tenant_id: str) -> dict:
+        from domain.usage import UsageResource
+        from datetime import datetime, timezone
+
+        resources_to_check = [
+            UsageResource.LLM_TOKENS_INPUT,
+            UsageResource.LLM_TOKENS_OUTPUT,
+            UsageResource.LLM_REQUESTS,
+            UsageResource.TOOL_EXECUTIONS,
+            UsageResource.EVENT_BUS_MESSAGES,
+        ]
+
+        raw: dict = {}
+        for resource in resources_to_check:
+            period_key = self._get_period_key(
+                resource, tenant_id
+            )
+            val = await self.redis.get(period_key)
+            raw[resource] = float(val) if val else 0.0
+
+        tokens_consumed = (
+            raw[UsageResource.LLM_TOKENS_INPUT]
+            + raw[UsageResource.LLM_TOKENS_OUTPUT]
+        )
+
+        quota_def = await self._get_quota_definition(
+            tenant_id, UsageResource.LLM_TOKENS_INPUT
+        )
+        token_limit = (
+            quota_def.limit if quota_def else 1_000_000
+        )
+
+        pct = (
+            round((tokens_consumed / token_limit) * 100, 1)
+            if token_limit > 0
+            else 0.0
+        )
+
+        now = datetime.now(timezone.utc)
+        reset_at = now.replace(
+            day=1, hour=0, minute=0,
+            second=0, microsecond=0,
+        )
+        if reset_at.month == 12:
+            reset_at = reset_at.replace(
+                year=reset_at.year + 1, month=1
+            )
+        else:
+            reset_at = reset_at.replace(
+                month=reset_at.month + 1
+            )
+
+        return {
+            "tokens": {
+                "consumed": tokens_consumed,
+                "limit": token_limit,
+                "percentage": pct,
+                "unlimited": token_limit == -1,
+            },
+            "requests": {
+                "llm": raw[UsageResource.LLM_REQUESTS],
+                "tools": raw[UsageResource.TOOL_EXECUTIONS],
+                "eventbus": raw[
+                    UsageResource.EVENT_BUS_MESSAGES
+                ],
+            },
+            "reset_at": reset_at.isoformat(),
+            "period": "month",
+        }

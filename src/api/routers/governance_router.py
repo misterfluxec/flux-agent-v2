@@ -1,73 +1,111 @@
-from fastapi import APIRouter, Depends, HTTPException
+from __future__ import annotations
+from typing import Any
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, text
-from typing import Dict, Any
-from datetime import datetime
-import json
 
-from src.core.database import get_db
-# TODO: Import tenant middleware properly once auth is linked
-# from src.core.middleware.tenant_isolation import get_tenant_id
+from auth import get_usuario_actual, PayloadToken
+from database import get_db
+from services.quota_manager import QuotaManager
+from core.exceptions import FluxError
 
-router = APIRouter(prefix="/api/v1/governance", tags=["Governance"])
+router = APIRouter(
+    prefix="/api/v1/governance",
+    tags=["Governance"],
+)
+
 
 @router.get("/usage/summary")
 async def get_usage_summary(
-    db: AsyncSession = Depends(get_db), 
-    # tenant_id: str = Depends(get_tenant_id)
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    usuario: PayloadToken = Depends(get_usuario_actual),
 ):
     """
-    Returns current usage vs limit for token economy widget.
+    Resumen de consumo vs límites del plan.
+    Usado por el widget de Token Economy en el dashboard.
     """
-    # Hardcoded tenant for Beta demo
-    tenant_id = "00000000-0000-0000-0000-000000000000" 
-    
-    # 1. Obtener límites de tenant_quotas
-    stmt = text("SELECT max_ai_tokens_per_month, max_workflow_runs_per_month FROM tenant_quotas WHERE tenant_id = :tenant_id")
-    result = await db.execute(stmt, {"tenant_id": tenant_id})
-    quota = result.fetchone()
-    
-    limit_tokens = quota.max_ai_tokens_per_month if quota else 1000000
-    
-    # 2. Obtener consumos reales desde los logs (o Redis, pero logs es más fácil aquí sin inyectar redis_client)
-    # Filtrar por el mes actual
-    period_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    
-    stmt_usage = text("""
-        SELECT resource_type, SUM(consumed_amount) as total
-        FROM tenant_usage_logs
-        WHERE tenant_id = :tenant_id AND created_at >= :period_start
-        GROUP BY resource_type
-    """)
-    result_usage = await db.execute(stmt_usage, {"tenant_id": tenant_id, "period_start": period_start})
-    
-    usage = {row.resource_type: int(row.total) for row in result_usage.fetchall()}
-    
-    consumed_tokens = usage.get('ai_tokens', 0)
-    consumed_workflows = usage.get('workflow_runs', 0)
-    
-    percentage = int((consumed_tokens / limit_tokens) * 100) if limit_tokens > 0 else 0
+    redis = request.app.state.redis
+    tenant_id = str(usuario.tenant_id)
 
+    manager = QuotaManager(redis=redis, db=db)
+    summary = await manager.get_summary(tenant_id)
+    return {"tenant_id": tenant_id, **summary}
+
+
+@router.get("/usage/resources")
+async def get_resource_detail(
+    resource: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    usuario: PayloadToken = Depends(get_usuario_actual),
+):
+    """Detalle de consumo de un recurso específico."""
+    from domain.usage import UsageResource
+    redis = request.app.state.redis
+    tenant_id = str(usuario.tenant_id)
+
+    try:
+        res_enum = UsageResource(resource)
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Recurso '{resource}' no válido.",
+        )
+
+    manager = QuotaManager(redis=redis, db=db)
+    key = manager._get_period_key(res_enum, tenant_id)
+    val = await redis.get(key)
     return {
-        "tokens": {
-            "limit": limit_tokens,
-            "consumed": consumed_tokens,
-            "percentage": percentage
-        },
-        "workflows": {
-            "consumed": consumed_workflows
-        }
+        "tenant_id": tenant_id,
+        "resource": resource,
+        "consumed": float(val) if val else 0.0,
     }
 
-@router.post("/approval")
-async def process_approval(response: Dict[str, Any]):
+
+@router.post("/approval/respond")
+async def respond_to_approval(
+    payload: dict[str, Any],
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    usuario: PayloadToken = Depends(get_usuario_actual),
+):
     """
-    Recibe la decisión humana (APPROVED, DENIED) desde el dashboard
-    y la inyecta al EventBus para reanudar el Graph Runtime.
+    Respuesta humana a una solicitud de aprobación HITL.
+    Publica HumanApprovalResponse al EventBus.
     """
-    # Mock endpoint para Sprint D.2E
-    # TODO: Validar request con ApprovalResponse model
-    # TODO: Publicar evento al EventBus para que el Orchestrator reanude el grafo
-    request_id = response.get("request_id")
-    decision = response.get("decision")
-    return {"status": "accepted", "request_id": request_id, "decision": decision, "message": "Approval processed asynchronously"}
+    from core.event_bus import EventBus
+    from domain.events import EventType
+
+    correlation_id = payload.get("correlation_id")
+    decision = payload.get("decision")
+    reason = payload.get("reason", "")
+
+    if not correlation_id or decision not in (
+        "approved", "rejected"
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Faltan correlation_id o decision válida.",
+        )
+
+    event_bus: EventBus = request.app.state.event_bus
+    tenant_id = str(usuario.tenant_id)
+
+    await event_bus.publish(
+        event_type=EventType.HUMAN_APPROVAL_RESPONSE,
+        tenant_id=tenant_id,
+        payload={
+            "correlation_id": correlation_id,
+            "decision": decision,
+            "reason": reason,
+            "reviewed_by": str(usuario.user_id),
+        },
+    )
+
+    return {
+        "status": "published",
+        "correlation_id": correlation_id,
+        "decision": decision,
+    }

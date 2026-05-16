@@ -79,6 +79,9 @@ class EventType(StrEnum):
     CATALOG_SYNCED = "catalog.synced"
     CUSTOMERS_SYNCED = "customers.synced"
 
+    # Human-In-The-Loop (HITL)
+    HUMAN_APPROVAL_RESPONSE = "human.approval_response"
+
 
 class EventMetadata(BaseModel):
     """Metadatos comunes a todos los eventos"""
