@@ -6,6 +6,13 @@
       PENDING en DB. Añadir validación previa para 
       prevenir inyección de eventos huérfanos.
 
+## Prioridad Alta (estructura de imports)
+- [ ] Colisión entre src/domain/events.py y 
+      src/domain/events/ directorio. Puede causar 
+      ImportError ambiguos dependiendo del intérprete.
+      Fix: mover events.py → events/__init__.py y 
+      consolidar en el directorio.
+
 ## Prioridad Alta (bloquean escala async)
 - [ ] 4 servicios usan `with SessionLocal() as db` síncrono — 
       bloquean el event loop bajo carga:
