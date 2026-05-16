@@ -84,3 +84,86 @@ ActionGovernanceRegistry.register(ActionPolicy(
     audit_required=True,
     description="Forzar sincronización inmediata de un conector (ERP/Shopify)."
 ))
+
+# ── Commerce ──────────────────────────────────────────
+ActionGovernanceRegistry.register(ActionPolicy(
+    action_name="ISSUE_REFUND",
+    requires_approval=True,
+    allowed_roles=["operations_admin", "finance_manager",
+                   "ai_operator"],
+    max_per_hour_per_tenant=30,
+    audit_required=True,
+    description="Emitir reembolso a un cliente. "
+                "Toda reversión financiera requiere aprobación.",
+))
+
+ActionGovernanceRegistry.register(ActionPolicy(
+    action_name="CANCEL_ORDER",
+    requires_approval=True,
+    allowed_roles=["operations_admin", "senior_support",
+                   "ai_operator"],
+    max_per_hour_per_tenant=50,
+    audit_required=True,
+    description="Cancelar una orden confirmada y liberar inventario.",
+))
+
+ActionGovernanceRegistry.register(ActionPolicy(
+    action_name="APPLY_DISCOUNT",
+    requires_approval=False,
+    allowed_roles=["sales_agent", "operations_admin",
+                   "ai_operator"],
+    max_per_hour_per_tenant=200,
+    audit_required=True,
+    description="Aplicar descuento a una cotización o pedido.",
+))
+
+ActionGovernanceRegistry.register(ActionPolicy(
+    action_name="OVERRIDE_PRICE",
+    requires_approval=True,
+    allowed_roles=["operations_admin", "finance_manager"],
+    max_per_hour_per_tenant=20,
+    audit_required=True,
+    description="Sobrescribir precio de catálogo manualmente. "
+                "Solo roles financieros senior.",
+))
+
+# ── Operaciones ────────────────────────────────────────
+ActionGovernanceRegistry.register(ActionPolicy(
+    action_name="ESCALATE_AGENT",
+    requires_approval=False,
+    allowed_roles=["sales_agent", "senior_support",
+                   "operations_admin", "ai_operator"],
+    max_per_hour_per_tenant=500,
+    audit_required=True,
+    description="Escalar conversación de IA a operador humano.",
+))
+
+ActionGovernanceRegistry.register(ActionPolicy(
+    action_name="SEND_BULK_MESSAGE",
+    requires_approval=True,
+    allowed_roles=["operations_admin", "marketing_manager"],
+    max_per_hour_per_tenant=5,
+    audit_required=True,
+    description="Enviar mensaje masivo a segmento de clientes. "
+                "Límite estricto anti-spam.",
+))
+
+ActionGovernanceRegistry.register(ActionPolicy(
+    action_name="MODIFY_AGENT_PROMPT",
+    requires_approval=True,
+    allowed_roles=["operations_admin", "ai_operator"],
+    max_per_hour_per_tenant=10,
+    audit_required=True,
+    description="Modificar el prompt base o instrucciones de un agente. "
+                "Cambios de comportamiento requieren revisión.",
+))
+
+ActionGovernanceRegistry.register(ActionPolicy(
+    action_name="EXPORT_CUSTOMER_DATA",
+    requires_approval=True,
+    allowed_roles=["operations_admin", "compliance_officer"],
+    max_per_hour_per_tenant=3,
+    audit_required=True,
+    description="Exportar datos de clientes. "
+                "GDPR/LATAM compliance — máxima restricción.",
+))
