@@ -31,3 +31,8 @@
 - [ ] `social_auth.py` y `unified_oauth.py` comparten lógica
       `code → token → userinfo` duplicada. Extraer a `OAuth2Helper`
       compartido. (Paso 2.1 — aplazado por scope)
+
+## Prioridad Baja (optimización)
+- [ ] enterprise_router /ledger/balance usa SUM() manual.
+      LedgerService ya tiene vista materializada customer_balances.
+      Migrar para usar el servicio directamente.
