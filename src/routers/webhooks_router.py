@@ -46,7 +46,7 @@ async def evolution_webhook(
 
     logger.info(f"Webhook recibido [{event}] para instancia: {instancia_nombre}")
 
-    if event == "messages.upsert":
+    if event.lower().replace("_", ".") == "messages.upsert":
         # Extraer data del mensaje
         msg_data = data.get("data", {})
         message_info = msg_data.get("message", {})
@@ -58,7 +58,7 @@ async def evolution_webhook(
 
         telefono_cliente = key.get("remoteJid", "").split("@")[0]
         
-        # 1. Detectar tipo de mensaje y extraer contenido
+        # 1. Detectar type de mensaje y extraer contenido
         mensaje_texto = message_info.get("conversation")
         if not mensaje_texto and "extendedTextMessage" in message_info:
             mensaje_texto = message_info["extendedTextMessage"].get("text")
@@ -73,7 +73,7 @@ async def evolution_webhook(
         async with sesion_db() as db:
             res_inst = await db.execute(text("""
                 SELECT tenant_id, agent_id FROM canales_config
-                WHERE canal = 'whatsapp' AND instancia_nombre = :instancia AND estado = 'activo'
+                WHERE canal = 'whatsapp' AND instancia_nombre = :instancia AND status = 'is_active'
             """), {"instancia": instancia_nombre})
             instancia_config = res_inst.fetchone()
 
@@ -133,7 +133,7 @@ async def procesar_y_responder_whatsapp_bg(
 
             except Exception as e:
                 logger.warning(f"Tenant {tenant_id} límite/feature falló: {e}")
-                msg_error = "Lo sentimos, el asistente ha excedido su límite o el plan no soporta este tipo de mensaje."
+                msg_error = "Lo sentimos, el asistente ha excedido su límite o el plan no soporta este type de mensaje."
                 await enviar_mensaje_whatsapp(instancia_nombre, telefono_cliente, msg_error)
                 return
 
