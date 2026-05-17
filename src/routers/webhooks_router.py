@@ -1,6 +1,7 @@
 import logging
 import os
-from fastapi import APIRouter, Request, HTTPException, status, BackgroundTasks, Header
+from typing import Optional
+from fastapi import APIRouter, Request, HTTPException, status, BackgroundTasks
 from sqlalchemy import text
 import httpx
 
@@ -20,15 +21,21 @@ EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "fluxkey123")
 
 @router.post("/whatsapp")
 async def evolution_webhook(
-    request: Request, 
+    request: Request,
     background_tasks: BackgroundTasks,
-    apikey: str = Header(None)
 ):
     """
     Recibe eventos de Evolution API.
     Identifica la instancia y procesa mensajes entrantes de forma segura.
     """
-    # 0. Validar Seguridad
+    # 0. Validar Seguridad — leer directamente del header (case-insensitive)
+    # FastAPI normaliza "apikey" -> "api-key" en el alias, por eso leemos manualmente
+    apikey = (
+        request.headers.get("apikey")
+        or request.headers.get("api-key")
+        or request.headers.get("x-api-key")
+    )
+
     if apikey != EVOLUTION_API_KEY:
         logger.warning(f"Intento de acceso no autorizado con apikey: {apikey}")
         raise HTTPException(status_code=401, detail="Invalid API Key")
