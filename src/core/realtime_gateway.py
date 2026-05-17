@@ -104,7 +104,7 @@ class RealtimeGateway:
         try:
             while True:
                 await asyncio.sleep(25)
-                # Verifica si el estado de la conexión sigue activo antes de enviar
+                # Verifica si el status de la conexión sigue is_active antes de enviar
                 if ws.client_state.name == "CONNECTED":
                     await ws.send_text(json.dumps({"type": "ping"}))
                 else:

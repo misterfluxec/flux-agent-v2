@@ -19,16 +19,16 @@ router = APIRouter(prefix="/api/v1/resilience", tags=["Resilience"])
 async def get_resilience_status_endpoint(
     usuario: PayloadToken = Depends(get_usuario_actual)
 ):
-    """Obtener estado completo de resiliencia del sistema"""
+    """Obtener status completo de resiliencia del sistema"""
     try:
         # Verificar permisos de administrador o soporte
-        if usuario.rol not in ["admin", "superadmin", "support"]:
+        if usuario.role not in ["admin", "superadmin", "support"]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Acceso denegado. Se requieren permisos de administrador."
             )
         
-        # Obtener estado completo de resiliencia
+        # Obtener status completo de resiliencia
         status = await get_resilience_status()
         
         logger.info(f"Resilience status requested by user {usuario.id} (tenant: {usuario.tenant_id})")
@@ -46,16 +46,16 @@ async def get_resilience_status_endpoint(
         logger.error(f"Error getting resilience status: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error obteniendo estado de resiliencia"
+            detail="Error obteniendo status de resiliencia"
         )
 
 @router.get("/circuit-breakers")
 async def get_circuit_breakers_status(
     usuario: PayloadToken = Depends(get_usuario_actual)
 ):
-    """Obtener estado de todos los circuit breakers"""
+    """Obtener status de todos los circuit breakers"""
     try:
-        if usuario.rol not in ["admin", "superadmin", "support"]:
+        if usuario.role not in ["admin", "superadmin", "support"]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Acceso denegado"
@@ -76,16 +76,16 @@ async def get_circuit_breakers_status(
         logger.error(f"Error getting circuit breakers status: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error obteniendo estado de circuit breakers"
+            detail="Error obteniendo status de circuit breakers"
         )
 
 @router.get("/bulkheads")
 async def get_bulkheads_status(
     usuario: PayloadToken = Depends(get_usuario_actual)
 ):
-    """Obtener estado de todos los bulkheads"""
+    """Obtener status de todos los bulkheads"""
     try:
-        if usuario.rol not in ["admin", "superadmin", "support"]:
+        if usuario.role not in ["admin", "superadmin", "support"]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Acceso denegado"
@@ -106,16 +106,16 @@ async def get_bulkheads_status(
         logger.error(f"Error getting bulkheads status: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error obteniendo estado de bulkheads"
+            detail="Error obteniendo status de bulkheads"
         )
 
 @router.get("/timeouts")
 async def get_timeouts_status(
     usuario: PayloadToken = Depends(get_usuario_actual)
 ):
-    """Obtener estado de todos los timeouts"""
+    """Obtener status de todos los timeouts"""
     try:
-        if usuario.rol not in ["admin", "superadmin", "support"]:
+        if usuario.role not in ["admin", "superadmin", "support"]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Acceso denegado"
@@ -136,7 +136,7 @@ async def get_timeouts_status(
         logger.error(f"Error getting timeouts status: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error obteniendo estado de timeouts"
+            detail="Error obteniendo status de timeouts"
         )
 
 @router.get("/metrics")
@@ -145,13 +145,13 @@ async def get_resilience_metrics(
 ):
     """Obtener métricas agregadas de resiliencia"""
     try:
-        if usuario.rol not in ["admin", "superadmin", "support"]:
+        if usuario.role not in ["admin", "superadmin", "support"]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Acceso denegado"
             )
         
-        # Obtener estado completo
+        # Obtener status completo
         full_status = await get_resilience_status()
         
         # Calcular métricas agregadas
@@ -215,13 +215,13 @@ async def reset_resilience_service(
 ):
     """Resetear métricas de un servicio específico"""
     try:
-        if usuario.rol not in ["admin", "superadmin"]:
+        if usuario.role not in ["admin", "superadmin"]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Acceso denegado. Se requieren permisos de administrador."
             )
         
-        # Validar tipo de servicio
+        # Validar type de servicio
         valid_types = ["circuit_breaker", "bulkhead", "timeout", "retry"]
         if service_type not in valid_types:
             raise HTTPException(
@@ -229,7 +229,7 @@ async def reset_resilience_service(
                 detail=f"Tipo de servicio inválido. Debe ser uno de: {valid_types}"
             )
         
-        # Resetear según tipo
+        # Resetear según type
         if service_type == "circuit_breaker":
             from core.resilience.circuit_breaker import get_circuit_breaker
             # Resetear todos los circuit breakers
@@ -272,7 +272,7 @@ async def get_resilience_health(
 ):
     """Health check del sistema de resiliencia"""
     try:
-        # Obtener estado completo
+        # Obtener status completo
         status = await get_resilience_status()
         
         # Calcular salud general

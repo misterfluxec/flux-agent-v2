@@ -79,7 +79,7 @@ async def acknowledge_event(
     db: AsyncSession = Depends(obtener_sesion)
 ):
     """
-    Cambia el estado de ACK de un evento.
+    Cambia el status de ACK de un evento.
     - acknowledged: el operador lo vio y lo toma en cuenta
     - snoozed: pospuesto por N minutos (requiere snooze_minutes)
     - resolved: cerrado, no requiere más acción
@@ -89,7 +89,7 @@ async def acknowledge_event(
         raise HTTPException(status_code=422, detail=f"Estado inválido. Use: {VALID_ACK_STATES}")
 
     if body.state == "snoozed" and not body.snooze_minutes:
-        raise HTTPException(status_code=422, detail="snooze_minutes es requerido para estado 'snoozed'")
+        raise HTTPException(status_code=422, detail="snooze_minutes es requerido para status 'snoozed'")
 
     await _get_event_or_404(event_id, str(usuario.tenant_id), db)
 

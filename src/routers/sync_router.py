@@ -41,7 +41,7 @@ async def trigger_sheet_sync(
         async with db.begin():
             # 1. VALIDAR AGENTE
             agent = await db.execute(text("""
-                SELECT id, nombre, estado, tenant_id 
+                SELECT id, name, status, tenant_id 
                 FROM agents 
                 WHERE id = :agent_id AND tenant_id = :tenant_id
             """), {"agent_id": payload.agent_id, "tenant_id": current_tenant.tenant_id})
@@ -75,12 +75,12 @@ async def trigger_sheet_sync(
             now = datetime.utcnow()
             
             if not is_local:
-                # Actualizar estado de la fuente remota
+                # Actualizar status de la fuente remota
                 await db.execute(text("""
                     UPDATE synced_sources 
                     SET sync_status = 'syncing', 
                         last_synced_at = :now,
-                        actualizado_en = :now
+                        updated_at = :now
                     WHERE id = :source_id
                 """), {"source_id": payload.source_id, "now": now})
             
@@ -127,7 +127,7 @@ async def trigger_sheet_sync(
 
 @router.get("/jobs/{job_id}/status")
 async def get_job_status(job_id: str, current_tenant: PayloadToken = Depends(get_tenant_actual_opcional)):
-    """Polling endpoint para saber el estado de la sincronización"""
+    """Polling endpoint para saber el status de la sincronización"""
     if not current_tenant:
         raise HTTPException(status_code=401, detail="No autenticado")
         
@@ -224,7 +224,7 @@ async def _execute_rag_sync(
                         ELSE next_sync_at
                     END,
                     rows_processed = :rows_count,
-                    actualizado_en = NOW()
+                    updated_at = NOW()
                 WHERE id = :source_id
             """), {"source_id": source_id, "freq": sync_frequency, "rows_count": added})
             
@@ -247,7 +247,7 @@ async def _execute_rag_sync(
                 UPDATE synced_sources 
                 SET sync_status = 'failed', 
                     sync_error_message = :error,
-                    actualizado_en = NOW()
+                    updated_at = NOW()
                 WHERE id = :source_id
             """), {"source_id": source_id, "error": str(e)[:500]})
             

@@ -58,7 +58,7 @@ export default function SeguridadPage() {
                 Autenticación de Dos Factores (2FA)
               </h2>
               <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0 }}>
-                Obliga a todos los usuarios a usar 2FA para iniciar sesión
+                Obliga a todos los users a usar 2FA para iniciar sesión
               </p>
             </div>
             <button
@@ -87,7 +87,7 @@ export default function SeguridadPage() {
             <div style={{ padding: 16, background: "var(--secondary)", borderRadius: 12 }}>
               <p style={{ fontSize: 13, color: "var(--success)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
                 <CheckCircle size={16} />
-                2FA obligatorio está habilitado para todos los usuarios
+                2FA obligatorio está habilitado para todos los users
               </p>
             </div>
           )}

@@ -7,9 +7,9 @@ import { toast } from "sonner";
 
 type Tenant = {
   id: string;
-  nombre: string;
+  name: string;
   plan: 'starter' | 'pro' | 'enterprise';
-  estado: 'activo' | 'suspendido' | 'cancelado';
+  status: 'is_active' | 'suspendido' | 'cancelado';
   usage: { used: number; limit: number; percent: number };
   contrato: { inicio: string; fin: string };
 };
@@ -34,7 +34,7 @@ export default function TenantsPage() {
   }, []);
 
   const filtered = tenants.filter(t =>
-    t.nombre.toLowerCase().includes(search.toLowerCase())
+    t.name.toLowerCase().includes(search.toLowerCase())
   );
 
   const handleSuspend = (id: string) => {
@@ -111,7 +111,7 @@ export default function TenantsPage() {
                 : filtered.map(t => (
                     <tr key={t.id} className="hover:bg-slate-800/30 transition-colors">
                       <td className="px-6 py-5">
-                        <div className="font-semibold text-slate-200">{t.nombre}</div>
+                        <div className="font-semibold text-slate-200">{t.name}</div>
                         <div className="text-[10px] text-slate-600 font-mono mt-0.5">{t.id.slice(0,8)}…</div>
                       </td>
                       <td className="px-6 py-5">
@@ -138,8 +138,8 @@ export default function TenantsPage() {
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-2">
-                          <div className={`w-1.5 h-1.5 rounded-full ${t.estado === 'activo' ? 'bg-emerald-500 shadow-[0_0_6px_#10b981]' : 'bg-red-500'}`} />
-                          <span className="text-xs text-slate-300 capitalize">{t.estado}</span>
+                          <div className={`w-1.5 h-1.5 rounded-full ${t.status === 'is_active' ? 'bg-emerald-500 shadow-[0_0_6px_#10b981]' : 'bg-red-500'}`} />
+                          <span className="text-xs text-slate-300 capitalize">{t.status}</span>
                         </div>
                       </td>
                       <td className="px-6 py-5 text-right relative">
@@ -151,7 +151,7 @@ export default function TenantsPage() {
                         </button>
                         {menuOpen === t.id && (
                           <div className="absolute right-6 top-12 z-20 bg-slate-800 border border-slate-700 rounded-xl shadow-xl py-1 w-44">
-                            <button onClick={() => { toast.info("Editar plan: " + t.nombre); setMenuOpen(null); }}
+                            <button onClick={() => { toast.info("Editar plan: " + t.name); setMenuOpen(null); }}
                               className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-700 transition-colors">
                               Editar Plan
                             </button>
@@ -159,7 +159,7 @@ export default function TenantsPage() {
                               className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-slate-700 transition-colors">
                               Suspender
                             </button>
-                            <button onClick={() => { toast.info("Ver detalles: " + t.nombre); setMenuOpen(null); }}
+                            <button onClick={() => { toast.info("Ver detalles: " + t.name); setMenuOpen(null); }}
                               className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-700 transition-colors">
                               Ver Detalles
                             </button>

@@ -106,7 +106,7 @@ export default function PolicyEnginePage() {
                   className="w-full accent-emerald-500 h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer"
                 />
                 <p className="text-xs text-white/40 mt-3">
-                  Si Yanua no entiende al cliente después de {handoffRetries} intentos consecutivos, pausará el flujo y alertará a un supervisor en la Torre de Control.
+                  Si Yanua no entiende al cliente después de {handoffRetries} attempts consecutivos, pausará el flujo y alertará a un supervisor en la Torre de Control.
                 </p>
               </div>
 
@@ -125,7 +125,7 @@ export default function PolicyEnginePage() {
                   className="w-full accent-emerald-500 h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer"
                 />
                 <p className="text-xs text-white/40 mt-3">
-                  Tiempo que la IA esperará la respuesta del lead antes de archivar la conversación en estado inactivo.
+                  Tiempo que la IA esperará la respuesta del lead antes de archivar la conversación en status inactivo.
                 </p>
               </div>
             </div>
@@ -186,7 +186,7 @@ export default function PolicyEnginePage() {
               Impacto de Políticas
             </h3>
             <p className="text-sm text-emerald-100 font-light mb-6">
-              Estas reglas afectan directamente cómo el orquestador interactúa en tiempo real con los usuarios finales.
+              Estas reglas afectan directamente cómo el orquestador interactúa en tiempo real con los users finales.
             </p>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between items-center py-2 border-b border-emerald-400/20">

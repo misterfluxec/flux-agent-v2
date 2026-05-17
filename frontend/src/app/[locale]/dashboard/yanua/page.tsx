@@ -9,7 +9,7 @@ import { toast } from "sonner";
 
 interface Message {
   id: string;
-  rol: "usuario" | "asistente";
+  role: "usuario" | "asistente";
   contenido: string;
   fuentes?: string[];
   tokens?: number;
@@ -26,7 +26,7 @@ export default function ChatPage() {
 
   const SLASH_COMMANDS = [
     { cmd: "/metrics", desc: "Ver resumen de leads de hoy" },
-    { cmd: "/config", desc: "Ajustar tono de IA a profesional" },
+    { cmd: "/config", desc: "Ajustar tone de IA a profesional" },
     { cmd: "/handoffs", desc: "Listar leads esperando humano" },
     { cmd: "/clear", desc: "Limpiar consola" }
   ];
@@ -46,7 +46,7 @@ export default function ChatPage() {
 
     const userMsg: Message = {
       id: crypto.randomUUID(),
-      rol: "usuario",
+      role: "usuario",
       contenido: msg,
       timestamp: new Date(),
     };
@@ -56,7 +56,7 @@ export default function ChatPage() {
 
     try {
       const historial = messages.slice(-6).map((m) => ({
-        rol: m.rol,
+        role: m.role,
         contenido: m.contenido,
       }));
 
@@ -65,12 +65,12 @@ export default function ChatPage() {
         session_id: "session-ui-1",
         mensaje: msg,
         historial,
-        configuracion: { nombre: "FluxBot", humor: "profesional" },
+        configuracion: { name: "FluxBot", mood: "profesional" },
       });
 
       const botMsg: Message = {
         id: crypto.randomUUID(),
-        rol: "asistente",
+        role: "asistente",
         contenido: res.respuesta,
         fuentes: res.fuentes_rag,
         tokens: res.tokens,
@@ -79,7 +79,7 @@ export default function ChatPage() {
       setMessages((prev) => [...prev, botMsg]);
     } catch {
       toast.error("Error de conexión", {
-        description: "No se pudo contactar al backend. Verifica que el servicio esté activo.",
+        description: "No se pudo contactar al backend. Verifica que el servicio esté is_active.",
       });
     } finally {
       setLoading(false);
@@ -155,7 +155,7 @@ export default function ChatPage() {
         )}
 
         {messages.map((m) => {
-          const isUser = m.rol === "usuario";
+          const isUser = m.role === "usuario";
           return (
             <div
               key={m.id}

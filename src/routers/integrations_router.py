@@ -73,7 +73,7 @@ async def start_discovery(
 
 @router.get("/sessions/{session_id}")
 async def get_session_status(session_id: str):
-    """Polling: Revisar el estado del discovery o sesión."""
+    """Polling: Revisar el status del discovery o sesión."""
     session = lifecycle_engine.get_session(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")

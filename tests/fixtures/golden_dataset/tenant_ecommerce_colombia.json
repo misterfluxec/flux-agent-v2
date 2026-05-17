@@ -1,0 +1,36 @@
+{
+  "tenant_id": "ecommerce-moda-co",
+  "name": "Moda Latina CO",
+  "country": "CO",
+  "currency": "COP",
+  "tax_id": "900.123.456-7",
+  "business_type": "ecommerce",
+  "customers": [
+    {
+      "id": "cust_co_88",
+      "name": "Carolina Herrera",
+      "phone": "+573105556677",
+      "email": "caro@moda.co"
+    }
+  ],
+  "orders": [
+    {
+      "id": "ord_co_2024",
+      "customer_id": "cust_co_88",
+      "total": 155000,
+      "status": "shipped",
+      "items": [
+        { "product_id": "item_vestido", "name": "Vestido Verano", "quantity": 1, "price": 155000 }
+      ],
+      "created_at": "2026-05-12T14:30:00Z"
+    }
+  ],
+  "workflows": [
+    {
+      "id": "wf_co_shipping",
+      "name": "Seguimiento Coordinadora/Servientrega",
+      "active": true,
+      "steps": ["track_api", "notify_customer"]
+    }
+  ]
+}

@@ -1,9 +1,9 @@
 import uuid
 from typing import Dict, Any
 from datetime import datetime
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-from database import SessionLocal
+from database import SesionLocal
 from services.commerce_transaction_manager import CommerceTransactionManager
 from domain.commerce_states import CommerceStateValidator, PaymentStatus
 from domain.events.payment_events import PaymentStatusUpdatedEventV1
@@ -12,12 +12,12 @@ class PaymentReconciliationEngine:
     """
     Motor de Conciliación de Pagos (Sprint 3D.2).
     Lee eventos de webhook_events de forma segura (FOR UPDATE SKIP LOCKED),
-    y aplica la lógica de transición de estado en las órdenes y payment_intents,
+    y aplica la lógica de transición de status en las órdenes y payment_intents,
     generando los eventos de dominio correctos.
     """
 
-    def process_pending_webhooks(self, batch_size: int = 50):
-        with SessionLocal() as db:
+    async def process_pending_webhooks(self, batch_size: int = 50):
+        async with SesionLocal() as db:
             query = text("""
                 SELECT id, tenant_id, provider, provider_event_id, event_type, payload
                 FROM webhook_events
@@ -26,25 +26,26 @@ class PaymentReconciliationEngine:
                 LIMIT :limit
                 FOR UPDATE SKIP LOCKED
             """)
-            events = db.execute(query, {"limit": batch_size}).fetchall()
+            result = await db.execute(query, {"limit": batch_size})
+            events = result.fetchall()
 
             count = 0
             for evt in events:
                 try:
-                    self._process_single_webhook(db, str(evt.tenant_id), evt)
+                    await self._process_single_webhook(db, str(evt.tenant_id), evt)
                     
-                    db.execute(text("UPDATE webhook_events SET status = 'processed', processed_at = NOW() WHERE id = :id"), 
+                    await db.execute(text("UPDATE webhook_events SET status = 'processed', processed_at = NOW() WHERE id = :id"), 
                                {"id": evt.id})
-                    db.commit()
+                    await db.commit()
                     count += 1
                 except Exception as e:
-                    db.rollback()
-                    db.execute(text("UPDATE webhook_events SET status = 'failed', error_message = :err WHERE id = :id"), 
+                    await db.rollback()
+                    await db.execute(text("UPDATE webhook_events SET status = 'failed', error_message = :err WHERE id = :id"), 
                                {"id": evt.id, "err": str(e)})
-                    db.commit()
+                    await db.commit()
             return count
 
-    def _process_single_webhook(self, db: Session, tenant_id: str, webhook_event: Any):
+    async def _process_single_webhook(self, db: AsyncSession, tenant_id: str, webhook_event: Any):
         """
         Interpreta el payload del webhook y actualiza payment_intents y orders.
         """
@@ -73,7 +74,8 @@ class PaymentReconciliationEngine:
             WHERE tenant_id = :tenant_id AND external_transaction_id = :ext_id
             FOR UPDATE
         """)
-        pi = db.execute(pi_query, {"tenant_id": tenant_id, "ext_id": ext_txn_id}).fetchone()
+        result = await db.execute(pi_query, {"tenant_id": tenant_id, "ext_id": ext_txn_id})
+        pi = result.fetchone()
 
         if not pi:
             # Quizá el intent se buscaba por idempotency_key o creamos un "Unlinked Payment"
@@ -88,7 +90,7 @@ class PaymentReconciliationEngine:
         # Transacción Comercial Atómica
         tx_manager = CommerceTransactionManager(db, tenant_id)
         
-        with tx_manager.atomic_transaction(
+        async with tx_manager.atomic_transaction(
             action_name="payment.reconciled",
             actor_type="webhook",
             actor_id=f"{provider}_{webhook_event.provider_event_id}",
@@ -97,11 +99,11 @@ class PaymentReconciliationEngine:
         ) as tx:
 
             # 1. Update Payment Intent
-            db.execute(text("UPDATE payment_intents SET status = :status, updated_at = NOW() WHERE id = :id"),
+            await db.execute(text("UPDATE payment_intents SET status = :status, updated_at = NOW() WHERE id = :id"),
                        {"status": new_status, "id": pi.id})
 
-            # 2. Update Order (Sincronización del estado)
-            db.execute(text("UPDATE orders SET payment_status = :status WHERE id = :order_id"),
+            # 2. Update Order (Sincronización del status)
+            await db.execute(text("UPDATE orders SET payment_status = :status WHERE id = :order_id"),
                        {"status": new_status, "order_id": pi.order_id})
 
             # 3. Emitir Eventos

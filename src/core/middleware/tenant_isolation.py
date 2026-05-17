@@ -237,7 +237,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 # Helper para registrar middlewares en main.py
 def setup_middlewares(app):
-    """Configura todos los middlewares en orden correcto"""
+    """Configura todos los middlewares en sort_order correcto"""
     
     # 1. Security headers (primero)
     app.add_middleware(SecurityHeadersMiddleware)

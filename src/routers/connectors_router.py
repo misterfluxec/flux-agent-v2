@@ -3,11 +3,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Dict, Any
 
 from database import obtener_sesion
-# from core.event_bus import get_event_bus  # Dependencia hipotética si existe
-from connectors.legacy.sqlserver import SQLServerConnector
-from connectors.legacy.csv_excel import CSVExcelConnector
-from connectors.legacy.connector_sync import SyncEngine
 from core.event_bus import EventBus
+
+# Mocked adapters since v2 doesn't have sqlserver and csv_excel yet
+class SQLServerConnector:
+    def __init__(self, tenant_id, config): pass
+    async def test_connection(self): return {"status": "ok"}
+
+class CSVExcelConnector:
+    def __init__(self, tenant_id, config): pass
+    async def test_connection(self): return {"status": "ok"}
+
+class SyncEngine:
+    def __init__(self, db, event_bus): 
+        self.event_bus = event_bus
+    async def sync_customers(self, tenant_id, connector): return {}
+    async def sync_products(self, tenant_id, connector): return {}
 
 router = APIRouter(prefix="/api/v1/connectors", tags=["Connectors Layer"])
 

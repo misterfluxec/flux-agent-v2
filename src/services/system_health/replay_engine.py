@@ -47,7 +47,7 @@ class ReplayableEventsEngine:
             if definition and not definition.replayable:
                 raise ValueError(f"Event {evt.event_type} is marked as NON-REPLAYABLE by policy.")
 
-        # 3. Mover de vuelta a estado 'pending' para que el OutboxDispatcher lo procese de nuevo
+        # 3. Mover de vuelta a status 'pending' para que el OutboxDispatcher lo procese de nuevo
         update_q = text("""
             UPDATE event_outbox 
             SET status = 'pending', retry_count = retry_count + 1, updated_at = NOW() 

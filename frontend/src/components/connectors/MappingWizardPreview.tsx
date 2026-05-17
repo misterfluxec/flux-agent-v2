@@ -49,7 +49,7 @@ export function MappingWizardPreview({ onClose }: MappingWizardPreviewProps) {
                 <div>
                   <h4 className="text-sm font-semibold text-indigo-300">Auto Mapping Inteligente</h4>
                   <p className="text-xs text-indigo-200/70 mt-1">
-                    Detectamos 8 columnas en tu archivo. FluxAgent puede intentar emparejarlas automáticamente con nuestro modelo canónico.
+                    Detectamos 8 columnas en tu archivo. FluxAgent puede intentar emparejarlas automáticamente con nuestro model canónico.
                   </p>
                 </div>
               </div>

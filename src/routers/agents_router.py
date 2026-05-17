@@ -2,7 +2,7 @@
 # FLUXAGENT V2 — ROUTER DE AGENTES IA
 # =============================================================================
 # Gestión de múltiples agentes IA por tenant
-# CRUD completo + configuración de personalidad y modelo
+# CRUD completo + configuración de personality y model
 # =============================================================================
 
 import logging
@@ -43,86 +43,86 @@ router = APIRouter(prefix="/api/v1/agents", tags=["Agentes IA"])
 # =============================================================================
 
 class AgentCreate(BaseModel):
-    nombre: str
+    name: str
     area: Optional[str] = None
-    descripcion: Optional[str] = None
-    genero: str = "femenino"
-    humor: str = "profesional"
-    personalidad: Optional[str] = None
-    idioma: str = "Español (Ecuador)"
-    tono: str = "profesional"
-    coleccion_rag: Optional[str] = None
-    tipo_negocio: Optional[str] = None
-    objetivo: Optional[str] = None
-    instrucciones: Optional[str] = None
-    modelo: str = "qwen2.5:3b"
-    temperatura: float = 0.7
+    description: Optional[str] = None
+    gender: str = "femenino"
+    mood: str = "profesional"
+    personality: Optional[str] = None
+    language: str = "Español (Ecuador)"
+    tone: str = "profesional"
+    rag_collection: Optional[str] = None
+    business_type: Optional[str] = None
+    objective: Optional[str] = None
+    instructions: Optional[str] = None
+    model: str = "qwen2.5:3b"
+    temperature: float = 0.7
     max_tokens: int = 512
-    canales: List[str] = ["web_chat"]
-    horario_inicio: Optional[str] = None
-    horario_fin: Optional[str] = None
-    dias_atencion: Optional[List[str]] = None
-    mensaje_fuera_horario: Optional[str] = None
-    script_ventas: Optional[Dict[str, Any]] = None
+    channels: List[str] = ["web_chat"]
+    schedule_start: Optional[str] = None
+    schedule_end: Optional[str] = None
+    service_days: Optional[List[str]] = None
+    off_hours_message: Optional[str] = None
+    sales_script: Optional[Dict[str, Any]] = None
     agent_type: str = "sales"
     specialty: Optional[str] = None
     system_prompt: Optional[str] = None
 
 class AgentUpdate(BaseModel):
-    nombre: Optional[str] = None
+    name: Optional[str] = None
     area: Optional[str] = None
-    descripcion: Optional[str] = None
-    genero: Optional[str] = None
-    humor: Optional[str] = None
-    personalidad: Optional[str] = None
-    idioma: Optional[str] = None
-    tono: Optional[str] = None
-    coleccion_rag: Optional[str] = None
-    tipo_negocio: Optional[str] = None
-    objetivo: Optional[str] = None
-    instrucciones: Optional[str] = None
-    modelo: Optional[str] = None
-    temperatura: Optional[float] = None
+    description: Optional[str] = None
+    gender: Optional[str] = None
+    mood: Optional[str] = None
+    personality: Optional[str] = None
+    language: Optional[str] = None
+    tone: Optional[str] = None
+    rag_collection: Optional[str] = None
+    business_type: Optional[str] = None
+    objective: Optional[str] = None
+    instructions: Optional[str] = None
+    model: Optional[str] = None
+    temperature: Optional[float] = None
     max_tokens: Optional[int] = None
-    canales: Optional[List[str]] = None
-    horario_inicio: Optional[str] = None
-    horario_fin: Optional[str] = None
-    dias_atencion: Optional[List[str]] = None
-    mensaje_fuera_horario: Optional[str] = None
-    script_ventas: Optional[Dict[str, Any]] = None
+    channels: Optional[List[str]] = None
+    schedule_start: Optional[str] = None
+    schedule_end: Optional[str] = None
+    service_days: Optional[List[str]] = None
+    off_hours_message: Optional[str] = None
+    sales_script: Optional[Dict[str, Any]] = None
     agent_type: Optional[str] = None
     specialty: Optional[str] = None
     system_prompt: Optional[str] = None
 
 class AgentResponse(BaseModel):
     id: str
-    nombre: str
+    name: str
     area: Optional[str] = None
-    descripcion: Optional[str] = None
-    genero: str
-    humor: str
-    personalidad: Optional[str] = None
-    idioma: str
-    tono: str
-    coleccion_rag: Optional[str] = None
-    tipo_negocio: Optional[str] = None
-    objetivo: Optional[str] = None
-    instrucciones: Optional[str] = None
-    modelo: str
-    temperatura: float
+    description: Optional[str] = None
+    gender: str
+    mood: str
+    personality: Optional[str] = None
+    language: str
+    tone: str
+    rag_collection: Optional[str] = None
+    business_type: Optional[str] = None
+    objective: Optional[str] = None
+    instructions: Optional[str] = None
+    model: str
+    temperature: float
     max_tokens: int
-    canales: List[str]
-    horario_inicio: Optional[str] = None
-    horario_fin: Optional[str] = None
-    dias_atencion: Optional[List[str]] = None
-    mensaje_fuera_horario: Optional[str] = None
-    script_ventas: Optional[Dict[str, Any]] = None
+    channels: List[str]
+    schedule_start: Optional[str] = None
+    schedule_end: Optional[str] = None
+    service_days: Optional[List[str]] = None
+    off_hours_message: Optional[str] = None
+    sales_script: Optional[Dict[str, Any]] = None
     agent_type: str
     specialty: Optional[str] = None
     system_prompt: Optional[str] = None
-    estado: str
-    creado_en: str
-    actualizado_en: str
+    status: str
+    created_at: str
+    updated_at: str
     knowledge_base_size: int = 0
     last_sync_at: Optional[str] = None
 
@@ -130,9 +130,9 @@ class AgentResponse(BaseModel):
 class GenerateIdentityRequest(BaseModel):
     descripcion_negocio: str
     agent_type: str
-    tono: str
+    tone: str
 
-@router.post("/generate-identity", summary="Genera instrucciones de sistema óptimas usando IA")
+@router.post("/generate-identity", summary="Genera instructions de sistema óptimas usando IA")
 async def generate_identity(
     req: GenerateIdentityRequest,
     usuario: PayloadToken = Depends(get_usuario_actual)
@@ -143,9 +143,9 @@ async def generate_identity(
 Eres un ingeniero de prompts experto creando la "Identidad de Sistema" para un agente de IA en la plataforma FluxAgent.
 El usuario tiene este negocio: "{req.descripcion_negocio}"
 Tipo de operación (Agent Type): {req.agent_type}
-Tono de personalidad deseado: {req.tono}
+Tono de personality deseado: {req.tone}
 
-Crea unas instrucciones en PRIMERA PERSONA para este agente ("Eres un asistente...").
+Crea unas instructions en PRIMERA PERSONA para este agente ("Eres un asistente...").
 El resultado debe ser únicamente el texto del prompt, directo y sin introducciones.
 
 DEBES INCLUIR OBLIGATORIAMENTE LAS SIGUIENTES REGLAS DE GOBERNANZA AL FINAL:
@@ -181,22 +181,22 @@ async def list_agents(
     
     result = await db.execute(
         text("""
-            SELECT a.id, a.nombre, a.area, a.descripcion, a.genero, a.humor, a.personalidad,
-                   a.idioma, a.tono, a.coleccion_rag, a.tipo_negocio, a.objetivo, a.instrucciones,
-                   a.modelo, a.temperatura, a.max_tokens, a.canales,
-                   a.horario_inicio, a.horario_fin, a.dias_atencion, a.mensaje_fuera_horario,
-                   a.script_ventas, a.agent_type, a.specialty, a.system_prompt, a.estado, a.creado_en, a.actualizado_en,
+            SELECT a.id, a.name, a.area, a.description, a.gender, a.mood, a.personality,
+                   a.language, a.tone, a.rag_collection, a.business_type, a.objective, a.instructions,
+                   a.model, a.temperature, a.max_tokens, a.channels,
+                   a.schedule_start, a.schedule_end, a.service_days, a.off_hours_message,
+                   a.sales_script, a.agent_type, a.specialty, a.system_prompt, a.status, a.created_at, a.updated_at,
                    COUNT(kc.id) as knowledge_base_size,
-                   MAX(kc.creado_en) as last_sync_at
+                   MAX(kc.created_at) as last_sync_at
             FROM agents a
             LEFT JOIN knowledge_chunks kc ON kc.agent_id = a.id
             WHERE a.tenant_id = :tenant_id
-            GROUP BY a.id, a.nombre, a.area, a.descripcion, a.genero, a.humor, a.personalidad,
-                     a.idioma, a.tono, a.coleccion_rag, a.tipo_negocio, a.objetivo, a.instrucciones,
-                     a.modelo, a.temperatura, a.max_tokens, a.canales,
-                     a.horario_inicio, a.horario_fin, a.dias_atencion, a.mensaje_fuera_horario,
-                     a.script_ventas, a.agent_type, a.specialty, a.system_prompt, a.estado, a.creado_en, a.actualizado_en
-            ORDER BY a.nombre ASC
+            GROUP BY a.id, a.name, a.area, a.description, a.gender, a.mood, a.personality,
+                     a.language, a.tone, a.rag_collection, a.business_type, a.objective, a.instructions,
+                     a.model, a.temperature, a.max_tokens, a.channels,
+                     a.schedule_start, a.schedule_end, a.service_days, a.off_hours_message,
+                     a.sales_script, a.agent_type, a.specialty, a.system_prompt, a.status, a.created_at, a.updated_at
+            ORDER BY a.name ASC
         """),
         {"tenant_id": usuario.tenant_id}
     )
@@ -205,33 +205,33 @@ async def list_agents(
     for row in result.fetchall():
         agentes.append(AgentResponse(
             id=str(row.id),
-            nombre=row.nombre,
+            name=row.name,
             area=row.area,
-            descripcion=row.descripcion,
-            genero=row.genero,
-            humor=row.humor,
-            personalidad=row.personalidad,
-            idioma=row.idioma,
-            tono=row.tono,
-            coleccion_rag=row.coleccion_rag,
-            tipo_negocio=row.tipo_negocio,
-            objetivo=row.objetivo,
-            instrucciones=row.instrucciones,
-            modelo=row.modelo,
-            temperatura=row.temperatura,
+            description=row.description,
+            gender=row.gender,
+            mood=row.mood,
+            personality=row.personality,
+            language=row.language,
+            tone=row.tone,
+            rag_collection=row.rag_collection,
+            business_type=row.business_type,
+            objective=row.objective,
+            instructions=row.instructions,
+            model=row.model,
+            temperature=row.temperature,
             max_tokens=row.max_tokens,
-            canales=row.canales or [],
-            horario_inicio=str(row.horario_inicio) if row.horario_inicio else None,
-            horario_fin=str(row.horario_fin) if row.horario_fin else None,
-            dias_atencion=row.dias_atencion,
-            mensaje_fuera_horario=row.mensaje_fuera_horario,
-            script_ventas=row.script_ventas if hasattr(row, 'script_ventas') else None,
+            channels=row.channels or [],
+            schedule_start=str(row.schedule_start) if row.schedule_start else None,
+            schedule_end=str(row.schedule_end) if row.schedule_end else None,
+            service_days=row.service_days,
+            off_hours_message=row.off_hours_message,
+            sales_script=row.sales_script if hasattr(row, 'sales_script') else None,
             agent_type=row.agent_type,
             specialty=row.specialty,
             system_prompt=row.system_prompt,
-            estado=row.estado,
-            creado_en=str(row.creado_en),
-            actualizado_en=str(row.actualizado_en),
+            status=row.status,
+            created_at=str(row.created_at),
+            updated_at=str(row.updated_at),
             knowledge_base_size=row.knowledge_base_size or 0,
             last_sync_at=str(row.last_sync_at) if row.last_sync_at else None
         ))
@@ -254,11 +254,11 @@ async def create_agent(
     
     # Verificar límite de agentes según el plan
     result_plan = await db.execute(
-        text("SELECT max_agentes FROM tenants WHERE id = :tid"),
+        text("SELECT max_agents FROM tenants WHERE id = :tid"),
         {"tid": usuario.tenant_id}
     )
     plan_row = result_plan.fetchone()
-    max_agentes = plan_row.max_agentes if plan_row else 1
+    max_agents = plan_row.max_agents if plan_row else 1
     
     result_count = await db.execute(
         text("SELECT COUNT(*) FROM agents WHERE tenant_id = :tid"),
@@ -266,15 +266,15 @@ async def create_agent(
     )
     current_count = result_count.scalar() or 0
     
-    if current_count >= max_agentes:
+    if current_count >= max_agents:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Has alcanzado el límite de {max_agentes} agentes de tu plan. Upgrade para más."
+            detail=f"Has alcanzado el límite de {max_agents} agentes de tu plan. Upgrade para más."
         )
     
     nuevo_id = uuid4()
-    dias_array = datos.dias_atencion if datos.dias_atencion is not None else ["lunes", "martes", "miercoles", "jueves", "viernes"]
-    canales_array = datos.canales if datos.canales is not None else ["web_chat"]
+    dias_array = datos.service_days if datos.service_days is not None else ["lunes", "martes", "miercoles", "jueves", "viernes"]
+    canales_array = datos.channels if datos.channels is not None else ["web_chat"]
     
     # Generar prompt completo usando plantillas pre-cargadas
     def generate_system_prompt(datos):
@@ -283,23 +283,23 @@ async def create_agent(
         base_prompts = {
             'sales': {
                 'intro': f"Eres un vendedor experto especializado en {datos.specialty or 'ventas generales'}.",
-                'main': "Tu objetivo es guiar al cliente hacia una compra exitosa.",
-                'style': f"Eres {datos.tono}, profesional y servicial."
+                'main': "Tu objective es guiar al cliente hacia una compra exitosa.",
+                'style': f"Eres {datos.tone}, profesional y servicial."
             },
             'support': {
                 'intro': f"Eres un especialista en soporte técnico especializado en {datos.specialty or 'soporte general'}.",
-                'main': "Tu objetivo es resolver problemas de manera eficiente y satisfacer al cliente.",
-                'style': f"Eres {datos.tono}, paciente y servicial."
+                'main': "Tu objective es resolver problemas de manera eficiente y satisfacer al cliente.",
+                'style': f"Eres {datos.tone}, paciente y servicial."
             },
             'bookings': {
                 'intro': f"Eres un asistente de reservas especializado en {datos.specialty or 'gestión de reservas'}.",
-                'main': "Tu objetivo es ayudar a los clientes a programar y gestionar sus citas.",
-                'style': f"Eres {datos.tono}, organizado y amigable."
+                'main': "Tu objective es ayudar a los clientes a programar y gestionar sus citas.",
+                'style': f"Eres {datos.tone}, organizado y amigable."
             },
             'custom': {
-                'intro': f"Eres {datos.nombre}, un asistente experto especializado en {datos.specialty or 'asistencia general'}.",
-                'main': "Tu objetivo es proporcionar el mejor servicio posible según las necesidades del cliente.",
-                'style': f"Eres {datos.tono}, adaptable y profesional."
+                'intro': f"Eres {datos.name}, un asistente experto especializado en {datos.specialty or 'asistencia general'}.",
+                'main': "Tu objective es proporcionar el mejor servicio posible según las necesidades del cliente.",
+                'style': f"Eres {datos.tone}, adaptable y profesional."
             }
         }
         
@@ -318,7 +318,7 @@ async def create_agent(
 {datos.system_prompt or 'Ayuda al cliente de manera eficiente y profesional.'}
 
 ## DIRECTRICES DE COMUNICACIÓN:
-- Mantén siempre un tono {datos.tono}
+- Mantén siempre un tone {datos.tone}
 - Sé claro y conciso en tus respuestas
 - Adapta tu comunicación según las necesidades del cliente
 - Ofrece soluciones prácticas y útiles
@@ -341,14 +341,14 @@ async def create_agent(
     
     # Generar script de ventas base
     def generate_sales_script(agent_type):
-        """Generar script de ventas según el tipo de agente."""
+        """Generar script de ventas según el type de agente."""
         
         scripts_base = {
             'sales': {
                 "fases": ["contacto", "calificacion", "presentacion", "cierre", "seguimiento"],
                 "reglas": ["siempre saludar primero", "identificar necesidades", "presentar beneficios", "pedir acción"],
                 "scripts": {
-                    "contacto": "Hola, soy {nombre}. ¿En qué puedo ayudarte hoy?",
+                    "contacto": "Hola, soy {name}. ¿En qué puedo ayudarte hoy?",
                     "calificacion": "Para poder ayudarte mejor, ¿podrías contarme más sobre lo que buscas?",
                     "presentacion": "Basado en lo que me comentas, te recomiendo...",
                     "cierre": "¿Te gustaría proceder con esta opción?",
@@ -360,7 +360,7 @@ async def create_agent(
                 "fases": ["recepcion", "diagnostico", "solucion", "verificacion", "cierre"],
                 "reglas": ["escuchar activamente", "identificar problema", "ofrecer solución", "confirmar resolución"],
                 "scripts": {
-                    "recepcion": "Hola, soy {nombre}. Entiendo que necesitas ayuda con...",
+                    "recepcion": "Hola, soy {name}. Entiendo que necesitas ayuda con...",
                     "diagnostico": "Vamos a identificar el problema. ¿Cuándo ocurrió?",
                     "solucion": "Para solucionar esto, te recomiendo...",
                     "verificacion": "¿Podrías confirmar si el problema está resuelto?",
@@ -372,7 +372,7 @@ async def create_agent(
                 "fases": ["bienvenida", "disponibilidad", "confirmacion", "recordatorio", "cierre"],
                 "reglas": ["verificar disponibilidad", "confirmar detalles", "enviar recordatorio", "confirmar cita"],
                 "scripts": {
-                    "bienvenida": "Hola, soy {nombre}. ¿En qué puedo ayudarte con tu reserva?",
+                    "bienvenida": "Hola, soy {name}. ¿En qué puedo ayudarte con tu reserva?",
                     "disponibilidad": "Voy a verificar la disponibilidad para ti...",
                     "confirmacion": "Tengo disponibilidad en los siguientes horarios...",
                     "recordatorio": "Te enviaré un recordatorio antes de tu cita.",
@@ -384,7 +384,7 @@ async def create_agent(
                 "fases": ["contacto", "comprension", "accion", "seguimiento"],
                 "reglas": ["escuchar activamente", "comprender necesidades", "proporcionar ayuda", "verificar satisfacción"],
                 "scripts": {
-                    "contacto": "Hola, soy {nombre}. ¿En qué puedo ayudarte?",
+                    "contacto": "Hola, soy {name}. ¿En qué puedo ayudarte?",
                     "comprension": "Entiendo que necesitas ayuda con...",
                     "accion": "Para ayudarte, voy a...",
                     "seguimiento": "¿Hay algo más en lo que pueda asistirte?"
@@ -398,43 +398,43 @@ async def create_agent(
     await db.execute(
         text("""
             INSERT INTO agents (
-                id, tenant_id, nombre, area, descripcion, genero, humor, personalidad,
-                idioma, tono, coleccion_rag, tipo_negocio, objetivo, instrucciones,
-                modelo, temperatura, max_tokens, canales,
-                horario_inicio, horario_fin, dias_atencion, mensaje_fuera_horario,
-                script_ventas, agent_type, specialty, system_prompt, estado
+                id, tenant_id, name, area, description, gender, mood, personality,
+                language, tone, rag_collection, business_type, objective, instructions,
+                model, temperature, max_tokens, channels,
+                schedule_start, schedule_end, service_days, off_hours_message,
+                sales_script, agent_type, specialty, system_prompt, status
             ) VALUES (
-                :id, :tid, :nombre, :area, :desc, :gen, :hum, :pers,
-                :idioma, :tono, :coleccion, :tipo, :objetivo, :instr,
-                :modelo, :temp, :tokens, :canales,
+                :id, :tid, :name, :area, :desc, :gen, :hum, :pers,
+                :language, :tone, :coleccion, :type, :objective, :instr,
+                :model, :temp, :tokens, :channels,
                 :hora_ini, :hora_fin, :dias, :msg_fuera,
-                :script_ventas, :agent_type, :specialty, :system_prompt, 'activo'
+                :sales_script, :agent_type, :specialty, :system_prompt, 'is_active'
             )
         """),
         {
             "id": str(nuevo_id),
             "tid": usuario.tenant_id,
-            "nombre": datos.nombre.strip(),
+            "name": datos.name.strip(),
             "area": area_mapeada,
-            "desc": datos.descripcion,
+            "desc": datos.description,
             "gen": genero_mapeado,
-            "hum": datos.humor,
-            "pers": datos.personalidad,
-            "idioma": datos.idioma,
-            "tono": datos.tono,
-            "coleccion": datos.coleccion_rag,
-            "tipo": datos.tipo_negocio,
-            "objetivo": datos.objetivo,
-            "instr": datos.instrucciones,
-            "modelo": datos.modelo,
-            "temp": datos.temperatura,
+            "hum": datos.mood,
+            "pers": datos.personality,
+            "language": datos.language,
+            "tone": datos.tone,
+            "coleccion": datos.rag_collection,
+            "type": datos.business_type,
+            "objective": datos.objective,
+            "instr": datos.instructions,
+            "model": datos.model,
+            "temp": datos.temperature,
             "tokens": datos.max_tokens,
-            "canales": canales_array,
-            "hora_ini": parse_time(datos.horario_inicio),
-            "hora_fin": parse_time(datos.horario_fin),
+            "channels": canales_array,
+            "hora_ini": parse_time(datos.schedule_start),
+            "hora_fin": parse_time(datos.schedule_end),
             "dias": dias_array,
-            "msg_fuera": datos.mensaje_fuera_horario,
-            "script_ventas": json.dumps(datos.script_ventas) if datos.script_ventas else json.dumps(generate_sales_script(datos.agent_type)),
+            "msg_fuera": datos.off_hours_message,
+            "sales_script": json.dumps(datos.sales_script) if datos.sales_script else json.dumps(generate_sales_script(datos.agent_type)),
             "agent_type": datos.agent_type,
             "specialty": datos.specialty,
             "system_prompt": final_prompt,
@@ -442,7 +442,7 @@ async def create_agent(
     )
     await db.commit()
     
-    logger.info(f"Agente creado: {datos.nombre} | tenant={usuario.tenant_id} | area={datos.area}")
+    logger.info(f"Agente creado: {datos.name} | tenant={usuario.tenant_id} | area={datos.area}")
     
     return {
         "mensaje": "Agente creado correctamente",
@@ -464,11 +464,11 @@ async def get_agent(
     
     result = await db.execute(
         text("""
-            SELECT id, nombre, area, descripcion, genero, humor, personalidad,
-                   idioma, tono, coleccion_rag, tipo_negocio, objetivo, instrucciones,
-                   modelo, temperatura, max_tokens, canales,
-                   horario_inicio, horario_fin, dias_atencion, mensaje_fuera_horario,
-                   script_ventas, agent_type, specialty, system_prompt, estado, creado_en, actualizado_en
+            SELECT id, name, area, description, gender, mood, personality,
+                   language, tone, rag_collection, business_type, objective, instructions,
+                   model, temperature, max_tokens, channels,
+                   schedule_start, schedule_end, service_days, off_hours_message,
+                   sales_script, agent_type, specialty, system_prompt, status, created_at, updated_at
             FROM agents
             WHERE id = :aid AND tenant_id = :tid
         """),
@@ -481,33 +481,33 @@ async def get_agent(
     
     return AgentResponse(
         id=str(row.id),
-        nombre=row.nombre,
+        name=row.name,
         area=row.area,
-        descripcion=row.descripcion,
-        genero=row.genero,
-        humor=row.humor,
-        personalidad=row.personalidad,
-        idioma=row.idioma,
-        tono=row.tono,
-        coleccion_rag=row.coleccion_rag,
-        tipo_negocio=row.tipo_negocio,
-        objetivo=row.objetivo,
-        instrucciones=row.instrucciones,
-        modelo=row.modelo,
-        temperatura=row.temperatura,
+        description=row.description,
+        gender=row.gender,
+        mood=row.mood,
+        personality=row.personality,
+        language=row.language,
+        tone=row.tone,
+        rag_collection=row.rag_collection,
+        business_type=row.business_type,
+        objective=row.objective,
+        instructions=row.instructions,
+        model=row.model,
+        temperature=row.temperature,
         max_tokens=row.max_tokens,
-        canales=row.canales or [],
-        horario_inicio=str(row.horario_inicio) if row.horario_inicio else None,
-        horario_fin=str(row.horario_fin) if row.horario_fin else None,
-        dias_atencion=row.dias_atencion or [],
-        mensaje_fuera_horario=row.mensaje_fuera_horario,
-        script_ventas=row.script_ventas if hasattr(row, 'script_ventas') else None,
+        channels=row.channels or [],
+        schedule_start=str(row.schedule_start) if row.schedule_start else None,
+        schedule_end=str(row.schedule_end) if row.schedule_end else None,
+        service_days=row.service_days or [],
+        off_hours_message=row.off_hours_message,
+        sales_script=row.sales_script if hasattr(row, 'sales_script') else None,
         agent_type=row.agent_type,
         specialty=row.specialty,
         system_prompt=row.system_prompt,
-        estado=row.estado,
-        creado_en=str(row.creado_en),
-        actualizado_en=str(row.actualizado_en),
+        status=row.status,
+        created_at=str(row.created_at),
+        updated_at=str(row.updated_at),
     )
 
 
@@ -527,7 +527,7 @@ async def update_agent(
     
     # Verificar que el agente exista
     result_check = await db.execute(
-        text("SELECT nombre FROM agents WHERE id = :aid AND tenant_id = :tid"),
+        text("SELECT name FROM agents WHERE id = :aid AND tenant_id = :tid"),
         {"aid": str(agent_id), "tid": usuario.tenant_id}
     )
     if not result_check.fetchone():
@@ -537,22 +537,22 @@ async def update_agent(
     params = {"aid": str(agent_id), "tid": usuario.tenant_id}
     
     campos = {
-        "nombre": datos.nombre,
+        "name": datos.name,
         "area": datos.area,
-        "descripcion": datos.descripcion,
-        "genero": datos.genero,
-        "humor": datos.humor,
-        "personalidad": datos.personalidad,
-        "idioma": datos.idioma,
-        "tono": datos.tono,
-        "coleccion_rag": datos.coleccion_rag,
-        "tipo_negocio": datos.tipo_negocio,
-        "objetivo": datos.objetivo,
-        "instrucciones": datos.instrucciones,
-        "modelo": datos.modelo,
-        "temperatura": datos.temperatura,
+        "description": datos.description,
+        "gender": datos.gender,
+        "mood": datos.mood,
+        "personality": datos.personality,
+        "language": datos.language,
+        "tone": datos.tone,
+        "rag_collection": datos.rag_collection,
+        "business_type": datos.business_type,
+        "objective": datos.objective,
+        "instructions": datos.instructions,
+        "model": datos.model,
+        "temperature": datos.temperature,
         "max_tokens": datos.max_tokens,
-        "mensaje_fuera_horario": datos.mensaje_fuera_horario,
+        "off_hours_message": datos.off_hours_message,
         "agent_type": datos.agent_type,
         "specialty": datos.specialty,
         "system_prompt": datos.system_prompt,
@@ -560,33 +560,33 @@ async def update_agent(
     
     for campo, valor in campos.items():
         if valor is not None:
-            db_campo = "coleccion_rag" if campo == "coleccion_rag" else campo
+            db_campo = "rag_collection" if campo == "rag_collection" else campo
             updates.append(f"{db_campo} = :{campo}")
             params[campo] = valor
     
-    if datos.canales is not None:
-        updates.append("canales = :canales")
-        params["canales"] = datos.canales
+    if datos.channels is not None:
+        updates.append("channels = :channels")
+        params["channels"] = datos.channels
     
-    if datos.dias_atencion is not None:
-        updates.append("dias_atencion = :dias_atencion")
-        params["dias_atencion"] = datos.dias_atencion
+    if datos.service_days is not None:
+        updates.append("service_days = :service_days")
+        params["service_days"] = datos.service_days
     
-    if datos.horario_inicio is not None:
-        updates.append("horario_inicio = :horario_inicio")
-        params["horario_inicio"] = parse_time(datos.horario_inicio)
+    if datos.schedule_start is not None:
+        updates.append("schedule_start = :schedule_start")
+        params["schedule_start"] = parse_time(datos.schedule_start)
     
-    if datos.horario_fin is not None:
-        updates.append("horario_fin = :horario_fin")
-        params["horario_fin"] = parse_time(datos.horario_fin)
+    if datos.schedule_end is not None:
+        updates.append("schedule_end = :schedule_end")
+        params["schedule_end"] = parse_time(datos.schedule_end)
     
-    if datos.estado is not None and datos.estado in ("entrenando", "activo", "pausado", "archivado"):
-        updates.append("estado = :estado")
-        params["estado"] = datos.estado
+    if datos.status is not None and datos.status in ("entrenando", "is_active", "pausado", "archivado"):
+        updates.append("status = :status")
+        params["status"] = datos.status
         
-    if datos.script_ventas is not None:
-        updates.append("script_ventas = :script_ventas")
-        params["script_ventas"] = json.dumps(datos.script_ventas)
+    if datos.sales_script is not None:
+        updates.append("sales_script = :sales_script")
+        params["sales_script"] = json.dumps(datos.sales_script)
     
     if not updates:
         return {"mensaje": "No hay cambios para aplicar"}
@@ -611,12 +611,12 @@ async def upload_agent_avatar(
     usuario: PayloadToken = Depends(get_usuario_actual),
     db: AsyncSession = Depends(obtener_sesion),
 ):
-    """Sube un avatar y actualiza el campo en script_ventas."""
+    """Sube un avatar y actualiza el campo en sales_script."""
     await configurar_rls(db, UUID(usuario.tenant_id))
     
     # Check if agent exists
     result_check = await db.execute(
-        text("SELECT script_ventas FROM agents WHERE id = :aid AND tenant_id = :tid"),
+        text("SELECT sales_script FROM agents WHERE id = :aid AND tenant_id = :tid"),
         {"aid": str(agent_id), "tid": usuario.tenant_id}
     )
     row = result_check.fetchone()
@@ -657,14 +657,14 @@ async def upload_agent_avatar(
     # In production, this should include the domain. For now, relative/static path.
     avatar_url = f"/uploads/avatars/{new_filename}"
     
-    # Update script_ventas JSON
-    script_ventas = row.script_ventas or {}
-    script_ventas["avatar"] = avatar_url
+    # Update sales_script JSON
+    sales_script = row.sales_script or {}
+    sales_script["avatar"] = avatar_url
     
     await db.execute(
-        text("UPDATE agents SET script_ventas = :script_ventas WHERE id = :aid AND tenant_id = :tid"),
+        text("UPDATE agents SET sales_script = :sales_script WHERE id = :aid AND tenant_id = :tid"),
         {
-            "script_ventas": json.dumps(script_ventas),
+            "sales_script": json.dumps(sales_script),
             "aid": str(agent_id),
             "tid": usuario.tenant_id
         }
@@ -720,7 +720,7 @@ async def test_agent(
     # Obtener configuración del agente
     result = await db.execute(
         text("""
-            SELECT nombre, instrucciones, modelo, temperatura, max_tokens, personalidad
+            SELECT name, instructions, model, temperature, max_tokens, personality
             FROM agents WHERE id = :aid AND tenant_id = :tid
         """),
         {"aid": str(agent_id), "tid": usuario.tenant_id}
@@ -733,8 +733,8 @@ async def test_agent(
     # Aquí iría la llamada a Ollama con el prompt del agente
     # Por ahora retornamos una respuesta de prueba
     return {
-        "agente": agent.nombre,
+        "agente": agent.name,
         "mensaje": mensaje.get("mensaje", ""),
-        "respuesta": f"Esta es una respuesta de prueba del agente {agent.nombre}. La integración con Ollama completaría la respuesta real.",
-        "modelo": agent.modelo,
+        "respuesta": f"Esta es una respuesta de prueba del agente {agent.name}. La integración con Ollama completaría la respuesta real.",
+        "model": agent.model,
     }

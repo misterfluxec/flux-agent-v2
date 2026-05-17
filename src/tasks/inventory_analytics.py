@@ -22,7 +22,7 @@ async def calculate_sales_velocity():
             # Utilizaremos order_items asumiendo que existen, o quote_items de órdenes pagadas.
             # Veamos si order_items existe, o quote_items de quotes aceptados.
             # Simplificamos: contamos los quote_items de quotes que están en 'accepted' o 'paid'
-            # (asumiendo que quote.status refleja si se vendió o generó la orden).
+            # (asumiendo que quote.status refleja si se vendió o generó la sort_order).
             
             query_stats = text("""
                 WITH sales_data AS (

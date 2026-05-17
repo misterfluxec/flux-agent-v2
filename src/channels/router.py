@@ -85,7 +85,7 @@ class ChannelRouter:
     
     @classmethod
     def list_supported_channels(cls) -> list[str]:
-        """Retorna lista de canales disponibles."""
+        """Retorna lista de channels disponibles."""
         return list(cls._adapters.keys())
     
     @classmethod

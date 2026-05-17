@@ -88,7 +88,7 @@ async def upload_audio(
 ):
     """Sube y procesa audio en cola"""
     try:
-        # Validar tipo de archivo
+        # Validar type de archivo
         if not file.content_type.startswith('audio/'):
             raise HTTPException(
                 status_code=400,
@@ -233,7 +233,7 @@ async def get_voice_task_status(
     task_id: str,
     usuario: PayloadToken = Depends(get_usuario_actual)
 ):
-    """Obtiene estado de tarea de voz"""
+    """Obtiene status de tarea de voz"""
     try:
         from tasks.async_tasks import get_task_status
         
@@ -247,10 +247,10 @@ async def get_voice_task_status(
         }
         
     except Exception as e:
-        logger.error(f"Error obteniendo estado de tarea voz {task_id}: {e}")
+        logger.error(f"Error obteniendo status de tarea voz {task_id}: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error obteniendo estado: {str(e)}"
+            detail=f"Error obteniendo status: {str(e)}"
         )
 
 @router.get("/queue/stats")
@@ -307,10 +307,10 @@ async def get_voice_status(
         }
         
     except Exception as e:
-        logger.error(f"Error verificando estado voz: {e}")
+        logger.error(f"Error verificando status voz: {e}")
         return {
             "status": "error",
-            "message": f"Error verificando estado: {str(e)}"
+            "message": f"Error verificando status: {str(e)}"
         }
 
 @router.get("/voices")

@@ -19,7 +19,7 @@ class AgentFactory:
         agent_data: AgentCreate,
         tenant_id: str,
         system_prompt: str,
-        script_ventas: Optional[Dict[str, Any]] = None
+        sales_script: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Crea entidad de agente para persistencia en BD
         
@@ -27,7 +27,7 @@ class AgentFactory:
             agent_data: Datos del agente
             tenant_id: ID del tenant
             system_prompt: Prompt del sistema generado
-            script_ventas: Scripts de ventas
+            sales_script: Scripts de ventas
             
         Returns:
             Dict con datos para inserción en BD
@@ -35,27 +35,27 @@ class AgentFactory:
         return {
             "id": str(uuid4()),
             "tenant_id": tenant_id,
-            "name": agent_data.nombre,
+            "name": agent_data.name,
             "area": agent_data.area,
-            "descripcion": agent_data.descripcion,
-            "genero": agent_data.genero.value,
-            "humor": agent_data.humor.value,
-            "personalidad": agent_data.personalidad,
-            "idioma": agent_data.idioma,
-            "tono": agent_data.tono.value,
-            "coleccion_rag": agent_data.coleccion_rag,
-            "tipo_negocio": agent_data.tipo_negocio,
-            "objetivo": agent_data.objetivo,
-            "instrucciones": agent_data.instrucciones,
-            "modelo": agent_data.modelo,
-            "temperatura": agent_data.temperatura,
+            "description": agent_data.description,
+            "gender": agent_data.gender.value,
+            "mood": agent_data.mood.value,
+            "personality": agent_data.personality,
+            "language": agent_data.language,
+            "tone": agent_data.tone.value,
+            "rag_collection": agent_data.rag_collection,
+            "business_type": agent_data.business_type,
+            "objective": agent_data.objective,
+            "instructions": agent_data.instructions,
+            "model": agent_data.model,
+            "temperature": agent_data.temperature,
             "max_tokens": agent_data.max_tokens,
-            "canales": agent_data.canales,
-            "horario_inicio": agent_data.horario_inicio,
-            "horario_fin": agent_data.horario_fin,
-            "dias_atencion": agent_data.dias_atencion,
-            "mensaje_fuera_horario": agent_data.mensaje_fuera_horario,
-            "script_ventas": json.dumps(script_ventas) if script_ventas else None,
+            "channels": agent_data.channels,
+            "schedule_start": agent_data.schedule_start,
+            "schedule_end": agent_data.schedule_end,
+            "service_days": agent_data.service_days,
+            "off_hours_message": agent_data.off_hours_message,
+            "sales_script": json.dumps(sales_script) if sales_script else None,
             "agent_type": agent_data.agent_type.value,
             "specialty": agent_data.specialty,
             "system_prompt": system_prompt,
@@ -67,7 +67,7 @@ class AgentFactory:
         agent_id: str,
         agent_data: AgentCreate,
         system_prompt: str,
-        script_ventas: Optional[Dict[str, Any]] = None
+        sales_script: Optional[Dict[str, Any]] = None
     ) -> AgentResponse:
         """Crea respuesta de agente para API
         
@@ -75,40 +75,40 @@ class AgentFactory:
             agent_id: ID del agente creado
             agent_data: Datos originales del agente
             system_prompt: Prompt generado
-            script_ventas: Scripts generados
+            sales_script: Scripts generados
             
         Returns:
             AgentResponse para respuesta HTTP
         """
         return AgentResponse(
             id=agent_id,
-            nombre=agent_data.nombre,
+            name=agent_data.name,
             area=agent_data.area,
-            descripcion=agent_data.descripcion,
-            genero=agent_data.genero,
-            humor=agent_data.humor,
-            personalidad=agent_data.personalidad,
-            idioma=agent_data.idioma,
-            tono=agent_data.tono,
-            coleccion_rag=agent_data.coleccion_rag,
-            tipo_negocio=agent_data.tipo_negocio,
-            objetivo=agent_data.objetivo,
-            instrucciones=agent_data.instrucciones,
-            modelo=agent_data.modelo,
-            temperatura=agent_data.temperatura,
+            description=agent_data.description,
+            gender=agent_data.gender,
+            mood=agent_data.mood,
+            personality=agent_data.personality,
+            language=agent_data.language,
+            tone=agent_data.tone,
+            rag_collection=agent_data.rag_collection,
+            business_type=agent_data.business_type,
+            objective=agent_data.objective,
+            instructions=agent_data.instructions,
+            model=agent_data.model,
+            temperature=agent_data.temperature,
             max_tokens=agent_data.max_tokens,
-            canales=agent_data.canales,
-            horario_inicio=agent_data.horario_inicio,
-            horario_fin=agent_data.horario_fin,
-            dias_atencion=agent_data.dias_atencion,
-            mensaje_fuera_horario=agent_data.mensaje_fuera_horario,
-            script_ventas=script_ventas,
+            channels=agent_data.channels,
+            schedule_start=agent_data.schedule_start,
+            schedule_end=agent_data.schedule_end,
+            service_days=agent_data.service_days,
+            off_hours_message=agent_data.off_hours_message,
+            sales_script=sales_script,
             agent_type=agent_data.agent_type,
             specialty=agent_data.specialty,
             system_prompt=system_prompt,
-            estado=AgentStatus.DRAFT,
-            creado_en=None,  # Se asignará en BD
-            actualizado_en=None
+            status=AgentStatus.DRAFT,
+            created_at=None,  # Se asignará en BD
+            updated_at=None
         )
     
     @staticmethod
@@ -128,58 +128,58 @@ class AgentFactory:
             data = db_row.__dict__
         
         # Parsear JSON si es necesario
-        script_ventas = data.get('script_ventas')
-        if isinstance(script_ventas, str):
+        sales_script = data.get('sales_script')
+        if isinstance(sales_script, str):
             try:
-                script_ventas = json.loads(script_ventas)
+                sales_script = json.loads(sales_script)
             except json.JSONDecodeError:
-                script_ventas = None
+                sales_script = None
         
         # Parsear arrays si es necesario
-        dias_atencion = data.get('dias_atencion')
-        if isinstance(dias_atencion, str):
+        service_days = data.get('service_days')
+        if isinstance(service_days, str):
             try:
-                dias_atencion = json.loads(dias_atencion)
+                service_days = json.loads(service_days)
             except json.JSONDecodeError:
-                dias_atencion = []
+                service_days = []
         
-        canales = data.get('canales')
-        if isinstance(canales, str):
+        channels = data.get('channels')
+        if isinstance(channels, str):
             try:
-                canales = json.loads(canales)
+                channels = json.loads(channels)
             except json.JSONDecodeError:
-                canales = []
+                channels = []
         
         return AgentResponse(
             id=str(data.get('id')),
-            nombre=data.get('name'),
+            name=data.get('name'),
             area=data.get('area'),
-            descripcion=data.get('descripcion'),
-            genero=AgentGender(data.get('genero', 'femenino')),
-            humor=AgentTone(data.get('humor', 'profesional')),
-            personalidad=data.get('personalidad'),
-            idioma=data.get('idioma', 'Español (Ecuador)'),
-            tono=AgentTone(data.get('tono', 'profesional')),
-            coleccion_rag=data.get('coleccion_rag'),
-            tipo_negocio=data.get('tipo_negocio'),
-            objetivo=data.get('objetivo'),
-            instrucciones=data.get('instrucciones'),
-            modelo=data.get('modelo', 'qwen2.5:3b'),
-            temperatura=float(data.get('temperatura', 0.7)),
+            description=data.get('description'),
+            gender=AgentGender(data.get('gender', 'femenino')),
+            mood=AgentTone(data.get('mood', 'profesional')),
+            personality=data.get('personality'),
+            language=data.get('language', 'Español (Ecuador)'),
+            tone=AgentTone(data.get('tone', 'profesional')),
+            rag_collection=data.get('rag_collection'),
+            business_type=data.get('business_type'),
+            objective=data.get('objective'),
+            instructions=data.get('instructions'),
+            model=data.get('model', 'qwen2.5:3b'),
+            temperature=float(data.get('temperature', 0.7)),
             max_tokens=int(data.get('max_tokens', 512)),
-            canales=canales or ['web_chat'],
-            horario_inicio=data.get('horario_inicio'),
-            horario_fin=data.get('horario_fin'),
-            dias_atencion=dias_atencion,
-            mensaje_fuera_horario=data.get('mensaje_fuera_horario'),
-            script_ventas=script_ventas,
+            channels=channels or ['web_chat'],
+            schedule_start=data.get('schedule_start'),
+            schedule_end=data.get('schedule_end'),
+            service_days=service_days,
+            off_hours_message=data.get('off_hours_message'),
+            sales_script=sales_script,
             agent_type=AgentType(data.get('agent_type', 'sales')),
             specialty=data.get('specialty'),
             system_prompt=data.get('system_prompt'),
-            estado=AgentStatus(data.get('status', 'draft')),
+            status=AgentStatus(data.get('status', 'draft')),
             avatar_url=data.get('avatar_url'),
-            creado_en=str(data.get('created_at')) if data.get('created_at') else None,
-            actualizado_en=str(data.get('updated_at')) if data.get('updated_at') else None
+            created_at=str(data.get('created_at')) if data.get('created_at') else None,
+            updated_at=str(data.get('updated_at')) if data.get('updated_at') else None
         )
     
     @staticmethod
@@ -196,27 +196,27 @@ class AgentFactory:
         
         # Mapeo de campos backend -> BD
         field_mapping = {
-            "nombre": "name",
+            "name": "name",
             "area": "area",
-            "descripcion": "descripcion",
-            "genero": "genero",
-            "humor": "humor",
-            "personalidad": "personalidad",
-            "idioma": "idioma",
-            "tono": "tono",
-            "coleccion_rag": "coleccion_rag",
-            "tipo_negocio": "tipo_negocio",
-            "objetivo": "objetivo",
-            "instrucciones": "instrucciones",
-            "modelo": "modelo",
-            "temperatura": "temperatura",
+            "description": "description",
+            "gender": "gender",
+            "mood": "mood",
+            "personality": "personality",
+            "language": "language",
+            "tone": "tone",
+            "rag_collection": "rag_collection",
+            "business_type": "business_type",
+            "objective": "objective",
+            "instructions": "instructions",
+            "model": "model",
+            "temperature": "temperature",
             "max_tokens": "max_tokens",
-            "canales": "canales",
-            "horario_inicio": "horario_inicio",
-            "horario_fin": "horario_fin",
-            "dias_atencion": "dias_atencion",
-            "mensaje_fuera_horario": "mensaje_fuera_horario",
-            "script_ventas": "script_ventas",
+            "channels": "channels",
+            "schedule_start": "schedule_start",
+            "schedule_end": "schedule_end",
+            "service_days": "service_days",
+            "off_hours_message": "off_hours_message",
+            "sales_script": "sales_script",
             "agent_type": "agent_type",
             "specialty": "specialty",
             "system_prompt": "system_prompt"

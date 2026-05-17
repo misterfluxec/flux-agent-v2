@@ -75,7 +75,7 @@ class OllamaDebateClient:
         self.model = model
 
     async def chat(self, system_prompt: str, user_message: str) -> str:
-        """Llama al modelo Ollama local y retorna la respuesta."""
+        """Llama al model Ollama local y retorna la respuesta."""
         try:
             import httpx
             async with httpx.AsyncClient(timeout=60.0) as client:
@@ -95,20 +95,20 @@ class OllamaDebateClient:
                 return resp.json()["message"]["content"]
         except Exception as e:
             logger.error(f"[OllamaDebateClient] Error: {e}")
-            # Fallback mock para modo de pruebas sin Ollama activo
+            # Fallback mock para modo de pruebas sin Ollama is_active
             return f"[MOCK RESPONSE] Análisis del agente para: {user_message[:80]}..."
 
 
 class AgentDebater:
     """
     Un agente participante en el debate.
-    Tiene un rol específico y perspectiva definida.
+    Tiene un role específico y perspectiva definida.
     """
     def __init__(self, role: str, persona: str, ollama: OllamaDebateClient):
         self.role = role
         self.persona = persona
         self.ollama = ollama
-        self.system_prompt = f"""Eres un especialista con el rol de {role}.
+        self.system_prompt = f"""Eres un especialista con el role de {role}.
 {persona}
 
 REGLAS DEL DEBATE:
@@ -145,24 +145,24 @@ class AgentDebateOrchestrator:
             "order_validation": (
                 AgentDebater(
                     role="Sales Specialist",
-                    persona="Eres el especialista de ventas. Tu prioridad es cerrar la venta y satisfacer al cliente, pero siempre dentro de las reglas de negocio.",
+                    persona="Eres el especialista de ventas. Tu priority es cerrar la venta y satisfacer al cliente, pero siempre dentro de las reglas de negocio.",
                     ollama=self.ollama,
                 ),
                 AgentDebater(
                     role="Risk & Compliance Officer",
-                    persona="Eres el oficial de cumplimiento. Tu prioridad es proteger al negocio de fraudes, errores de stock y violaciones de políticas.",
+                    persona="Eres el oficial de cumplimiento. Tu priority es proteger al negocio de fraudes, errores de stock y violaciones de políticas.",
                     ollama=self.ollama,
                 ),
             ),
             "identity_conflict": (
                 AgentDebater(
                     role="Customer Success Manager",
-                    persona="Tu prioridad es mantener una experiencia de cliente positiva y resolver duplicados con empatía.",
+                    persona="Tu priority es mantener una experiencia de cliente positiva y resolver duplicados con empatía.",
                     ollama=self.ollama,
                 ),
                 AgentDebater(
                     role="Data Integrity Specialist",
-                    persona="Tu prioridad es la integridad de los datos. Los perfiles duplicados son un riesgo operativo serio.",
+                    persona="Tu priority es la integridad de los datos. Los perfiles duplicados son un riesgo operativo serio.",
                     ollama=self.ollama,
                 ),
             ),
@@ -287,7 +287,7 @@ Responde en formato JSON exactamente así:
             except json.JSONDecodeError:
                 pass
 
-        # Fallback si el modelo no genera JSON correcto
+        # Fallback si el model no genera JSON correcto
         response_lower = moderator_response.lower()
         if "apro" in response_lower or "approve" in response_lower:
             return DebateVerdict.APPROVE, 0.70, "Consenso implícito de aprobación.", False

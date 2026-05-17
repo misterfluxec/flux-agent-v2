@@ -1,15 +1,15 @@
-import { Inter } from 'next/font/google';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { Providers } from '../providers';
 import '../globals.css';
 
-// Inter con todos los pesos operacionales — cargado por Next.js (sin @import manual)
-const inter = Inter({
+// Tipografía Enterprise B2B - Plus Jakarta Sans
+const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700', '800', '900'],
+  weight: ['400', '500', '600', '700', '800'],
   display: 'swap',
-  variable: '--font-inter',  // expone como CSS var para globals.css
+  variable: '--font-jakarta',  // expone como CSS var para globals.css
 });
 
 export const metadata = {
@@ -37,8 +37,8 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} className="dark" suppressHydrationWarning data-scroll-behavior="smooth">
-      {/* inter.variable expone --font-inter, inter.className aplica font-family directo */}
-      <body className={`${inter.variable} ${inter.className} antialiased`}>
+      {/* Aplicar Plus Jakarta Sans en todo el body */}
+      <body className={`${jakarta.variable} font-sans antialiased`}>
         <NextIntlClientProvider messages={messages} locale={locale}>
           <Providers>{children}</Providers>
         </NextIntlClientProvider>

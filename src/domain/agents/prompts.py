@@ -17,26 +17,26 @@ class AgentPromptFactory:
         personality: Optional[str] = None,
         instructions: Optional[str] = None,
         specialty: Optional[str] = None,
-        script_ventas: Optional[Dict[str, Any]] = None,
+        sales_script: Optional[Dict[str, Any]] = None,
         **kwargs
     ) -> Tuple[str, Optional[Dict[str, Any]]]:
-        """Genera prompt del sistema + script según tipo de agente
+        """Genera prompt del sistema + script según type de agente
         
         Args:
             agent_type: Tipo de agente (sales, support, bookings, custom)
             personality: Personalidad del agente
             instructions: Instrucciones específicas
             specialty: Especialidad del agente
-            script_ventas: Scripts de ventas (para agentes de ventas)
+            sales_script: Scripts de ventas (para agentes de ventas)
             **kwargs: Parámetros adicionales
             
         Returns:
-            Tuple[str, Optional[Dict]]: (system_prompt, script_ventas)
+            Tuple[str, Optional[Dict]]: (system_prompt, sales_script)
         """
         
         if agent_type == AgentType.SALES:
             return AgentPromptFactory._create_sales_prompt(
-                personality, instructions, specialty, script_ventas, **kwargs
+                personality, instructions, specialty, sales_script, **kwargs
             )
         elif agent_type == AgentType.SUPPORT:
             return AgentPromptFactory._create_support_prompt(
@@ -56,7 +56,7 @@ class AgentPromptFactory:
         personality: Optional[str],
         instructions: Optional[str],
         specialty: Optional[str],
-        script_ventas: Optional[Dict[str, Any]],
+        sales_script: Optional[Dict[str, Any]],
         **kwargs
     ) -> Tuple[str, Optional[Dict[str, Any]]]:
         """Crea prompt para agente de ventas"""
@@ -67,10 +67,10 @@ class AgentPromptFactory:
             
             # Construir datos para legacy
             agent_data = {
-                "personalidad": personality,
-                "instrucciones": instructions,
+                "personality": personality,
+                "instructions": instructions,
                 "specialty": specialty,
-                "script_ventas": script_ventas,
+                "sales_script": sales_script,
                 **kwargs
             }
             
@@ -79,7 +79,7 @@ class AgentPromptFactory:
         except ImportError:
             # Fallback si no existe legacy
             return AgentPromptFactory._fallback_sales_prompt(
-                personality, instructions, specialty, script_ventas
+                personality, instructions, specialty, sales_script
             )
     
     @staticmethod
@@ -97,7 +97,7 @@ class AgentPromptFactory:
             base_prompt += f" Tu especialidad es: {specialty}."
         
         if personality:
-            base_prompt += f" Tu personalidad: {personality}."
+            base_prompt += f" Tu personality: {personality}."
         
         if instructions:
             base_prompt += f" Instrucciones específicas: {instructions}"
@@ -109,7 +109,7 @@ class AgentPromptFactory:
 - Escuchar activamente las necesidades del cliente
 - Ofrecer soluciones prácticas y efectivas
 - Escalar problemas complejos cuando sea necesario
-- Mantener un tono profesional y empático
+- Mantener un tone profesional y empático
 
 ## TU ENFOQUE:
 1. Escuchar el problema con atención
@@ -142,7 +142,7 @@ class AgentPromptFactory:
             base_prompt += f" Tu especialidad es: {specialty}."
         
         if personality:
-            base_prompt += f" Tu personalidad: {personality}."
+            base_prompt += f" Tu personality: {personality}."
         
         if instructions:
             base_prompt += f" Instrucciones específicas: {instructions}"
@@ -187,7 +187,7 @@ class AgentPromptFactory:
             base_prompt += f" Tu especialidad es: {specialty}."
         
         if personality:
-            base_prompt += f" Tu personalidad: {personality}."
+            base_prompt += f" Tu personality: {personality}."
         
         if instructions:
             base_prompt += f" Instrucciones: {instructions}"
@@ -196,7 +196,7 @@ class AgentPromptFactory:
 
 ## TUS RESPONSABILIDADES:
 - Proporcionar asistencia según tu especialidad
-- Mantener un tono profesional y servicial
+- Mantener un tone profesional y servicial
 - Adaptarte a las necesidades del cliente
 - Buscar la mejor solución para cada caso
 
@@ -214,7 +214,7 @@ class AgentPromptFactory:
         personality: Optional[str],
         instructions: Optional[str],
         specialty: Optional[str],
-        script_ventas: Optional[Dict[str, Any]]
+        sales_script: Optional[Dict[str, Any]]
     ) -> Tuple[str, Optional[Dict[str, Any]]]:
         """Prompt fallback para ventas si legacy no disponible"""
         
@@ -224,7 +224,7 @@ class AgentPromptFactory:
             base_prompt += f" Tu especialidad es: {specialty}."
         
         if personality:
-            base_prompt += f" Tu personalidad: {personality}."
+            base_prompt += f" Tu personality: {personality}."
         
         if instructions:
             base_prompt += f" Instrucciones: {instructions}"
@@ -255,9 +255,9 @@ class AgentPromptFactory:
         # Script básico si no se proporciona
         default_script = {
             "fases": [
-                {"nombre": "descubrimiento", "objetivo": "Identificar necesidades"},
-                {"nombre": "presentacion", "objetivo": "Mostrar soluciones"},
-                {"nombre": "cierre", "objetivo": "Facilitar decisión"}
+                {"name": "descubrimiento", "objective": "Identificar necesidades"},
+                {"name": "presentacion", "objective": "Mostrar soluciones"},
+                {"name": "cierre", "objective": "Facilitar decisión"}
             ],
             "reglas": [
                 "Escuchar antes de hablar",
@@ -275,14 +275,14 @@ class AgentPromptFactory:
             }
         }
         
-        return base_prompt, script_ventas or default_script
+        return base_prompt, sales_script or default_script
 
 class PromptTemplate:
     """Templates reutilizables para prompts"""
     
     @staticmethod
     def get_base_template(agent_type: AgentType) -> str:
-        """Obtiene template base para tipo de agente"""
+        """Obtiene template base para type de agente"""
         templates = {
             AgentType.SALES: "Eres un agente de ventas profesional.",
             AgentType.SUPPORT: "Eres un agente de soporte técnico.",
@@ -293,7 +293,7 @@ class PromptTemplate:
     
     @staticmethod
     def get_responsibilities(agent_type: AgentType) -> str:
-        """Obtiene responsabilidades por tipo"""
+        """Obtiene responsabilidades por type"""
         responsibilities = {
             AgentType.SALES: "Identificar necesidades, presentar soluciones, cerrar ventas.",
             AgentType.SUPPORT: "Resolver problemas técnicos, escalar cuando sea necesario.",

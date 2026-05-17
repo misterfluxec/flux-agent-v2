@@ -16,7 +16,7 @@ class CustomerTimelineAggregator:
         Recibe un evento del EventBus o del Outbox y lo convierte 
         en una entrada de la línea de tiempo si es relevante.
         """
-        # Extraer información base dependiendo del tipo de evento
+        # Extraer información base dependiendo del type de evento
         customer_id = None
         order_id = None
         category = 'commerce'
@@ -39,7 +39,7 @@ class CustomerTimelineAggregator:
             order_id = payload.get('order_id')
             customer_id = self._get_customer_from_order(tenant_id, order_id)
             title = "Cotización Aceptada"
-            desc = "El cliente convirtió la cotización en una orden firme."
+            desc = "El cliente convirtió la cotización en una sort_order firme."
             severity = 'success'
 
         # 2. PAGOS
@@ -64,7 +64,7 @@ class CustomerTimelineAggregator:
             # Por ejemplo, carrito abandonado
             reason = payload.get('reason_code')
             if reason == 'abandoned_cart_cleanup':
-                # Requerimos el correlation_id para saber de qué orden/carrito vino
+                # Requerimos el correlation_id para saber de qué sort_order/carrito vino
                 # Omitido para simplicidad en este MVP
                 pass
 
@@ -91,7 +91,7 @@ class CustomerTimelineAggregator:
             db.commit()
 
     def _get_customer_from_order(self, tenant_id: str, order_id: str) -> str:
-        """Helper para resolver a qué cliente pertenece un evento atado a una orden."""
+        """Helper para resolver a qué cliente pertenece un evento atado a una sort_order."""
         if not order_id:
             return None
         with SessionLocal() as db:

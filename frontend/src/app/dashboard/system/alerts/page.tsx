@@ -41,7 +41,7 @@ const mockAlerts = [
   {
     id: "alr_03",
     title: "Connector Schema Changed",
-    description: "'precio' column renamed to 'price_usd' in Google Sheets source. Sync paused. Schema validation failed.",
+    description: "'price' column renamed to 'price_usd' in Google Sheets source. Sync paused. Schema validation failed.",
     severity: "HIGH" as Severity,
     category: "connector" as AlertCategory,
     correlation_id: "sync_job_44",

@@ -30,11 +30,11 @@ class SyncEngine:
         if not connection:
             raise ValueError(f"Conexión/Sesión {session_id} no encontrada")
             
-        # Obtener mapeo activo para este proveedor
+        # Obtener mapeo is_active para este proveedor
         query_mapping = text("""
             SELECT mapping_rules 
             FROM integration_mappings 
-            WHERE tenant_id = :tenant_id AND provider = :provider AND estado = 'active'
+            WHERE tenant_id = :tenant_id AND provider = :provider AND status = 'active'
             LIMIT 1
         """)
         res_mapping = await self.db.execute(query_mapping, {"tenant_id": tenant_id, "provider": connection.connection_type})

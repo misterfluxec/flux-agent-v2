@@ -38,5 +38,5 @@ async def run_discovery_task(session_id: str, lifecycle_engine):
     
     logger.info(f"[DiscoveryWorker] Discovery completado para {session_id}")
     
-    # Actualizar estado de la sesión para que el Frontend (polling) pueda avanzar a MAPPING
+    # Actualizar status de la sesión para que el Frontend (polling) pueda avanzar a MAPPING
     lifecycle_engine.finish_discovery(session_id, mock_schema)

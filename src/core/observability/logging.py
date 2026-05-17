@@ -335,7 +335,7 @@ class StructuredLogger:
             **kwargs
         )
 
-class StructuredLogHandler(logging.Handler):
+class StructuredLogHandler(logging.StreamHandler):
     """Handler personalizado para logs estructurados"""
     
     def emit(self, record):

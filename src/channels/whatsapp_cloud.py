@@ -67,7 +67,7 @@ class WhatsAppCloudAdapter(ChannelAdapter):
         message = messages[0]
         sender_id = message.get("from", "")
         
-        # Determinar tipo de contenido
+        # Determinar type de contenido
         msg_type = message.get("type", "text")
         content_type = self._map_content_type(msg_type)
         content = self._extract_content(message, msg_type)
@@ -110,7 +110,7 @@ class WhatsAppCloudAdapter(ChannelAdapter):
         return mapping.get(wa_type, "text")
     
     def _extract_content(self, message: dict, msg_type: str) -> Union[str, Dict[str, Any]]:
-        """Extrae el contenido del mensaje según el tipo."""
+        """Extrae el contenido del mensaje según el type."""
         if msg_type == "text":
             return message.get("text", {}).get("body", "")
         elif msg_type in ["image", "audio", "video", "document"]:

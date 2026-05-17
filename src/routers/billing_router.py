@@ -105,8 +105,8 @@ async def get_subscription(usuario: PayloadToken = Depends(get_usuario_actual)):
         await db.execute(text(f"SET app.current_tenant_id = '{usuario.tenant_id}'"))
         
         result = await db.execute(text("""
-            SELECT plan, estado, contrato_inicio as contract_start, contrato_fin as contract_end, 
-                   max_agentes, max_mensajes_mes as max_messages_month, 0 as price
+            SELECT plan, status, contract_start as contract_start, contract_end as contract_end, 
+                   max_agents, max_messages_month as max_messages_month, 0 as price
             FROM tenants
             WHERE id = :tid
         """), {"tid": usuario.tenant_id})
@@ -224,7 +224,7 @@ async def upgrade_plan(
         await db.execute(text("""
             UPDATE tenants
             SET plan = :plan, 
-                max_agentes = :max_agentes,
+                max_agents = :max_agents,
                 max_messages_month = :max_messages,
                 price = :price,
                 updated_at = NOW()
@@ -232,7 +232,7 @@ async def upgrade_plan(
         """), {
             "tid": usuario.tenant_id,
             "plan": new_plan,
-            "max_agentes": features.max_agents,
+            "max_agents": features.max_agents,
             "max_messages": features.max_messages_month,
             "price": features.price_usd
         })
@@ -256,7 +256,7 @@ async def get_usage_stats(
         
         # Obtener límites del plan
         tenant_result = await db.execute(text("""
-            SELECT max_agentes, max_messages_month, plan
+            SELECT max_agents, max_messages_month, plan
             FROM tenants
             WHERE id = :tid
         """), {"tid": usuario.tenant_id})
@@ -277,7 +277,7 @@ async def get_usage_stats(
                 COUNT(DISTINCT c.id) as conversations_used
             FROM agents a
             LEFT JOIN conversaciones c ON c.agent_id = a.id
-            LEFT JOIN mensajes m ON m.conversacion_id = c.id
+            LEFT JOIN mensajes m ON m.conversation_id = c.id
             WHERE a.tenant_id = :tid
                 AND c.iniciada_en >= NOW() - INTERVAL ':days days'
         """), {"tid": usuario.tenant_id, "days": days})

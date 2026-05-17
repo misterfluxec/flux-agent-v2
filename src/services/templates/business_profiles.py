@@ -15,14 +15,14 @@ BUSINESS_PROFILES: Dict[str, Dict[str, Any]] = {
                     "positioning": "El producto más vendido, ideal para regalos.",
                     "ideal_customer": ["Comprador impulsivo", "Buscador de regalos"],
                     "objection_handling": {
-                        "precio": "Destacar que la calidad justifica el precio y dura 3 veces más que la competencia.",
+                        "price": "Destacar que la calidad justifica el price y dura 3 veces más que la competencia.",
                         "tiempo_envio": "Ofrecer envío express (upsell)."
                     },
                     "urgency_triggers": ["Solo quedan pocas unidades en este color."]
                 },
                 "commercial_strategy": {
                     "upsells": ["Envío Express", "Garantía Extendida"],
-                    "fallback_offer": "Versión básica (si el precio es problema)"
+                    "fallback_offer": "Versión básica (si el price es problema)"
                 }
             },
             {
@@ -49,7 +49,7 @@ BUSINESS_PROFILES: Dict[str, Dict[str, Any]] = {
                     "positioning": "Revisión completa con especialistas certificados.",
                     "objection_handling": {
                         "disponibilidad": "Ofrecer entrar en lista de espera prioritaria o el siguiente turno disponible.",
-                        "precio": "Recordar que aceptamos aseguradoras (pedir nombre del seguro)."
+                        "price": "Recordar que aceptamos aseguradoras (pedir name del seguro)."
                     },
                     "closing_style": "consultative"
                 }

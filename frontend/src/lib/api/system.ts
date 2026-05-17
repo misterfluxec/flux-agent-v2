@@ -21,7 +21,7 @@ export interface SystemHealthStatus {
 }
 
 /**
- * Obtiene el estado de salud del sistema con información de circuit breakers
+ * Obtiene el status de salud del sistema con información de circuit breakers
  * Se integra con el endpoint /health del backend que implementa resiliencia
  */
 export async function fetchSystemHealth(): Promise<SystemHealthStatus> {
@@ -32,7 +32,7 @@ export async function fetchSystemHealth(): Promise<SystemHealthStatus> {
       // Agregar token si el endpoint requiere auth
       // "Authorization": `Bearer ${getToken()}`,
     },
-    // Cache corto para estado dinámico
+    // Cache corto para status dinámico
     next: { revalidate: 10 }, // Next.js App Router: revalidar cada 10s
   });
   
@@ -44,7 +44,7 @@ export async function fetchSystemHealth(): Promise<SystemHealthStatus> {
 }
 
 /**
- * Hook para obtener el estado de salud con polling automático
+ * Hook para obtener el status de salud con polling automático
  */
 export function useSystemHealth(refreshInterval: number = 30000) {
   return {

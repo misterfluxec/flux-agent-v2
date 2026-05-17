@@ -60,7 +60,7 @@ class Configuracion(BaseSettings):
         if external_url:
             return external_url
         
-        # Para Docker Compose: usar nombre del contenedor
+        # Para Docker Compose: usar name del contenedor
         if os.getenv("APP_ENV") == "production":
             return "http://ollama:11434"
         
@@ -135,7 +135,7 @@ class Configuracion(BaseSettings):
     tts_cache_dir: str = "/app/data/media/tts_cache"  # Directorio de caché
     tts_cache_ttl: int = 172800        # TTL: 48 horas en segundos
     tts_cache_max_size_gb: float = 2.0  # Máximo tamaño del directorio
-    tts_voice: str = "es-MX-DaliaNeural"  # Voz por defecto
+    tts_voice: str = "es-EC-AndreaNeural"  # Voz por defecto (ecuatoriana)
 
     # -------------------------------------------------------------------------
     # Canales de Mensajería

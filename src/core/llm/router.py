@@ -362,7 +362,7 @@ class LLMRouter:
             yield chunk
     
     def _get_default_model(self, provider: str) -> str:
-        """Retorna el modelo por defecto para cada provider."""
+        """Retorna el model por defecto para cada provider."""
         defaults = {
             "openai": "gpt-4o-mini",
             "anthropic": "claude-3-haiku-20240307",
@@ -375,7 +375,7 @@ class LLMRouter:
         return self.mode == "cloud"
     
     def get_available_providers(self) -> Dict[str, bool]:
-        """Retorna proveedores disponibles y su estado."""
+        """Retorna proveedores disponibles y su status."""
         return {
             "local": True,
             "openai": bool(os.getenv("OPENAI_API_KEY")),

@@ -40,7 +40,7 @@ export default function ModelsPage() {
       setPulling(true);
       toast.info(`Iniciando descarga de ${newModel}...`);
       await api.post(`/admin/models/pull?model_name=${newModel}`);
-      toast.success("Descarga iniciada. El modelo aparecerá cuando termine.");
+      toast.success("Descarga iniciada. El model aparecerá cuando termine.");
       setNewModel("");
     } catch (e) {
       toast.error("Error al solicitar descarga");
@@ -100,7 +100,7 @@ export default function ModelsPage() {
           <div className="col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center">
             <Cpu size={32} className="text-slate-700 mx-auto mb-3" />
             <p className="text-slate-400 text-sm font-medium">No hay modelos disponibles</p>
-            <p className="text-slate-600 text-xs mt-1">Descarga un modelo usando el formulario de arriba</p>
+            <p className="text-slate-600 text-xs mt-1">Descarga un model usando el formulario de arriba</p>
           </div>
         ) : (
           models.map((m) => (
@@ -127,7 +127,7 @@ export default function ModelsPage() {
                 <span className="text-[10px] text-slate-600">Modificado: {new Date(m.modified).toLocaleDateString()}</span>
                 {!m.active && (
                   <button
-                    onClick={() => toast.success(`${m.name} establecido como modelo por defecto`)}
+                    onClick={() => toast.success(`${m.name} establecido como model por defecto`)}
                     className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 px-2.5 py-1 rounded-lg transition-all"
                   >
                     Establecer Default

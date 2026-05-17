@@ -1,0 +1,43 @@
+{
+  "plans": {
+    "stability": {
+      "name": "Stability",
+      "tagline": "Your business never sleeps",
+      "price": "45",
+      "period": "/mo",
+      "features": [
+        "3,000 messages / month",
+        "Unlimited RAG Training",
+        "Ultra-fast Text Responses"
+      ],
+      "cta": "Select Stability",
+      "recommended": false
+    },
+    "human": {
+      "name": "Human Connection",
+      "tagline": "Sell via voice notes",
+      "price": "85",
+      "period": "/mo",
+      "features": [
+        "7,000 messages / month",
+        "Listen to Voice Notes (STT)",
+        "Respond with Human Voice (TTS)"
+      ],
+      "cta": "Activate Human Connection",
+      "recommended": true
+    },
+    "peace": {
+      "name": "Peace of Mind",
+      "tagline": "Total Scalability",
+      "price": "160",
+      "period": "/mo",
+      "features": [
+        "15,000 messages / month",
+        "AI Vision: Reads photos and catalogs",
+        "Full Multimodal Reasoning"
+      ],
+      "cta": "Choose Peace of Mind",
+      "recommended": false
+    }
+  }
+}

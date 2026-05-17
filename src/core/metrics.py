@@ -151,7 +151,7 @@ if PROMETHEUS_AVAILABLE:
             ).observe(duration)
     
     def record_circuit_breaker_state(state: int):
-        """Registrar estado del circuit breaker (0=CLOSED, 1=OPEN, 2=HALF_OPEN)."""
+        """Registrar status del circuit breaker (0=CLOSED, 1=OPEN, 2=HALF_OPEN)."""
         if PROMETHEUS_AVAILABLE:
             TTS_CIRCUIT_BREAKER_STATE.set(state)
     

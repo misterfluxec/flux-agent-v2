@@ -18,12 +18,12 @@ class RAGSyncEngine:
     """
     
     COLUMN_HEURISTICS = {
-        "nombre": ["nombre", "producto", "item", "artículo", "title", "name", "articulo"],
-        "precio": ["precio", "costo", "valor", "price", "cost", "amount"],
+        "name": ["name", "producto", "item", "artículo", "title", "name", "articulo"],
+        "price": ["price", "costo", "valor", "price", "cost", "amount"],
         "stock": ["stock", "cantidad", "disponible", "inventario", "quantity", "available"],
         "sku": ["sku", "código", "codigo", "id", "reference"],
-        "descripcion": ["descripción", "descripcion", "desc", "details", "description"],
-        "categoria": ["categoría", "categoria", "category", "tipo", "type"],
+        "description": ["descripción", "description", "desc", "details", "description"],
+        "categoria": ["categoría", "categoria", "category", "type", "type"],
     }
     
     @classmethod
@@ -153,7 +153,7 @@ class RAGSyncEngine:
                     # RAG Insert
                     await db.execute(text("""
                         INSERT INTO knowledge_chunks 
-                        (tenant_id, agent_id, fuente_nombre, fuente_tipo, contenido, embedding, creado_en)
+                        (tenant_id, agent_id, fuente_nombre, fuente_tipo, contenido, embedding, created_at)
                         VALUES (:tenant_id, :agent_id, :synced_source_id, :fuente_tipo, :contenido, CAST(:embedding AS vector), NOW())
                     """), batch)
                     stats["added"] += len(batch)
@@ -162,13 +162,13 @@ class RAGSyncEngine:
                 catalog_batch = []
                 for row in rows:
                     try:
-                        name = row.get(column_mapping.get('nombre', ''), '')
+                        name = row.get(column_mapping.get('name', ''), '')
                         if not name:
                             continue
                             
                         # Try to cast price and stock safely
                         try:
-                            price_str = str(row.get(column_mapping.get('precio', ''), '0')).replace(',', '').replace('$', '')
+                            price_str = str(row.get(column_mapping.get('price', ''), '0')).replace(',', '').replace('$', '')
                             price = float(price_str) if price_str.strip() else 0.0
                         except:
                             price = 0.0
@@ -179,7 +179,7 @@ class RAGSyncEngine:
                         except:
                             stock = 0
                             
-                        desc = row.get(column_mapping.get('descripcion', ''), '')
+                        desc = row.get(column_mapping.get('description', ''), '')
                         cat = row.get(column_mapping.get('categoria', ''), '')
                         
                         catalog_batch.append({
@@ -214,13 +214,13 @@ class RAGSyncEngine:
 
     @staticmethod
     def _build_semantic_context(row: Dict, mapping: Dict) -> str:
-        nombre = row.get(mapping.get('nombre', ''), 'Producto Desconocido')
-        precio = row.get(mapping.get('precio', ''), 'N/A')
+        name = row.get(mapping.get('name', ''), 'Producto Desconocido')
+        price = row.get(mapping.get('price', ''), 'N/A')
         sku = row.get(mapping.get('sku', ''), 'N/A')
         stock = row.get(mapping.get('stock', ''), 'N/A')
-        desc = row.get(mapping.get('descripcion', ''), '')
+        desc = row.get(mapping.get('description', ''), '')
         cat = row.get(mapping.get('categoria', ''), '')
-        return f"[Producto] {nombre}. [SKU] {sku}. [Precio] {precio}. [Stock] {stock}. [Categoría] {cat}. [Descripción] {desc}"
+        return f"[Producto] {name}. [SKU] {sku}. [Precio] {price}. [Stock] {stock}. [Categoría] {cat}. [Descripción] {desc}"
 
     @classmethod
     async def _generate_embedding(cls, text_content: str) -> List[float]:

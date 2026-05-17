@@ -24,15 +24,15 @@ async def resolve_agent_for_channel(tenant_id: str, channel: str, message_text: 
             target_types = ['sales', 'support', 'bookings']
             
         for agent_type in target_types:
-            query = "SELECT id FROM agents WHERE tenant_id = :tid AND agent_type = :type AND estado = 'activo' LIMIT 1"
+            query = "SELECT id FROM agents WHERE tenant_id = :tid AND agent_type = :type AND status = 'is_active' LIMIT 1"
             result = await db.execute(text(query), {"tid": tenant_id, "type": agent_type})
             agent = result.fetchone()
             if agent:
                 break
 
         if not agent:
-            # Fallback a cualquiera activo
-            fallback = await db.execute(text("SELECT id FROM agents WHERE tenant_id = :tid AND estado = 'activo' LIMIT 1"), {"tid": tenant_id})
+            # Fallback a cualquiera is_active
+            fallback = await db.execute(text("SELECT id FROM agents WHERE tenant_id = :tid AND status = 'is_active' LIMIT 1"), {"tid": tenant_id})
             agent = fallback.fetchone()
             
         if not agent:

@@ -34,7 +34,7 @@ export function CircuitBreakerBanner({
     enabled: !showOnlyOnIssues, // Si showOnlyOnIssues, solo fetch si hay problemas detectados
   });
 
-  // Determinar si hay circuit breakers en estado OPEN (problemas activos)
+  // Determinar si hay circuit breakers en status OPEN (problemas activos)
   const activeBreakers = health?.circuits 
     ? Object.entries(health.circuits).filter(
         ([_, circuit]) => circuit.state === "OPEN"
@@ -56,7 +56,7 @@ export function CircuitBreakerBanner({
       <Alert className="bg-muted/50 border-muted">
         <Loader2 className="h-4 w-4 animate-spin" />
         <AlertDescription className="ml-2 text-sm text-muted-foreground">
-          Verificando estado del sistema...
+          Verificando status del sistema...
         </AlertDescription>
       </Alert>
     );
@@ -69,7 +69,7 @@ export function CircuitBreakerBanner({
     return (
       <Alert variant="destructive">
         <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>⚠️ No se pudo verificar el estado</AlertTitle>
+        <AlertTitle>⚠️ No se pudo verificar el status</AlertTitle>
         <AlertDescription className="flex items-center gap-2">
           <span className="text-sm">
             Error al conectar con el servicio de salud. 
@@ -147,7 +147,7 @@ export function CircuitBreakerBanner({
             onClick={() => refetch()}
           >
             <RefreshCw className="h-3 w-3 mr-1" />
-            Actualizar estado
+            Actualizar status
           </Button>
           
           {onShowDetails && (
@@ -171,7 +171,7 @@ export function CircuitBreakerBanner({
 // =============================================================================
 
 /**
- * Formatea nombre técnico de circuito a nombre legible
+ * Formatea name técnico de circuito a name legible
  */
 function formatServiceName(name: string): string {
   const mapping: Record<string, string> = {

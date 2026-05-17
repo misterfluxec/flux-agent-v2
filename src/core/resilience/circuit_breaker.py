@@ -78,7 +78,7 @@ class AsyncCircuitBreaker:
     async def call(self, func: Callable, *args, **kwargs) -> Any:
         """Ejecuta función con protección del circuit breaker"""
         async with self._lock:
-            # Verificar estado del circuito
+            # Verificar status del circuito
             if self.state == CircuitState.OPEN:
                 if self._should_attempt_reset():
                     self.state = CircuitState.HALF_OPEN
@@ -196,7 +196,7 @@ class AsyncCircuitBreaker:
         return elapsed.total_seconds() >= self.config.recovery_timeout
     
     async def _notify_state_change(self, new_state: str):
-        """Notifica cambio de estado"""
+        """Notifica cambio de status"""
         old_state = self.state.value
         self._last_state_change = datetime.now()
         
@@ -221,7 +221,7 @@ class AsyncCircuitBreaker:
             logger.error(f"Error in circuit breaker callback: {e}")
     
     def get_status(self) -> Dict[str, Any]:
-        """Retorna estado actual y métricas"""
+        """Retorna status actual y métricas"""
         return {
             "name": self.config.name,
             "state": self.state.value,
@@ -247,7 +247,7 @@ class AsyncCircuitBreaker:
         }
     
     async def reset(self):
-        """Resetea manualmente el circuit breaker a estado cerrado"""
+        """Resetea manualmente el circuit breaker a status cerrado"""
         async with self._lock:
             self.state = CircuitState.CLOSED
             self.metrics = CircuitBreakerMetrics()
@@ -387,7 +387,7 @@ def create_circuit_breaker(service_name: str, **overrides) -> AsyncCircuitBreake
 
 # Endpoint para monitoreo de circuit breakers
 async def get_all_circuit_breakers_status() -> Dict[str, Any]:
-    """Retorna estado de todos los circuit breakers"""
+    """Retorna status de todos los circuit breakers"""
     status = {}
     for name, breaker in _circuit_breakers.items():
         status[name] = breaker.get_status()

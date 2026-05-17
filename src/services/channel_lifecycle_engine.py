@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class ChannelLifecycleEngine:
     """
-    Motor B2B para gobernar el estado de la conexión de todos los canales.
+    Motor B2B para gobernar el status de la conexión de todos los channels.
     - Maneja la base de datos `connected_channels`.
     - Genera QRs o Inicia validaciones de Webhooks.
     - Emite eventos al EventBus.
@@ -19,7 +19,7 @@ class ChannelLifecycleEngine:
 
     @classmethod
     async def get_channels(cls, tenant_id: UUID) -> List[ChannelConfig]:
-        """Obtiene la lista de canales y sus estados para un tenant."""
+        """Obtiene la lista de channels y sus estados para un tenant."""
         async with sesion_db(tenant_id) as db:
             result = await db.execute(text(
                 "SELECT * FROM connected_channels WHERE tenant_id = :tid"
@@ -90,7 +90,7 @@ class ChannelLifecycleEngine:
                     "cfg": '{"phone": "' + phone_number + '"}'
                 })
         
-        # Emitir cambio de estado
+        # Emitir cambio de status
         await WSRealtimeBridge.broadcast_to_tenant(str(tenant_id), {
             "event_type": "channel.status_changed",
             "channel": "whatsapp",

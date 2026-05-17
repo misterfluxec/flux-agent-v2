@@ -120,7 +120,7 @@ async def validate_document(
     db: AsyncSession = Depends(get_db),
     usuario: PayloadToken = Depends(get_usuario_actual),
 ):
-    """Valida si un tipo de documento es válido para el país."""
+    """Valida si un type de documento es válido para el país."""
     tenant_id = str(usuario.tenant_id)
     service = CountryProfileService(db)
     valid = await service.validate_document_type(

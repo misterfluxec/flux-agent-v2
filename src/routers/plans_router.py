@@ -182,7 +182,7 @@ async def get_current_plan(usuario: PayloadToken = Depends(get_usuario_actual)):
         await db.execute(text(f"SET app.current_tenant_id = '{usuario.tenant_id}'"))
         
         result = await db.execute(text("""
-            SELECT plan, max_agentes, max_messages_month, messages_used_month, estado
+            SELECT plan, max_agents, max_messages_month, messages_used_month, status
             FROM tenants
             WHERE id = :tid
         """), {"tid": usuario.tenant_id})
@@ -230,7 +230,7 @@ async def get_agents_count(db, tenant_id: str) -> int:
     result = await db.execute(text("""
         SELECT COUNT(*) 
         FROM agents 
-        WHERE tenant_id = :tid AND estado = 'activo'
+        WHERE tenant_id = :tid AND status = 'is_active'
     """), {"tid": tenant_id})
     
     count = result.scalar()
@@ -248,7 +248,7 @@ async def get_plan_usage(
         
         # Obtener información del plan
         tenant_result = await db.execute(text("""
-            SELECT plan, max_agentes, max_messages_month
+            SELECT plan, max_agents, max_messages_month
             FROM tenants
             WHERE id = :tid
         """), {"tid": usuario.tenant_id})
@@ -265,9 +265,9 @@ async def get_plan_usage(
         messages_result = await db.execute(text("""
             SELECT COUNT(*) as messages_used
             FROM mensajes m
-            JOIN conversaciones c ON m.conversacion_id = c.id
+            JOIN conversaciones c ON m.conversation_id = c.id
             WHERE c.tenant_id = :tid
-                AND m.creado_en >= NOW() - INTERVAL ':days days'
+                AND m.created_at >= NOW() - INTERVAL ':days days'
         """), {"tid": usuario.tenant_id, "days": days})
         
         messages_row = messages_result.fetchone()
@@ -321,7 +321,7 @@ async def get_plan_usage(
 
 @router.post("/calculate-price")
 async def calculate_price(plan_id: str, quantity: int = 1):
-    """Calcular precio para un plan"""
+    """Calcular price para un plan"""
     if plan_id not in PLAN_DETAILS:
         raise HTTPException(status_code=404, detail="Plan no encontrado")
     

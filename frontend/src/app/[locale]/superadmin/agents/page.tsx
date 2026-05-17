@@ -7,9 +7,9 @@ import { toast } from "sonner";
 
 type Agent = {
   id: string;
-  nombre: string;
-  tipo: string;
-  estado: string;
+  name: string;
+  type: string;
+  status: string;
   tenant: string;
 };
 
@@ -46,7 +46,7 @@ export default function GlobalAgentsPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
             <input 
               type="text" 
-              placeholder="Buscar por nombre o tipo..."
+              placeholder="Buscar por name o type..."
               className="bg-slate-900 border border-slate-800 rounded-lg py-2 pl-10 pr-4 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
             />
           </div>
@@ -71,11 +71,11 @@ export default function GlobalAgentsPage() {
               
               <div className="flex justify-between items-start mb-4">
                 <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800 group-hover:border-blue-500/30 transition-all">
-                  {a.tipo === 'ventas' ? <Zap className="w-5 h-5 text-amber-400" /> : <BrainCircuit className="w-5 h-5 text-blue-400" />}
+                  {a.type === 'ventas' ? <Zap className="w-5 h-5 text-amber-400" /> : <BrainCircuit className="w-5 h-5 text-blue-400" />}
                 </div>
                 <div className="flex gap-1.5">
                     <span className="bg-slate-950 text-[10px] text-slate-400 px-2 py-1 rounded-md border border-slate-800">
-                        {a.tipo.toUpperCase()}
+                        {a.type.toUpperCase()}
                     </span>
                     <button className="p-1 hover:bg-slate-800 rounded-md text-slate-500">
                         <MoreHorizontal className="w-4 h-4" />
@@ -83,7 +83,7 @@ export default function GlobalAgentsPage() {
                 </div>
               </div>
 
-              <h3 className="text-slate-100 font-bold mb-1 truncate">{a.nombre}</h3>
+              <h3 className="text-slate-100 font-bold mb-1 truncate">{a.name}</h3>
               <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-4">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
                 <span className="truncate">{a.tenant}</span>
@@ -91,8 +91,8 @@ export default function GlobalAgentsPage() {
 
               <div className="flex items-center justify-between pt-4 border-t border-slate-800/50">
                 <div className="flex items-center gap-1.5">
-                  <div className={`w-1.5 h-1.5 rounded-full ${a.estado === 'activo' ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-slate-600'}`} />
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{a.estado}</span>
+                  <div className={`w-1.5 h-1.5 rounded-full ${a.status === 'is_active' ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-slate-600'}`} />
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{a.status}</span>
                 </div>
                 <button className="text-[10px] font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1 uppercase tracking-tighter group/btn">
                     Auditar Logs

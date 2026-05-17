@@ -3,8 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List
 import logging
 
-from src.models import Customer, CustomerIdentity
-from src.services.identity_scoring_engine import IdentityScoringEngine, IdentityCandidate
+from models import Customer, CustomerIdentity
+from services.identity_scoring_engine import IdentityScoringEngine, IdentityCandidate
 import jellyfish
 
 logger = logging.getLogger(__name__)
@@ -55,7 +55,7 @@ class CustomerIdentityResolver:
                 or_(*conditions)
             )
         ).order_by(
-            # Dar prioridad a coincidencias por national_id
+            # Dar priority a coincidencias por national_id
             (CustomerIdentity.channel == 'national_id').desc(),
             CustomerIdentity.created_at.asc() 
         )
@@ -86,7 +86,7 @@ class CustomerIdentityResolver:
         
         # 3. Búsqueda Probabilística / Fonética (Sprint C.1)
         if name:
-            logger.info(f"[IdentityResolver] Buscando match probabilístico para nombre: {name}")
+            logger.info(f"[IdentityResolver] Buscando match probabilístico para name: {name}")
             # Obtener candidatos potenciales en el tenant (limitar por seguridad)
             candidates_query = select(Customer).where(Customer.tenant_id == self.tenant_id).limit(20)
             c_result = await self.db.execute(candidates_query)

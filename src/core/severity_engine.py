@@ -2,7 +2,7 @@
 Operational Severity Engine
 
 Calcula automáticamente la severidad de un evento basándose en:
-  1. Reglas estáticas por tipo de evento (base)
+  1. Reglas estáticas por type de evento (base)
   2. Modificadores contextuales dinámicos (SLA, VIP, recurrencia)
   3. Escalada temporal (un evento "medium" puede escalar a "high" si no se atiende)
 
@@ -37,7 +37,7 @@ def _max_sev(a: str, b: str) -> str:
 
 
 # =============================================================================
-# 1. Reglas base por tipo de evento
+# 1. Reglas base por type de evento
 # "Verdad de negocio" para FluxAgent — revisable con el equipo comercial.
 # =============================================================================
 BASE_SEVERITY_RULES: Dict[str, str] = {
@@ -66,7 +66,7 @@ BASE_SEVERITY_RULES: Dict[str, str] = {
     "tenant.quota_exhausted":   "high",
     "billing.threshold_reached":"high",
 
-    # Automatizaciones y seguimientos
+    # Automatizaciones y follow_ups
     "followup.scheduled":       "low",
     "followup.sent":            "low",
     "handoff.completed":        "low",
@@ -148,7 +148,7 @@ class SeverityEngine:
         payload = payload or {}
         context = context or SeverityContext()
 
-        # 1. Severidad base del tipo de evento
+        # 1. Severidad base del type de evento
         base = BASE_SEVERITY_RULES.get(event_type, "low")
         effective = base
 
@@ -292,7 +292,7 @@ class SeverityEngine:
         context: Optional[SeverityContext] = None,
     ) -> List[str]:
         """
-        Genera tags automáticos basados en el tipo de evento y contexto.
+        Genera tags automáticos basados en el type de evento y contexto.
         Los tags permiten filtrar, buscar y disparar automations.
 
         Tags generados automáticamente:
@@ -352,4 +352,4 @@ class SeverityEngine:
         if hasattr(context, "customer_tags"):
             tags.extend(context.customer_tags)
 
-        return list(dict.fromkeys(tags))  # Deduplicar preservando orden
+        return list(dict.fromkeys(tags))  # Deduplicar preservando sort_order

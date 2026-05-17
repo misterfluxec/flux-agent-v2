@@ -17,7 +17,7 @@ def get_whisper_model():
     if _whisper_model is None:
         try:
             from faster_whisper import WhisperModel
-            logger.info("Cargando modelo Faster-Whisper (base, int8, 4 threads)...")
+            logger.info("Cargando model Faster-Whisper (base, int8, 4 threads)...")
             # compute_type="int8" to minimize RAM/VRAM
             # cpu_threads=4 to avoid maxing out the i7
             _whisper_model = WhisperModel("base", device="cpu", compute_type="int8", cpu_threads=4)
@@ -70,7 +70,7 @@ class ServicioMultimedia:
     @staticmethod
     async def analizar_imagen(b64_image: str, prompt: str = "Describe esta imagen detalladamente para un asistente de ventas.") -> str:
         """
-        Envía una imagen Base64 al modelo Moondream en Ollama y devuelve la descripción.
+        Envía una imagen Base64 al model Moondream en Ollama y devuelve la descripción.
         Optimizado para CPU i7 (Moondream es ~1.4B parameters).
         """
         logger.info("Analizando imagen con moondream (Ollama)...")
@@ -92,9 +92,9 @@ class ServicioMultimedia:
                 resp = await client.post(f"{config.ollama_base_url}/api/chat", json=payload)
                 resp.raise_for_status()
                 data = resp.json()
-                descripcion = data.get("message", {}).get("content", "")
-                logger.info(f"Imagen analizada: {descripcion[:50]}...")
-                return descripcion.strip()
+                description = data.get("message", {}).get("content", "")
+                logger.info(f"Imagen analizada: {description[:50]}...")
+                return description.strip()
         except Exception as e:
             logger.error(f"Error analizando imagen: {e}")
             return ""

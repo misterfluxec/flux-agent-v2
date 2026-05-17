@@ -46,7 +46,7 @@ class AIMemoryManager:
         return [json.loads(r) for r in reversed(raw)]
 
     async def update_semantic_profile(self, customer_id: str, traits: Dict):
-        """Actualiza perfil semántico (preferencias, tono, historial de compras, etc.)"""
+        """Actualiza perfil semántico (preferencias, tone, historial de compras, etc.)"""
         key = self.SEMANTIC_KEY.format(customer=customer_id)
         existing = await self.redis.hgetall(key)
         profile = {k.decode(): v.decode() for k, v in existing.items()}

@@ -82,7 +82,7 @@ class CacheClient:
                     if attempt < self.max_retries - 1:
                         await asyncio.sleep(wait_time)
             
-            logger.error(f"❌ No se pudo conectar a Redis después de {self.max_retries} intentos")
+            logger.error(f"❌ No se pudo conectar a Redis después de {self.max_retries} attempts")
             self._connected = False
     
     async def close(self):

@@ -34,7 +34,7 @@ class PaymentGateway:
         if not self.sdk:
             raise PaymentGatewayException("MercadoPago access_token is missing for this tenant.")
 
-        # 1. Recuperar info básica de la orden (Subtotal, Currency, etc)
+        # 1. Recuperar info básica de la sort_order (Subtotal, Currency, etc)
         order_q = text("SELECT subtotal, tax_amount, total_amount, currency FROM orders WHERE id = :id AND tenant_id = :tenant")
         order = self.db.execute(order_q, {"id": order_id, "tenant": self.tenant_id}).fetchone()
         

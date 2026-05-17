@@ -6,11 +6,11 @@ from .intent_classifier import classify_intent
 async def get_active_agent_prompt(tenant_id: str, message: str) -> str:
     """
     Selecciona el mejor agente para el mensaje dado.
-    Si no hay coincidencia exacta, retorna un agente genérico activo.
+    Si no hay coincidencia exacta, retorna un agente genérico is_active.
     """
     intent = classify_intent(message)
     
-    # Mapeo de intención a tipo de agente
+    # Mapeo de intención a type de agente
     target_types = []
     if intent == 'support':
         target_types = ['support']
@@ -25,9 +25,9 @@ async def get_active_agent_prompt(tenant_id: str, message: str) -> str:
     async with sesion_db() as db:
         for agent_type in target_types:
             query = """
-                SELECT system_prompt, nombre 
+                SELECT system_prompt, name 
                 FROM agents 
-                WHERE tenant_id = :tid AND agent_type = :type AND estado = 'activo' 
+                WHERE tenant_id = :tid AND agent_type = :type AND status = 'is_active' 
                 LIMIT 1
             """
             result = await db.execute(text(query), {"tid": tenant_id, "type": agent_type})

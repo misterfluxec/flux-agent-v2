@@ -59,7 +59,7 @@ export default function OperationDetailView({
             <p className="text-xs text-slate-500 font-mono mt-1">ID: {id}</p>
             <p className="text-xs text-slate-400 mt-4">
               Aquí se integrarán los detalles específicos de negocio (CRM, montos, contacto)
-              según el tipo de agregado.
+              según el type de agregado.
             </p>
           </div>
         </div>

@@ -30,7 +30,7 @@ _servicio_ingesta = ServicioIngesta()
 
 def _generar_secciones_script(cfg: dict) -> str:
     """Genera las secciones de Reglas, Fases y Scripts para el prompt."""
-    script = cfg.get("script_ventas", {})
+    script = cfg.get("sales_script", {})
     if not script or "reglas" not in script:
         script = cfg
     
@@ -55,7 +55,7 @@ def _generar_secciones_script(cfg: dict) -> str:
     fases = [f for f in script.get("fases", []) if f.get("enabled")]
     if fases:
         seccion_fases = "## ESTRATEGIA DE VENTA (POR FASES):\n"
-        seccion_fases += "Identifica en qué fase estás y actúa según el objetivo. Adapta las frases a tu tono.\n"
+        seccion_fases += "Identifica en qué fase estás y actúa según el objective. Adapta las frases a tu tone.\n"
         for f in fases:
             seccion_fases += f"- [{f['name']}]: {f['objective']}. Sugerencia: {', '.join(f.get('keyPhrases', []))}\n"
         secciones.append(seccion_fases)
@@ -87,7 +87,7 @@ def _generar_secciones_script(cfg: dict) -> str:
 class EstadoConversacion:
     """
     Estado completo que se pasa entre nodos del grafo de conversación.
-    Cada nodo lee el estado, lo enriquece y lo pasa al siguiente.
+    Cada nodo lee el status, lo enriquece y lo pasa al siguiente.
     """
     contexto:         ContextoAgente
     chunks_rag:       list[dict] = field(default_factory=list)
@@ -102,13 +102,13 @@ class EstadoConversacion:
 # =============================================================================
 
 async def nodo_recuperacion(
-    estado:  EstadoConversacion,
+    status:  EstadoConversacion,
     sesion:  AsyncSession,
 ) -> EstadoConversacion:
     """
     NODO 1: Recuperación semántica (RAG Retrieval).
     """
-    ctx = estado.contexto
+    ctx = status.contexto
     logger.info(
         f"[RAG] Buscando contexto | tenant={ctx.tenant_id} | "
         f"pregunta='{ctx.mensaje_usuario[:60]}...'"
@@ -122,29 +122,29 @@ async def nodo_recuperacion(
             agent_id=ctx.agent_id if ctx.agent_id else None,
             top_k=5,
         )
-        estado.chunks_rag = chunks
+        status.chunks_rag = chunks
         logger.info(f"[RAG] {len(chunks)} chunks recuperados con similitud > 0.3")
     except Exception as exc:
         logger.warning(f"[RAG] Búsqueda vectorial falló, continuando sin contexto: {exc}")
-        estado.chunks_rag = []
+        status.chunks_rag = []
 
-    return estado
+    return status
 
 
 async def nodo_generacion(
-    estado:  EstadoConversacion,
+    status:  EstadoConversacion,
     stream:  bool = False,
 ) -> EstadoConversacion:
     """
     NODO 2: Generación de respuesta con LLM (Ollama).
     """
-    ctx = estado.contexto
+    ctx = status.contexto
     cfg = ctx.configuracion
 
     # Construir sección de contexto RAG para el prompt
     contexto_rag = ""
-    if estado.chunks_rag:
-        partes = [f"[Ref {i+1}]: {c['contenido']}" for i, c in enumerate(estado.chunks_rag)]
+    if status.chunks_rag:
+        partes = [f"[Ref {i+1}]: {c['contenido']}" for i, c in enumerate(status.chunks_rag)]
         contexto_rag = "\n\n## INFORMACIÓN DE TU BASE DE CONOCIMIENTO:\n" + "\n\n".join(partes)
 
     secciones_script = _generar_secciones_script(cfg)
@@ -154,38 +154,38 @@ async def nodo_generacion(
         "profesional": "profesional pero cercano y empático",
         "amigable":    "muy amigable, cálido y accesible",
         "casual":      "casual, conversacional y directo",
-        "humoristico": "con un toque de humor natural, pero siempre útil",
-    }.get(cfg.get("humor", "profesional"), "profesional")
+        "humoristico": "con un toque de mood natural, pero siempre útil",
+    }.get(cfg.get("mood", "profesional"), "profesional")
 
-    prompt_sistema = f"""Eres {cfg.get('nombre', 'Asistente')}, asistente de ventas IA {cfg.get('genero', 'neutro')}.
+    prompt_sistema = f"""Eres {cfg.get('name', 'Asistente')}, asistente de ventas IA {cfg.get('gender', 'neutro')}.
 
 ## TU ESTILO:
-Eres {humor_desc}. {cfg.get('personalidad', '')}
+Eres {humor_desc}. {cfg.get('personality', '')}
 
 ## TU EMPRESA:
-{cfg.get('tipo_negocio', 'Empresa de servicios')}
+{cfg.get('business_type', 'Empresa de servicios')}
 
 ## TUS INSTRUCCIONES:
-{cfg.get('instrucciones', 'Ayuda al cliente a encontrar lo que necesita y guíalo hacia una compra.')}
+{cfg.get('instructions', 'Ayuda al cliente a encontrar lo que necesita y guíalo hacia una compra.')}
 
 {secciones_script}
 
 {contexto_rag}"""
 
-    estado.prompt_sistema = prompt_sistema
+    status.prompt_sistema = prompt_sistema
 
     # Construir mensajes para Ollama
     mensajes_ollama = [{"role": "system", "content": prompt_sistema}]
     for msg in ctx.historial[-10:]:
         rol_map = {"usuario": "user", "asistente": "assistant", "sistema": "system"}
-        mensajes_ollama.append({"role": rol_map.get(msg.rol, "user"), "content": msg.contenido})
+        mensajes_ollama.append({"role": rol_map.get(msg.role, "user"), "content": msg.contenido})
     mensajes_ollama.append({"role": "user", "content": ctx.mensaje_usuario})
 
-    modelo = cfg.get("modelo", config.ollama_modelo_chat)
-    temperatura = float(cfg.get("temperatura", 0.7))
+    model = cfg.get("model", config.ollama_modelo_chat)
+    temperature = float(cfg.get("temperature", 0.7))
     max_tokens = int(cfg.get("max_tokens", 512))
 
-    logger.info(f"[LLM] Generando respuesta | modelo={modelo} | temp={temperatura}")
+    logger.info(f"[LLM] Generando respuesta | model={model} | temp={temperature}")
 
     async with httpx.AsyncClient(
         base_url=config.ollama_base_url,
@@ -194,43 +194,43 @@ Eres {humor_desc}. {cfg.get('personalidad', '')}
         respuesta = await cliente.post(
             "/api/chat",
             json={
-                "model":   modelo,
+                "model":   model,
                 "messages": mensajes_ollama,
                 "stream":   False,
-                "options": {"temperature": temperatura, "num_predict": max_tokens},
+                "options": {"temperature": temperature, "num_predict": max_tokens},
             },
         )
         respuesta.raise_for_status()
         datos = respuesta.json()
 
-    estado.respuesta_final = datos.get("message", {}).get("content", "")
-    estado.tokens_usados = (
+    status.respuesta_final = datos.get("message", {}).get("content", "")
+    status.tokens_usados = (
         datos.get("prompt_eval_count", 0) + datos.get("eval_count", 0)
     )
-    estado.modelo_usado = datos.get("model", modelo)
+    status.modelo_usado = datos.get("model", model)
 
-    return estado
+    return status
 
 
 async def nodo_generacion_stream(
-    estado: EstadoConversacion,
+    status: EstadoConversacion,
 ) -> AsyncGenerator[str, None]:
     """
     NODO 2 (Streaming): Versión SSE del nodo de generación.
     """
-    ctx = estado.contexto
+    ctx = status.contexto
     cfg = ctx.configuracion
 
-    modelo = cfg.get("modelo", config.ollama_modelo_chat)
-    temperatura = float(cfg.get("temperatura", 0.7))
+    model = cfg.get("model", config.ollama_modelo_chat)
+    temperature = float(cfg.get("temperature", 0.7))
     max_tokens = int(cfg.get("max_tokens", 512))
 
-    prompt_sistema = estado.prompt_sistema or "Eres un asistente de ventas profesional."
+    prompt_sistema = status.prompt_sistema or "Eres un asistente de ventas profesional."
 
     mensajes_ollama = [{"role": "system", "content": prompt_sistema}]
     for msg in ctx.historial[-10:]:
         rol_map = {"usuario": "user", "asistente": "assistant", "sistema": "system"}
-        mensajes_ollama.append({"role": rol_map.get(msg.rol, "user"), "content": msg.contenido})
+        mensajes_ollama.append({"role": rol_map.get(msg.role, "user"), "content": msg.contenido})
     mensajes_ollama.append({"role": "user", "content": ctx.mensaje_usuario})
 
     try:
@@ -242,10 +242,10 @@ async def nodo_generacion_stream(
                 "POST",
                 "/api/chat",
                 json={
-                    "model":    modelo,
+                    "model":    model,
                     "messages": mensajes_ollama,
                     "stream":   True,
-                    "options":  {"temperature": temperatura, "num_predict": max_tokens},
+                    "options":  {"temperature": temperature, "num_predict": max_tokens},
                 },
             ) as resp:
                 resp.raise_for_status()
@@ -258,7 +258,7 @@ async def nodo_generacion_stream(
                         if token:
                             yield f"data: {json.dumps({'token': token, 'done': False})}\n\n"
                         if datos.get("done"):
-                            yield f"data: {json.dumps({'token': '', 'done': True, 'modelo': datos.get('model', '')})}\n\n"
+                            yield f"data: {json.dumps({'token': '', 'done': True, 'model': datos.get('model', '')})}\n\n"
                             break
                     except json.JSONDecodeError:
                         continue
@@ -274,26 +274,26 @@ async def nodo_generacion_stream(
 
 class AgentDeVentas(AgenteBase):
     def __init__(self):
-        super().__init__(nombre="Agente de Ventas FluxAgent V2")
+        super().__init__(name="Agente de Ventas FluxAgent V2")
 
     def construir_prompt_sistema(self, contexto: ContextoAgente) -> str:
-        return f"Asistente de ventas para {contexto.configuracion.get('nombre', 'el cliente')}"
+        return f"Asistente de ventas para {contexto.configuracion.get('name', 'el cliente')}"
 
     async def procesar(
         self,
         contexto: ContextoAgente,
         sesion:   Optional[AsyncSession] = None,
     ) -> RespuestaAgente:
-        estado = EstadoConversacion(contexto=contexto)
+        status = EstadoConversacion(contexto=contexto)
         if sesion:
-            estado = await nodo_recuperacion(estado, sesion)
-        estado = await nodo_generacion(estado)
+            status = await nodo_recuperacion(status, sesion)
+        status = await nodo_generacion(status)
         return RespuestaAgente(
-            contenido=estado.respuesta_final or "No pude generar una respuesta.",
-            tokens_usados=estado.tokens_usados,
-            modelo_usado=estado.modelo_usado,
-            fuentes_rag=[c.get("fuente_nombre", "") for c in estado.chunks_rag],
-            metadatos={"chunks_usados": len(estado.chunks_rag)},
+            contenido=status.respuesta_final or "No pude generar una respuesta.",
+            tokens_usados=status.tokens_usados,
+            modelo_usado=status.modelo_usado,
+            fuentes_rag=[c.get("fuente_nombre", "") for c in status.chunks_rag],
+            metadatos={"chunks_usados": len(status.chunks_rag)},
         )
 
     async def procesar_streaming(
@@ -301,41 +301,41 @@ class AgentDeVentas(AgenteBase):
         contexto: ContextoAgente,
         sesion:   Optional[AsyncSession] = None,
     ) -> AsyncGenerator[str, None]:
-        estado = EstadoConversacion(contexto=contexto)
+        status = EstadoConversacion(contexto=contexto)
         if sesion:
-            estado = await nodo_recuperacion(estado, sesion)
+            status = await nodo_recuperacion(status, sesion)
         
-        estado_con_prompt = await _preparar_estado_para_stream(estado)
+        estado_con_prompt = await _preparar_estado_para_stream(status)
         async for token_sse in nodo_generacion_stream(estado_con_prompt):
             yield token_sse
 
 
-async def _preparar_estado_para_stream(estado: EstadoConversacion) -> EstadoConversacion:
-    ctx = estado.contexto
+async def _preparar_estado_para_stream(status: EstadoConversacion) -> EstadoConversacion:
+    ctx = status.contexto
     cfg = ctx.configuracion
 
     contexto_rag = ""
-    if estado.chunks_rag:
-        partes = [f"[Ref {i+1}]: {c['contenido']}" for i, c in enumerate(estado.chunks_rag)]
+    if status.chunks_rag:
+        partes = [f"[Ref {i+1}]: {c['contenido']}" for i, c in enumerate(status.chunks_rag)]
         contexto_rag = "\n\n## INFORMACIÓN DE TU BASE DE CONOCIMIENTO:\n" + "\n\n".join(partes)
 
     humor_desc = {
         "formal": "formal y corporativo", "profesional": "profesional y empático",
         "amigable": "amigable y cálido", "casual": "casual y directo",
-        "humoristico": "con sentido del humor natural",
-    }.get(cfg.get("humor", "profesional"), "profesional")
+        "humoristico": "con sentido del mood natural",
+    }.get(cfg.get("mood", "profesional"), "profesional")
 
     secciones_script = _generar_secciones_script(cfg)
 
-    estado.prompt_sistema = f"""Eres {cfg.get('nombre', 'Asistente')}, asistente de ventas IA.
+    status.prompt_sistema = f"""Eres {cfg.get('name', 'Asistente')}, asistente de ventas IA.
 
-Eres {humor_desc}. {cfg.get('personalidad', '')}
+Eres {humor_desc}. {cfg.get('personality', '')}
 
-Empresa: {cfg.get('tipo_negocio', 'Empresa de servicios')}
-Instrucciones: {cfg.get('instrucciones', 'Ayuda al cliente.')}
+Empresa: {cfg.get('business_type', 'Empresa de servicios')}
+Instrucciones: {cfg.get('instructions', 'Ayuda al cliente.')}
 
 {secciones_script}
 
 {contexto_rag}"""
 
-    return estado
+    return status

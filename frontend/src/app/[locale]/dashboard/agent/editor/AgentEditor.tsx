@@ -17,7 +17,7 @@ interface AgentEditorProps {
 
 /**
  * Componente principal que unifica toda la configuración del agente
- * Usa tabs para separar responsabilidades y contexto para estado compartido
+ * Usa tabs para separar responsabilidades y contexto para status compartido
  */
 export function AgentEditor({ agentId, initialTab = "config" }: AgentEditorProps) {
   const { activeTab, setActiveTab, isInitialized } = useAgentTabPersistence(initialTab);
@@ -38,7 +38,7 @@ export function AgentEditor({ agentId, initialTab = "config" }: AgentEditorProps
   return (
     <AgentEditProvider initialAgentId={agentId}>
       <div className="space-y-6">
-        {/* Header con título y estado de guardado */}
+        {/* Header con título y status de guardado */}
         <AgentEditorHeader agentId={agentId} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -92,10 +92,10 @@ export function AgentEditor({ agentId, initialTab = "config" }: AgentEditorProps
 }
 
 /**
- * Header con título y estado de guardado (reutilizable)
+ * Header con título y status de guardado (reutilizable)
  */
 function AgentEditorHeader({ agentId }: { agentId: string }) {
-  // Aquí podrías cargar el nombre del agente para mostrarlo
+  // Aquí podrías cargar el name del agente para mostrarlo
   // Por ahora usamos un placeholder
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b">
@@ -116,7 +116,7 @@ function AgentEditorHeader({ agentId }: { agentId: string }) {
  * Indicador visual de cambios pendientes
  */
 function UnsavedChangesIndicator() {
-  // Este componente consumirá el contexto para mostrar estado
+  // Este componente consumirá el contexto para mostrar status
   // Lo implementaremos después de tener los tabs base
   return null; // Placeholder - se implementará en siguiente iteración
 }

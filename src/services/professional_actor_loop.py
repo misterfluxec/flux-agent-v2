@@ -7,7 +7,7 @@ Une las tres capas del sistema:
   (Roles + SOPs)    (Razonamiento crítico)  (Inferencia privada)
 
 Flujo de decisión:
-  1. Carga el SOP del rol activo (MetaGPT Layer)
+  1. Carga el SOP del role is_active (MetaGPT Layer)
   2. Ejecuta los pasos del SOP secuencialmente
   3. Si un paso falla o hay una excepción → activa el Debate (CAMEL Layer)
   4. El debate produce un veredicto fundamentado
@@ -96,14 +96,14 @@ class ProfessionalActorLoop:
         sop = self.sop_manager.get_sop_for_role(ctx.role_id, ctx.input_text)
         if sop:
             ctx.active_sop = sop
-            logger.info(f"[PAL] SOP activo: {sop.name} ({len(sop.steps)} pasos)")
+            logger.info(f"[PAL] SOP is_active: {sop.name} ({len(sop.steps)} pasos)")
             audit_trail.append({
                 "event": "sop_loaded",
                 "sop_name": sop.name,
                 "steps_count": len(sop.steps)
             })
         else:
-            logger.warning(f"[PAL] Sin SOP para rol {ctx.role_id}. Activando modo libre.")
+            logger.warning(f"[PAL] Sin SOP para role {ctx.role_id}. Activando modo libre.")
 
         # ─── PASO 2: Ejecutar Pasos del SOP ──────────────────────────────────
         sop_success = True
@@ -201,8 +201,8 @@ class ProfessionalActorLoop:
             }
 
         if step.required_action and self.tool_executor:
-            from src.runtime.tool_intent import ToolIntent
-            from src.runtime.tool_runtime import ToolRuntime
+            from runtime.tool_intent import ToolIntent
+            from runtime.tool_runtime import ToolRuntime
             import hashlib
             
             logger.info(f"[PAL] Paso {step.order} requiere herramienta: {step.required_action}")

@@ -42,7 +42,7 @@ const MODULE_GUIDES: Record<Module, {
   workforce: {
     emoji:         "🤖",
     title:         `${FLUX_LEXICON.WORKFORCE} sin agentes`,
-    description:   `Crea tu primer agente especializado. Dale nombre, personalidad y un propósito comercial.`,
+    description:   `Crea tu primer agente especializado. Dale name, personality y un propósito comercial.`,
     defaultAction: `➕ Crear ${FLUX_LEXICON.AGENT}`,
     defaultHref:   "/dashboard/agents",
   },

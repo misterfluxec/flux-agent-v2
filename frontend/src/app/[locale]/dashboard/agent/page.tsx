@@ -91,7 +91,7 @@ export default function AgentIdentity() {
       const toastId = toast.loading('Subiendo avatar...');
       const response = await uploadAgentAvatar(agentId, file);
       
-      // Mantenemos la URL actualizada en el estado
+      // Mantenemos la URL actualizada en el status
       setAgentData(prev => ({ ...prev, avatar: response.avatar_url }));
       
       // Actualizamos fullScriptData para no perderlo
@@ -114,20 +114,20 @@ export default function AgentIdentity() {
         if (agents && agents.length > 0) {
           const firstAgent = agents[0];
           setAgentId(firstAgent.id);
-          const scriptData = firstAgent.script_ventas || {};
+          const scriptData = firstAgent.sales_script || {};
           setFullScriptData(scriptData);
           
           setAgentData({
-            name: firstAgent.nombre || DEFAULT.name,
-            gender: firstAgent.genero || DEFAULT.gender,
-            tone: firstAgent.humor || DEFAULT.tone, // Usa humor en lugar de tono
-            industry: firstAgent.tipo_negocio || DEFAULT.industry,
-            tagline: firstAgent.descripcion || DEFAULT.tagline,
-            bio: firstAgent.personalidad || DEFAULT.bio, // Bio es ahora personalidad
-            instructions: firstAgent.instrucciones || DEFAULT.instructions,
-            language: firstAgent.idioma || DEFAULT.language,
+            name: firstAgent.name || DEFAULT.name,
+            gender: firstAgent.gender || DEFAULT.gender,
+            tone: firstAgent.mood || DEFAULT.tone, // Usa mood en lugar de tone
+            industry: firstAgent.business_type || DEFAULT.industry,
+            tagline: firstAgent.description || DEFAULT.tagline,
+            bio: firstAgent.personality || DEFAULT.bio, // Bio es ahora personality
+            instructions: firstAgent.instructions || DEFAULT.instructions,
+            language: firstAgent.language || DEFAULT.language,
             avatar: scriptData.avatar || DEFAULT.avatar,
-            role: scriptData.rol_agente?.tipo || DEFAULT.role,
+            role: scriptData.rol_agente?.type || DEFAULT.role,
           });
         }
       } catch (error) {
@@ -146,23 +146,23 @@ export default function AgentIdentity() {
         ...(fullScriptData || {}),
         avatar: agentData.avatar,
         rol_agente: {
-          tipo: agentData.role,
+          type: agentData.role,
           area: agentData.role === 'specialist' ? agentData.industry : null
         }
       };
 
       const payload = {
-        nombre: agentData.name,
-        genero: agentData.gender,
-        humor: agentData.tone, // Mapea tone al campo humor de DB
-        tono: agentData.tone, // Mantenemos tono por compatibilidad si es necesario, o lo igualamos
-        idioma: agentData.language,
-        tipo_negocio: agentData.industry,
+        name: agentData.name,
+        gender: agentData.gender,
+        mood: agentData.tone, // Mapea tone al campo mood de DB
+        tone: agentData.tone, // Mantenemos tone por compatibilidad si es necesario, o lo igualamos
+        language: agentData.language,
+        business_type: agentData.industry,
         area: agentData.industry,
-        descripcion: agentData.tagline,
-        personalidad: agentData.bio, // Bio es la personalidad
-        instrucciones: agentData.instructions,
-        script_ventas: updatedScriptVentas
+        description: agentData.tagline,
+        personality: agentData.bio, // Bio es la personality
+        instructions: agentData.instructions,
+        sales_script: updatedScriptVentas
       };
 
       if (agentId) {
@@ -209,7 +209,7 @@ export default function AgentIdentity() {
             <span className="text-primary">Identidad</span> del Agente
           </h1>
           <p className="text-sm text-white/50 font-light mt-1">
-            Define el rol, especialidad y la apariencia de tu agente de ventas IA.
+            Define el role, especialidad y la apariencia de tu agente de ventas IA.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -348,7 +348,7 @@ export default function AgentIdentity() {
                   placeholder="Soy Sofia, tu asesora virtual..."
                 />
                 <p className="text-xs text-white/40 mt-2 font-light">
-                  Cómo se presenta el agente (se usa para darle personalidad)
+                  Cómo se presenta el agente (se usa para darle personality)
                 </p>
               </div>
 
@@ -550,11 +550,11 @@ export default function AgentIdentity() {
             <ul className="space-y-3 text-sm text-white/60 font-light">
               <li className="flex items-start gap-2">
                 <ChevronRight className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                <span>Elige un nombre memorable y fácil de recordar para tus clientes.</span>
+                <span>Elige un name memorable y fácil de recordar para tus clientes.</span>
               </li>
               <li className="flex items-start gap-2">
                 <ChevronRight className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                <span>El tono debe coincidir con la imagen corporativa de tu negocio.</span>
+                <span>El tone debe coincidir con la imagen corporativa de tu negocio.</span>
               </li>
               <li className="flex items-start gap-2">
                 <ChevronRight className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />

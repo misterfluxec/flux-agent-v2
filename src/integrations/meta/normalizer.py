@@ -3,9 +3,9 @@ import json
 from datetime import datetime
 from typing import Dict, Any, Tuple
 from uuid import UUID
-from src.integrations.canonical import CanonicalMessage, CanonicalEnvelope
-from src.integrations.base import IntegrationAdapter, ProviderCapability
-from src.integrations.idempotency_utils import generate_dedup_hash
+from integrations.canonical import CanonicalMessage, CanonicalEnvelope
+from integrations.base import IntegrationAdapter, ProviderCapability
+from integrations.idempotency_utils import generate_dedup_hash
 
 class MetaNormalizer:
     """

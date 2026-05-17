@@ -70,7 +70,7 @@ async def get_analytics_overview(
                 SELECT COUNT(*)
                 FROM mensajes
                 WHERE tenant_id = :tid
-                    AND creado_en >= NOW() - {interval_days('days')}
+                    AND created_at >= NOW() - {interval_days('days')}
             """), {"tid": usuario.tenant_id, "days": days})
             
             row_messages = await result2.fetchone()
@@ -145,7 +145,7 @@ async def get_daily_stats(
                     SELECT COUNT(*)
                     FROM mensajes
                     WHERE tenant_id = :tid
-                        AND DATE(creado_en) = :date
+                        AND DATE(created_at) = :date
                 """), {"tid": usuario.tenant_id, "date": row[0]})
                 
                 messages_count = int(msg_result.fetchone()[0]) if msg_result.fetchone() else 0
@@ -175,14 +175,14 @@ async def get_agent_stats(usuario: PayloadToken = Depends(get_usuario_actual)):
             result = await db.execute(text("""
                 SELECT 
                     a.id,
-                    a.nombre,
+                    a.name,
                     COUNT(c.id) as conversations,
                     COALESCE(SUM(c.valor_venta), 0) as sales,
                     COALESCE(AVG(c.sentimiento), 0) as avg_sentiment
                 FROM agents a
                 LEFT JOIN conversaciones c ON c.agent_id = a.id
                 WHERE a.tenant_id = :tid
-                GROUP BY a.id, a.nombre
+                GROUP BY a.id, a.name
                 ORDER BY conversations DESC
             """), {"tid": usuario.tenant_id})
             
@@ -192,7 +192,7 @@ async def get_agent_stats(usuario: PayloadToken = Depends(get_usuario_actual)):
                 msg_result = await db.execute(text("""
                     SELECT COUNT(*)
                     FROM mensajes m
-                    JOIN conversaciones c ON m.conversacion_id = c.id
+                    JOIN conversaciones c ON m.conversation_id = c.id
                     WHERE c.agent_id = :agent_id
                         AND c.tenant_id = :tid
                 """), {"agent_id": row[0], "tid": usuario.tenant_id})

@@ -64,7 +64,7 @@ class PolicyRule(BaseModel):
     action: PolicyAction
     
     # Metadatos de aplicación
-    priority: int = Field(default=100, ge=1, le=1000)  # Mayor = más prioridad
+    priority: int = Field(default=100, ge=1, le=1000)  # Mayor = más priority
     enabled: bool = True
     tenant_plans: List[str] = Field(default=["basic", "pro", "enterprise"])
     industries: Optional[List[str]] = None  # Si None, aplica a todas

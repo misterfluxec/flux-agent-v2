@@ -53,7 +53,7 @@ def get_operational_narrative(
     db: Session = Depends(get_db),
 ):
     """
-    Operational Narrative: La "historia" ejecutiva del estado actual del negocio.
+    Operational Narrative: La "historia" ejecutiva del status actual del negocio.
     Combina métricas de snapshots y anomalías recientes.
     """
     engine = SemanticSummaryEngine(db, tenant_id)

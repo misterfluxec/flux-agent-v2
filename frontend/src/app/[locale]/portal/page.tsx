@@ -93,8 +93,8 @@ export default function PortalDashboard() {
   }
 
   const kpis = stats?.kpis || {};
-  const leadsCount = leads.filter(l => l.estado === "nuevo" || l.estado === "contactado").length;
-  const closedCount = leads.filter(l => l.estado === "cerrado").length;
+  const leadsCount = leads.filter(l => l.status === "nuevo" || l.status === "contactado").length;
+  const closedCount = leads.filter(l => l.status === "cerrado").length;
 
   return (
     <div className="animate-entry max-w-7xl mx-auto pb-20">
@@ -170,10 +170,10 @@ export default function PortalDashboard() {
           </h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {[
-              { label: "Nuevos", count: leads.filter(l => l.estado === "nuevo").length, color: "#6366f1" },
-              { label: "Contactados", count: leads.filter(l => l.estado === "contactado").length, color: "#10b981" },
-              { label: "En negociación", count: leads.filter(l => l.estado === "negociacion").length, color: "#f59e0b" },
-              { label: "Cerrados", count: leads.filter(l => l.estado === "cerrado").length, color: "#8b5cf6" },
+              { label: "Nuevos", count: leads.filter(l => l.status === "nuevo").length, color: "#6366f1" },
+              { label: "Contactados", count: leads.filter(l => l.status === "contactado").length, color: "#10b981" },
+              { label: "En negociación", count: leads.filter(l => l.status === "negociacion").length, color: "#f59e0b" },
+              { label: "Cerrados", count: leads.filter(l => l.status === "cerrado").length, color: "#8b5cf6" },
             ].map((item, idx) => (
               <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>

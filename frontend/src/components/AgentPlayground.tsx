@@ -8,7 +8,7 @@ import { VoiceTestClient } from "./voice/VoiceTestClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Message {
-  rol: "usuario" | "asistente";
+  role: "usuario" | "asistente";
   contenido: string;
   tokens?: number;
   fuentes?: string[];
@@ -25,7 +25,7 @@ function SourceIcon({ fuente }: { fuente: string }) {
 
 export default function AgentPlayground({ agentId, tenantId }: { agentId?: string, tenantId?: string }) {
   const [messages, setMessages] = useState<Message[]>([{
-    rol: "asistente",
+    role: "asistente",
     contenido: "👋 Hola, soy tu agente. Pregúntame sobre los documentos entrenados.",
   }]);
   const [input, setInput] = useState("");
@@ -39,8 +39,8 @@ export default function AgentPlayground({ agentId, tenantId }: { agentId?: strin
     if (!texto || loading) return;
     setInput("");
     
-    const newMessages = [...messages, { rol: "usuario" as const, contenido: texto }];
-    setMessages([...newMessages, { rol: "asistente" as const, contenido: "" }]);
+    const newMessages = [...messages, { role: "usuario" as const, contenido: texto }];
+    setMessages([...newMessages, { role: "asistente" as const, contenido: "" }]);
     setLoading(true);
 
     try {
@@ -54,8 +54,8 @@ export default function AgentPlayground({ agentId, tenantId }: { agentId?: strin
           session_id: SESSION_ID,
           mensaje: texto,
           agent_id: agentId,
-          historial: messages.map(m => ({ rol: m.rol, contenido: m.contenido })),
-          configuracion: { nombre: "FluxBot", humor: "profesional" },
+          historial: messages.map(m => ({ role: m.role, contenido: m.contenido })),
+          configuracion: { name: "FluxBot", mood: "profesional" },
         }),
       });
 
@@ -128,11 +128,11 @@ export default function AgentPlayground({ agentId, tenantId }: { agentId?: strin
           </div>
           <div>
             <p className="text-sm font-bold m-0">Simulador</p>
-            <p className="text-[10px] text-muted-foreground m-0">🔬 Rayos X activo</p>
+            <p className="text-[10px] text-muted-foreground m-0">🔬 Rayos X is_active</p>
           </div>
         </div>
         <button 
-          onClick={() => setMessages([{ rol: "asistente", contenido: "👋 Chat reiniciado." }])}
+          onClick={() => setMessages([{ role: "asistente", contenido: "👋 Chat reiniciado." }])}
           title="Limpiar chat"
           className="p-1.5 rounded-md hover:bg-muted text-muted-foreground transition-colors"
         >
@@ -154,9 +154,9 @@ export default function AgentPlayground({ agentId, tenantId }: { agentId?: strin
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
             {messages.map((msg, i) => (
-              <div key={i} className={`flex gap-2 items-end ${msg.rol === "usuario" ? "flex-row-reverse" : "flex-row"}`}>
+              <div key={i} className={`flex gap-2 items-end ${msg.role === "usuario" ? "flex-row-reverse" : "flex-row"}`}>
                 <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center bg-primary/10 border border-primary/20">
-                  {msg.rol === "asistente" ? (
+                  {msg.role === "asistente" ? (
                     <Bot className="w-3.5 h-3.5 text-primary" />
                   ) : (
                     <User className="w-3.5 h-3.5 text-primary" />
@@ -164,7 +164,7 @@ export default function AgentPlayground({ agentId, tenantId }: { agentId?: strin
                 </div>
                 <div className="max-w-[78%]">
                   <div className={`px-3 py-2 text-sm leading-relaxed ${
-                    msg.rol === "usuario" 
+                    msg.role === "usuario" 
                       ? "rounded-[14px_14px_4px_14px] bg-primary text-primary-foreground" 
                       : "rounded-[14px_14px_14px_4px] bg-card text-foreground border shadow-sm"
                   }`}>

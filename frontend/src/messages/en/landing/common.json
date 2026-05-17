@@ -1,0 +1,168 @@
+{
+  "nav": {
+    "features": "Features",
+    "comparison": "Comparison",
+    "pricing": "Pricing",
+    "tech": "Technology"
+  },
+  "auth": {
+    "login": "Log In",
+    "free_trial": "🚀 7 Days Free"
+  },
+  "market": {
+    "title": "WORLD-CLASS LOCAL POWER",
+    "subtitle": "The most expensive market options you can avoid",
+    "fluxagent_value": "With FluxAgent V2: All included starting at $45/mo"
+  },
+  "features": {
+    "badge": "Features",
+    "title_1": "Automate your support",
+    "title_2": "and multiply your sales",
+    "subtitle": "It's not just a bot. It's your best digital salesperson working 24/7.",
+    "items": [
+      {
+        "title": "24/7 Uninterrupted Support",
+        "description": "Your virtual salesperson never sleeps, never tires, and responds instantly at any time of day.",
+        "highlight": "Instant Response"
+      },
+      {
+        "title": "Maximized Conversions",
+        "description": "Every query turns into a sale. The agent qualifies leads, handles objections, and closes deals.",
+        "highlight": "+300% Conversion"
+      },
+      {
+        "title": "Predictable Costs",
+        "description": "Forget surprise bills. A fixed monthly price includes everything, no top-ups or extras.",
+        "highlight": "No Surprises"
+      },
+      {
+        "title": "100% Private Data",
+        "description": "Your data and your clients' data never leave your infrastructure. Complete control and sovereignty.",
+        "highlight": "Total Sovereignty"
+      }
+    ]
+  },
+  "chat": {
+    "welcome": "Hello! I am Yanua, your FluxAgent V2 assistant. How can I help you today?",
+    "responses": [
+      "Excellent question! I can help you set up your first AI agent in minutes.",
+      "With FluxAgent V2 you can save up to 3X compared to other solutions. Would you like to see a comparison?",
+      "Our 7-day free trial allows you to test all features with no commitment.",
+      "Do you have a specific ERP? I can explain how our native integration works.",
+      "The Human Connection plan includes ultra-realistic voice notes to serve your clients 24/7."
+    ]
+  },
+  "comparison": {
+    "rows": [
+      {
+        "benefit": "Payment Model",
+        "competitor": "Top-ups per chat",
+        "ventacore": "Abundance Subscription",
+        "highlight": false
+      },
+      {
+        "benefit": "Message Capacity",
+        "competitor": "1,000 - 2,000",
+        "ventacore": "3,000 - 15,000",
+        "highlight": true
+      },
+      {
+        "benefit": "AI Senses",
+        "competitor": "Text Only",
+        "ventacore": "Sees, Hears, and Speaks natively",
+        "highlight": false
+      }
+    ]
+  },
+  "marketAlternatives": {
+    "items": [
+      {
+        "name": "GPT-4 Turbo",
+        "category": "Public Cloud",
+        "price": "~$0.03/message",
+        "limit": "Limited by API"
+      },
+      {
+        "name": "Claude 3",
+        "category": "Public Cloud",
+        "price": "~$0.025/message",
+        "limit": "Limited by API"
+      },
+      {
+        "name": "Amazon Lex",
+        "category": "Public Cloud",
+        "price": "~$0.04/message",
+        "limit": "Limited by API"
+      },
+      {
+        "name": "IBM Watson",
+        "category": "Enterprise Cloud",
+        "price": "From $0.06/message",
+        "limit": "Scalable cost"
+      }
+    ]
+  },
+  "stats": {
+    "items": [
+      {
+        "value": "3-15K",
+        "label": "Messages included"
+      },
+      {
+        "value": "7 Days",
+        "label": "Free trial"
+      },
+      {
+        "value": "< 500ms",
+        "label": "Ultra-low latency"
+      },
+      {
+        "value": "100%",
+        "label": "Data sovereignty"
+      }
+    ]
+  },
+  "footer": {
+    "rights": "© 2026 FluxAgent V2. All rights reserved.",
+    "sections": [
+      {
+        "title": "Headquarters",
+        "content": [
+          "FluxAgent V2",
+          "20-22 Wenlock Road, London, England, N1 7GU",
+          "London Tech Hub - European center for AI innovation"
+        ]
+      },
+      {
+        "title": "Compliance & Governance",
+        "content": [
+          "Data Protection Act 2018 + GDPR",
+          "Data sovereignty for Latin America",
+          "Private enterprise infrastructure"
+        ]
+      },
+      {
+        "title": "Authorized Distribution",
+        "content": [
+          "Exclusive operations for Latin America",
+          "Official distribution channel: FluxAgent Latam"
+        ]
+      },
+      {
+        "title": "Technological Strength",
+        "content": [
+          "Dedicated Edge Computing Infrastructure",
+          "Real-time Voice Processing",
+          "Latency <500ms - Zero cost for scaling",
+          "RAG Intelligent Memory"
+        ]
+      }
+    ]
+  },
+  "final_cta": {
+    "title_1": "It is time to automate and",
+    "title_2": "scale your business",
+    "subtitle": "Create your account now and put your digital clone to work.\n7 days free, cancel anytime.",
+    "button": "🚀 Create Free Account"
+  }
+}

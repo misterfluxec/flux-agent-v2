@@ -8,7 +8,7 @@
 #
 # FLUJO:
 #   1. Usuario llama POST /api/v1/auth/login con email+password
-#   2. Backend verifica bcrypt, genera JWT con {sub, tenant_id, rol, nombre}
+#   2. Backend verifica bcrypt, genera JWT con {sub, tenant_id, role, name}
 #   3. Frontend guarda el token y lo envía en cada request como:
 #      Authorization: Bearer <token>
 #   4. Cada endpoint protegido usa Depends(get_tenant_actual) para
@@ -57,8 +57,8 @@ class PayloadToken(BaseModel):
     """Datos que viajan dentro del JWT."""
     sub:       str          # user_id (UUID como string)
     tenant_id: str          # tenant_id (UUID como string)
-    rol:       str          # super_admin | admin | agente | viewer
-    nombre:    str          # Nombre del usuario para mostrar en la UI
+    role:       str          # super_admin | admin | agente | viewer
+    name:    str          # Nombre del usuario para mostrar en la UI
     plan:      str = "starter"  # Plan del tenant
     exp:       Optional[int] = None
 
@@ -159,19 +159,19 @@ async def get_tenant_actual_opcional(
 
 
 def solo_admin(usuario: PayloadToken = Depends(get_usuario_actual)) -> PayloadToken:
-    """Dependencia que requiere rol admin o superior."""
-    if usuario.rol not in ("super_admin", "admin"):
+    """Dependencia que requiere role admin o superior."""
+    if usuario.role not in ("super_admin", "admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Se requiere rol de administrador para esta acción.",
+            detail="Se requiere role de administrador para esta acción.",
         )
     return usuario
 
 
 def solo_super_admin(usuario: PayloadToken = Depends(get_usuario_actual)) -> PayloadToken:
-    """Dependencia que requiere rol super_admin."""
-    logger.info(f"Verificando rol super_admin para usuario: {usuario.sub} | rol_actual: {usuario.rol}")
-    if usuario.rol != "super_admin":
+    """Dependencia que requiere role super_admin."""
+    logger.info(f"Verificando role super_admin para usuario: {usuario.sub} | rol_actual: {usuario.role}")
+    if usuario.role != "super_admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Se requiere acceso de super-administrador.",

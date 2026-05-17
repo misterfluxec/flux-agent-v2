@@ -16,7 +16,7 @@ class SemanticSummaryEngine:
     y un `summary_source` (ej. 'heuristic_engine').
     
     Introduce el `Operational Narrative`, una historia ejecutiva sobre
-    el estado actual del negocio.
+    el status actual del negocio.
     """
 
     def __init__(self, db: AsyncSession, tenant_id: str):

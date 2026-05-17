@@ -23,7 +23,7 @@ async def get_whatsapp_health(
     usuario: PayloadToken = Depends(get_usuario_actual)
 ) -> Dict[str, Any]:
     """
-    Retorna el estado de salud del número de WhatsApp del tenant.
+    Retorna el status de salud del número de WhatsApp del tenant.
     """
     tenant_id = UUID(usuario.tenant_id)
     
@@ -53,7 +53,7 @@ async def get_whatsapp_health(
             "message": "No hay datos de WhatsApp. Configura tu número primero."
         }
     
-    # Calcular estado
+    # Calcular status
     if row.quality_rating == "RED" or row.error_count_today > 10:
         status = "critical"
     elif row.quality_rating == "YELLOW" or row.error_count_today > 5:
@@ -114,7 +114,7 @@ async def get_whatsapp_health_detailed(
 
 
 def _get_recommendation(row) -> str:
-    """Genera recomendación según el estado."""
+    """Genera recomendación según el status."""
     if row[0] == "RED" or (row[4] and row[4] > 10):
         return "CRÍTICO: Tu número está en riesgo. Detén mensajes de marketing inmediatamente y espera 48h."
     elif row[0] == "YELLOW" or (row[4] and row[4] > 5):
@@ -122,7 +122,7 @@ def _get_recommendation(row) -> str:
     elif row[2] and row[2] >= row[3] * 0.9:
         return "Advertencia: Estás cerca del límite diario de conversaciones."
     else:
-        return "Número en buen estado. Continúa operación normal."
+        return "Número en buen status. Continúa operación normal."
 
 
 @router.post("/health/refresh")

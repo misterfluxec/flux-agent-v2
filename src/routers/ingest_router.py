@@ -161,7 +161,7 @@ async def iniciar_ingesta(
         with open(archivo_ruta, "wb") as f:
             f.write(contenido)
             
-    # Iniciar estado inicial (TaskRunner ya lo hace pero para que la UI lo vea rápido)
+    # Iniciar status inicial (TaskRunner ya lo hace pero para que la UI lo vea rápido)
     task_runner.update_progress(job_id, 0, "pending", "En cola...", "pending", str(tenant_id))
 
     # Enviar a background. Al estar decorado, procesar_ingesta_background ya recibe `task_id` o lo genera
@@ -177,7 +177,7 @@ async def iniciar_ingesta(
 
     return {
         "job_id": job_id,
-        "estado": "procesando",
+        "status": "procesando",
         "fuente": archivo.filename if archivo else url,
         "mensaje": "La ingesta ha comenzado en segundo plano.",
     }

@@ -1,5 +1,5 @@
 from typing import Dict, Any, Optional
-from src.integrations.quarantine import QuarantineReason
+from integrations.quarantine import QuarantineReason
 
 class MetaVersionResolver:
     """
@@ -17,7 +17,7 @@ class MetaVersionResolver:
     @staticmethod
     def get_normalizer(version: str):
         if version == "v16":
-            from src.integrations.meta.normalizer import MetaNormalizer
+            from integrations.meta.normalizer import MetaNormalizer
             return MetaNormalizer
         
         # Fallback Policy: Return None to trigger Quarantine

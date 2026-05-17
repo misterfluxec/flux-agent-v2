@@ -22,7 +22,7 @@ def classify_intent(text: str) -> str:
         return 'bookings'
     
     # 3. Detección de Ventas (es el defecto para productos/precios)
-    sales_keywords = ['precio', 'comprar', 'costo', 'venta', 'stock', 'descuento', 'envío']
+    sales_keywords = ['price', 'comprar', 'costo', 'venta', 'stock', 'descuento', 'envío']
     if any(kw in text for kw in sales_keywords):
         return 'sales'
         

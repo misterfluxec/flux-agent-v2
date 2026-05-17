@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class MensajeChat:
-    rol: str
+    role: str
     contenido: str
 
 @dataclass
@@ -29,8 +29,8 @@ class RespuestaAgente:
     metadatos: dict = field(default_factory=dict)
 
 class AgenteBase:
-    def __init__(self, nombre: str = "Agente Base"):
-        self.nombre = nombre
+    def __init__(self, name: str = "Agente Base"):
+        self.name = name
     
     async def cerrar(self):
         pass

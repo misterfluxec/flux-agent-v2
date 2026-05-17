@@ -1,0 +1,43 @@
+{
+  "plans": {
+    "stability": {
+      "name": "Estabilidad",
+      "tagline": "Tu negocio nunca duerme",
+      "price": "45",
+      "period": "/mes",
+      "features": [
+        "Aprende todo tu catálogo sin límites",
+        "Atención al cliente por texto ultra-rápida",
+        "Respuestas instantáneas 24/7"
+      ],
+      "cta": "Seleccionar Estabilidad",
+      "recommended": false
+    },
+    "human": {
+      "name": "Conexión Humana",
+      "tagline": "Vende por notas de voz",
+      "price": "85",
+      "period": "/mes",
+      "features": [
+        "Escucha y envía notas de voz naturales",
+        "Ideal para cerrar ventas por WhatsApp",
+        "Gestión de objeciones por audio"
+      ],
+      "cta": "Activar Conexión Humana",
+      "recommended": true
+    },
+    "peace": {
+      "name": "Paz Mental",
+      "tagline": "Escalabilidad Total",
+      "price": "160",
+      "period": "/mes",
+      "features": [
+        "Analiza fotos, imágenes y documentos complejos",
+        "Ideal para agencias inmobiliarias o clínicas",
+        "Razonamiento experto para grandes inventarios"
+      ],
+      "cta": "Elegir Paz Mental",
+      "recommended": false
+    }
+  }
+}

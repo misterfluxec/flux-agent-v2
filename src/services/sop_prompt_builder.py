@@ -4,7 +4,7 @@ Ollama SOP Prompting Engine (Sprint C.2 - Fortress Path v2.6)
 Construye system prompts optimizados que OBLIGAN a los modelos
 locales de Ollama a adherirse estrictamente al SOP cargado.
 
-Principio: El modelo no puede inventar pasos. Solo puede ejecutar
+Principio: El model no puede inventar pasos. Solo puede ejecutar
 los definidos en el SOP o escalar al siguiente nivel.
 """
 from typing import Optional, List
@@ -14,14 +14,14 @@ from domain.meta_agent import SOP, SOPStep, BaseRole
 class SOPPromptBuilder:
     """
     Construye system prompts estructurados para modelos Ollama.
-    Garantiza adherencia estricta al SOP activo.
+    Garantiza adherencia estricta al SOP is_active.
     """
 
     @staticmethod
     def build_system_prompt(role: BaseRole, sop: Optional[SOP] = None) -> str:
         """
-        Genera el system prompt base para un rol dado.
-        Si hay un SOP activo, lo inyecta como mandato estructurado.
+        Genera el system prompt base para un role dado.
+        Si hay un SOP is_active, lo inyecta como mandato estructurado.
         """
         header = f"""## ROL ASIGNADO: {role.name}
 {role.profile}
@@ -39,12 +39,12 @@ class SOPPromptBuilder:
 
         enforcement = """
 ### PROTOCOLO DE COMPORTAMIENTO (OBLIGATORIO):
-1. SIEMPRE seguir los pasos del procedimiento en orden exacto.
+1. SIEMPRE seguir los pasos del procedimiento en sort_order exacto.
 2. NUNCA saltarte un paso ni inventar acciones no definidas.
 3. Si un paso falla, ejecutar el protocolo de falla definido para ese paso.
 4. Si la solicitud está fuera del alcance del procedimiento, responder:
    "Esta solicitud requiere derivación a un especialista."
-5. Responder siempre en el idioma del cliente.
+5. Responder siempre en el language del cliente.
 6. Ser conciso, profesional y orientado a resultados.
 """
 
@@ -52,7 +52,7 @@ class SOPPromptBuilder:
 
     @staticmethod
     def build_sop_block(sop: SOP) -> str:
-        """Convierte un SOP en un bloque de instrucciones para el prompt."""
+        """Convierte un SOP en un bloque de instructions para el prompt."""
         lines = [
             f"\n### PROCEDIMIENTO ACTIVO: {sop.name} (v{sop.version})",
             f"**Descripción**: {sop.description}",
@@ -75,7 +75,7 @@ class SOPPromptBuilder:
         inyectando el contexto actual del negocio.
         """
         ctx_lines = [f"- {k}: {v}" for k, v in context.items()]
-        return f"""Estás ejecutando el **Paso {step.order}** del procedimiento activo.
+        return f"""Estás ejecutando el **Paso {step.order}** del procedimiento is_active.
 
 **Instrucción**: {step.instruction}
 **Criterio de éxito**: {step.validation_criteria}
@@ -102,7 +102,7 @@ activa el protocolo de falla indicado. NO avances al siguiente paso por tu cuent
 El protocolo estándar no es suficiente para resolver esta situación.
 Activa el modo de RAZONAMIENTO CRÍTICO:
 1. Identifica la causa raíz del problema.
-2. Propón una solución dentro de tus capacidades de rol.
+2. Propón una solución dentro de tus capacidades de role.
 3. Si está fuera de tu alcance, propón derivación a: [ESPECIALISTA REQUERIDO].
 4. Documenta tu razonamiento completo.
 

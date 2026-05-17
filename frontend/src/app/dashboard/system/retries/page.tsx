@@ -49,7 +49,7 @@ const mockDLQEvents = [
     first_failed: "2 days ago",
     correlation_id: "sync_job_44",
     replayable: false,
-    payload_preview: `{ "connector": "google_sheets", "changed_columns": ["precio"] }`,
+    payload_preview: `{ "connector": "google_sheets", "changed_columns": ["price"] }`,
   },
 ];
 

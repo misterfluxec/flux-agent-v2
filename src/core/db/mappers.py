@@ -59,7 +59,7 @@ class BaseMapper(Generic[T]):
             if db_field.startswith('_'):
                 continue
                 
-            # Mapear nombre de campo
+            # Mapear name de campo
             backend_field = cls.DB_TO_BACKEND.get(db_field, db_field)
             
             # Aplicar transformación si existe
@@ -86,7 +86,7 @@ class BaseMapper(Generic[T]):
             if value is None:
                 continue
                 
-            # Mapear nombre de campo
+            # Mapear name de campo
             db_field = cls.BACKEND_TO_DB.get(backend_field, backend_field)
             
             result[db_field] = value
@@ -99,45 +99,45 @@ class AgentMapper(BaseMapper):
     DB_TO_BACKEND = {
         "id": "id",
         "tenant_id": "tenant_id",
-        "name": "nombre",
+        "name": "name",
         "avatar_url": "avatar_url",
         "agent_type": "agent_type",
         "specialty": "specialty",
         "system_prompt": "system_prompt",
-        "tone": "tono",
-        "temperature": "temperatura",
+        "tone": "tone",
+        "temperature": "temperature",
         "max_tokens": "max_tokens",
-        "status": "estado",
-        "created_at": "creado_en",
-        "updated_at": "actualizado_en",
+        "status": "status",
+        "created_at": "created_at",
+        "updated_at": "updated_at",
         # Campos adicionales de la tabla extendida
         "area": "area",
-        "descripcion": "descripcion",
-        "genero": "genero",
-        "humor": "humor",
-        "personalidad": "personalidad",
-        "idioma": "idioma",
-        "coleccion_rag": "coleccion_rag",
-        "tipo_negocio": "tipo_negocio",
-        "objetivo": "objetivo",
-        "instrucciones": "instrucciones",
-        "modelo": "modelo",
-        "canales": "canales",
-        "horario_inicio": "horario_inicio",
-        "horario_fin": "horario_fin",
-        "dias_atencion": "dias_atencion",
-        "mensaje_fuera_horario": "mensaje_fuera_horario",
-        "script_ventas": "script_ventas",
+        "description": "description",
+        "gender": "gender",
+        "mood": "mood",
+        "personality": "personality",
+        "language": "language",
+        "rag_collection": "rag_collection",
+        "business_type": "business_type",
+        "objective": "objective",
+        "instructions": "instructions",
+        "model": "model",
+        "channels": "channels",
+        "schedule_start": "schedule_start",
+        "schedule_end": "schedule_end",
+        "service_days": "service_days",
+        "off_hours_message": "off_hours_message",
+        "sales_script": "sales_script",
     }
     
     BACKEND_TO_DB = {v: k for k, v in DB_TO_BACKEND.items()}
     
     TRANSFORMS = {
-        "creado_en": lambda x: str(x) if x else None,
-        "actualizado_en": lambda x: str(x) if x else None,
-        "script_ventas": lambda x: x if isinstance(x, (dict, list)) else {},
-        "dias_atencion": lambda x: x if isinstance(x, list) else [],
-        "canales": lambda x: x if isinstance(x, list) else [],
+        "created_at": lambda x: str(x) if x else None,
+        "updated_at": lambda x: str(x) if x else None,
+        "sales_script": lambda x: x if isinstance(x, (dict, list)) else {},
+        "service_days": lambda x: x if isinstance(x, list) else [],
+        "channels": lambda x: x if isinstance(x, list) else [],
     }
 
 class ConversationMapper(BaseMapper):
@@ -148,7 +148,7 @@ class ConversationMapper(BaseMapper):
         "tenant_id": "tenant_id",
         "agent_id": "agent_id",
         "customer_id": "customer_id",
-        "status": "estado",
+        "status": "status",
         "started_at": "iniciada_en",
         "ended_at": "finalizada_en",
         "last_message_at": "ultimo_mensaje_en",
@@ -156,8 +156,8 @@ class ConversationMapper(BaseMapper):
         "revenue_generated": "valor_venta",
         "sale_closed": "venta_cerrada",
         "sentiment": "sentimiento",
-        "created_at": "creado_en",
-        "updated_at": "actualizado_en",
+        "created_at": "created_at",
+        "updated_at": "updated_at",
     }
     
     BACKEND_TO_DB = {v: k for k, v in DB_TO_BACKEND.items()}
@@ -174,8 +174,8 @@ class MessageMapper(BaseMapper):
         "content": "contenido",
         "message_type": "tipo_mensaje",
         "metadata": "metadatos",
-        "created_at": "creado_en",
-        "updated_at": "actualizado_en",
+        "created_at": "created_at",
+        "updated_at": "updated_at",
     }
     
     BACKEND_TO_DB = {v: k for k, v in DB_TO_BACKEND.items()}
@@ -185,20 +185,20 @@ class TenantMapper(BaseMapper):
     
     DB_TO_BACKEND = {
         "id": "id",
-        "name": "nombre",
+        "name": "name",
         "email": "email",
-        "phone": "telefono",
+        "phone": "phone",
         "plan": "plan",
-        "status": "estado",
+        "status": "status",
         "contract_start": "inicio_contrato",
         "contract_end": "fin_contrato",
-        "max_agents": "max_agentes",
-        "max_messages_month": "max_mensajes_mes",
-        "messages_used_month": "mensajes_usados_mes",
-        "max_whatsapp_instances": "max_instancias_whatsapp",
+        "max_agents": "max_agents",
+        "max_messages_month": "max_messages_month",
+        "messages_used_month": "messages_used_month",
+        "max_whatsapp_instances": "max_whatsapp_instances",
         "billing_info": "info_facturacion",
-        "created_at": "creado_en",
-        "updated_at": "actualizado_en",
+        "created_at": "created_at",
+        "updated_at": "updated_at",
     }
     
     BACKEND_TO_DB = {v: k for k, v in DB_TO_BACKEND.items()}

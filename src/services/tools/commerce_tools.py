@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import uuid
 
 from core.exceptions import BusinessRuleError, InsufficientStockError, SlotUnavailableError
+from services.payments.payment_factory import PaymentFactory
 
 # ==========================================
 # INPUT SCHEMAS (Pydantic v2)
@@ -13,7 +14,7 @@ from core.exceptions import BusinessRuleError, InsufficientStockError, SlotUnava
 class CheckAvailabilityInput(BaseModel):
     product_name_or_query: str = Field(description="Nombre o consulta del producto a buscar")
     quantity: int = Field(ge=1, default=1)
-    preferred_time: Optional[datetime] = None
+    preferred_time: Optional[str] = None
     duration_minutes: Optional[int] = None
 
 class QuoteItemInput(BaseModel):
@@ -35,6 +36,12 @@ class CreateOrderInput(BaseModel):
     payment_method: str = Field(default="pending")
     fulfillment_type: str = Field(default="pending")
     scheduled_for: Optional[datetime] = None
+
+class GeneratePaymentLinkInput(BaseModel):
+    order_id: str = Field(description="El ID de la sort_order en el sistema para la cual se generará el cobro.")
+    amount: float = Field(description="Monto total a cobrar.")
+    currency: str = Field(default="USD", description="Moneda (ej. USD).")
+    description: str = Field(description="Descripción corta del cobro a mostrar al cliente.")
 
 # ==========================================
 # HANDLERS
@@ -60,7 +67,7 @@ async def check_availability(
     
     items = result.fetchall()
     if not items:
-        raise BusinessRuleError(f"No encontré productos con el nombre: {input_data.product_name_or_query}")
+        raise BusinessRuleError(f"No encontré productos con el name: {input_data.product_name_or_query}")
 
     # Tomar el mejor match (el primero)
     item = items[0]
@@ -200,4 +207,55 @@ async def create_order(
         "order_id": str(order_id),
         "status": "pending",
         "total": round(float(subtotal), 2)
+    }
+
+async def generate_payment_link(
+    input_data: GeneratePaymentLinkInput,
+    tenant_id: str,
+    db: AsyncSession,
+    tenant_config: Dict[str, Any]
+) -> Dict[str, Any]:
+    """
+    Invoca el adaptador configurado para el tenant (Factory Pattern) 
+    y retorna la URL de cobro que el agente puede enviar al cliente.
+    """
+    # 1. Determinar el gateway configurado para este cliente (ej. 'payphone' o 'mercadopago')
+    gateway_name = tenant_config.get("payment_gateway", "payphone") # default temporal para demo
+    
+    provider = PaymentFactory.get_provider(gateway_name)
+
+    # 2. Obtener el link de pago seguro
+    payment_result = await provider.create_payment_link(
+        order_id=input_data.order_id,
+        amount=input_data.amount,
+        currency=input_data.currency,
+        description=input_data.description,
+        tenant_config=tenant_config
+    )
+
+    init_point = payment_result.get("init_point")
+    external_tx_id = payment_result.get("payment_id")
+
+    # 3. Registrar el Payment Intent en nuestra base de datos para esperar el Webhook
+    intent_query = text("""
+        INSERT INTO payment_intents 
+        (tenant_id, order_id, status, provider, external_transaction_id, amount, currency)
+        VALUES (:tenant_id, :order_id, 'pending', :provider, :ext_id, :amount, :currency)
+        RETURNING id
+    """)
+    
+    await db.execute(intent_query, {
+        "tenant_id": tenant_id,
+        "order_id": input_data.order_id,
+        "provider": gateway_name,
+        "ext_id": str(external_tx_id) if external_tx_id else None,
+        "amount": input_data.amount,
+        "currency": input_data.currency
+    })
+
+    return {
+        "status": "success",
+        "payment_url": init_point,
+        "gateway_used": gateway_name,
+        "message_to_user": "Link de pago generado exitosamente. Por favor, envía la URL al cliente."
     }

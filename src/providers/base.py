@@ -25,8 +25,8 @@ class ChannelProvider(ABC):
     @abstractmethod
     async def health_check(self, session_id: str) -> Dict[str, Any]:
         """
-        Realiza un ping o valida el estado de la conexión.
-        Debe lanzar excepciones o devolver payload de estado.
+        Realiza un ping o valida el status de la conexión.
+        Debe lanzar excepciones o devolver payload de status.
         """
         pass
 

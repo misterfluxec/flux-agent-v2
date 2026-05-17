@@ -23,7 +23,7 @@ async def send_followup_message(customer_phone: str, template: str, context: Dic
     
     messages = {
         "quote_reminder": f"Hola 👋, te recordamos que tu cotización está por vencer. ¿Necesitas ajustar algo?",
-        "order_confirmation": f"✅ Tu orden ha sido confirmada. Te enviaremos novedades pronto. ID: {context.get('order_id')}",
+        "order_confirmation": f"✅ Tu sort_order ha sido confirmada. Te enviaremos novedades pronto. ID: {context.get('order_id')}",
         "post_purchase_survey": f"Gracias por tu compra 🙏. ¿Cómo calificarías tu experiencia? (1-5)",
         "payment_pending": f"💳 Tu pago está pendiente. Completa aquí: {context.get('payment_link')}"
     }

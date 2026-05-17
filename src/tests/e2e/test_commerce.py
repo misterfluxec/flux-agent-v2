@@ -15,7 +15,7 @@ async def run_test():
     
     async with SesionLocal() as db:
         await db.execute(text("""
-            INSERT INTO agents (id, tenant_id, nombre, modelo, instrucciones)
+            INSERT INTO agents (id, tenant_id, name, model, instructions)
             VALUES (:aid, :tid, 'Yanua', 'qwen2.5:3b', 'Eres Yanua, una agente de ventas. Usa las herramientas provistas para verificar stock y crear órdenes.')
             ON CONFLICT DO NOTHING
         """), {"aid": str(agent_id), "tid": str(tenant_id)})
@@ -27,7 +27,7 @@ async def run_test():
         agent_id=agent_id,
         canal="test",
         lead_externo_id="user_test_123",
-        mensaje_texto="Hola, necesito saber el precio y stock de la Cámara de Seguridad WiFi",
+        mensaje_texto="Hola, necesito saber el price y stock de la Cámara de Seguridad WiFi",
         instancia_nombre=None
     )
     print("Agent Response:", response)

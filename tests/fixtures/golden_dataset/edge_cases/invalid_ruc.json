@@ -1,0 +1,7 @@
+{
+  "tenant_id": "bad-ruc-ec",
+  "country": "EC",
+  "tax_id": "123",
+  "notes": "RUC inválido para probar validaciones de la capa de dominio en Ecuador",
+  "expected_error": "Invalid RUC format"
+}

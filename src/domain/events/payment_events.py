@@ -18,7 +18,7 @@ class PaymentIntentCreatedEventV1(BaseDomainEvent):
 class PaymentStatusUpdatedEventV1(BaseDomainEvent):
     """
     Emitido cuando el Payment Reconciliation Engine confirma 
-    el cambio de estado de un pago (ej. pending -> paid).
+    el cambio de status de un pago (ej. pending -> paid).
     """
     payment_intent_id: str
     order_id: str

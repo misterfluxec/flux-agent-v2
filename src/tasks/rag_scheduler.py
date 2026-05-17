@@ -59,7 +59,7 @@ async def sync_all_pending_sheets():
                             last_synced_at = NOW(), 
                             next_sync_at = NOW() + INTERVAL '1 day',
                             rows_processed = :rows,
-                            actualizado_en = NOW()
+                            updated_at = NOW()
                         WHERE id = :id
                     """), {"id": source.id, "rows": len(rows)})
                     

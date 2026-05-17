@@ -42,7 +42,7 @@ router = APIRouter(prefix="/api/v1/auth", tags=["Autenticación"])
 
 class RegisterRequest(BaseModel):
     """Datos para crear un nuevo tenant con usuario admin."""
-    nombre_empresa: Optional[str] = None
+    company_name: Optional[str] = None
     nombre_usuario: str
     email:          str
     password:       str
@@ -96,7 +96,7 @@ async def register(
     """
     Crea:
     1. Un nuevo tenant (empresa/cliente)
-    2. Un usuario con rol 'admin' vinculado a ese tenant
+    2. Un usuario con role 'admin' vinculado a ese tenant
     3. Retorna un JWT listo para usar
 
     Los límites del plan (starter/pro/enterprise) se aplican automáticamente.
@@ -107,7 +107,7 @@ async def register(
     
     # Verificar email único
     result = await db.execute(
-        text("SELECT id FROM usuarios WHERE email = :email"),
+        text("SELECT id FROM users WHERE email = :email"),
         {"email": email_normalizado},
     )
     if result.fetchone():
@@ -118,17 +118,17 @@ async def register(
 
     # Límites por plan
     PLAN_LIMITES = {
-        "starter":    {"max_agentes": 1,  "max_mensajes_mes": 500,  "max_instancias_whatsapp": 1},
-        "pro":        {"max_agentes": 5,  "max_mensajes_mes": 5000, "max_instancias_whatsapp": 3},
-        "enterprise": {"max_agentes": 20, "max_mensajes_mes": 50000,"max_instancias_whatsapp": 10},
+        "starter":    {"max_agents": 1,  "max_messages_month": 500,  "max_whatsapp_instances": 1},
+        "pro":        {"max_agents": 5,  "max_messages_month": 5000, "max_whatsapp_instances": 3},
+        "enterprise": {"max_agents": 20, "max_messages_month": 50000,"max_whatsapp_instances": 10},
     }
     limites = PLAN_LIMITES.get(datos.plan, PLAN_LIMITES["starter"])
 
-    # Si es empresa y tiene nombre de empresa, usarla. 
-    # Si es individual y tiene nombre de empresa, usarlo como nombre de tienda.
-    # Si no hay nombre de empresa, usar el nombre del usuario + " Store"
+    # Si es empresa y tiene name de empresa, usarla. 
+    # Si es individual y tiene name de empresa, usarlo como name de tienda.
+    # Si no hay name de empresa, usar el name del usuario + " Store"
     nombre_usuario_str = (datos.nombre_usuario or "").strip()
-    nombre_empresa_final = (datos.nombre_empresa or "").strip() if datos.nombre_empresa else f"{nombre_usuario_str} Store"
+    nombre_empresa_final = (datos.company_name or "").strip() if datos.company_name else f"{nombre_usuario_str} Store"
 
     tenant_id  = uuid4()
     usuario_id = uuid4()
@@ -142,11 +142,11 @@ async def register(
     # Crear tenant
     await db.execute(
         text("""
-            INSERT INTO tenants (id, nombre_empresa, email_contacto, plan,
-                                 max_agentes, max_mensajes_mes, max_instancias_whatsapp,
-                                 color_primario, branding_config)
+            INSERT INTO tenants (id, company_name, contact_email, plan,
+                                 max_agents, max_messages_month, max_whatsapp_instances,
+                                 primary_color, branding_config)
             VALUES (:id, :empresa, :email, :plan,
-                    :max_agentes, :max_mensajes, :max_whatsapp,
+                    :max_agents, :max_mensajes, :max_whatsapp,
                     :color, :branding)
         """),
         {
@@ -154,10 +154,10 @@ async def register(
             "empresa":     nombre_empresa_final,
             "email":       email_normalizado,
             "plan":        datos.plan,
-            "max_agentes": limites["max_agentes"],
-            "max_mensajes": limites["max_mensajes_mes"],
-            "max_whatsapp": limites["max_instancias_whatsapp"],
-            "color":       datos.branding.get("color_primario") if datos.branding else "#6366f1",
+            "max_agents": limites["max_agents"],
+            "max_mensajes": limites["max_messages_month"],
+            "max_whatsapp": limites["max_whatsapp_instances"],
+            "color":       datos.branding.get("primary_color") if datos.branding else "#6366f1",
             "branding":    branding_json,
         },
     )
@@ -167,13 +167,13 @@ async def register(
     await db.execute(
         text("""
             SELECT fn_crear_usuario(
-                CAST(:tid AS UUID), CAST(:uid AS UUID), :nombre, :email, :phash, 'admin'
+                CAST(:tid AS UUID), CAST(:uid AS UUID), :name, :email, :phash, 'admin'
             )
         """),
         {
             "tid":    str(tenant_id),
             "uid":    str(usuario_id),
-            "nombre": nombre_usuario_str,
+            "name": nombre_usuario_str,
             "email":  (datos.email or "").lower().strip(),
             "phash":  password_hash,
         },
@@ -184,11 +184,11 @@ async def register(
     await db.execute(
         text("""
             INSERT INTO agents (
-                id, tenant_id, nombre, area, estado,
-                modelo, temperatura, max_tokens, canales
+                id, tenant_id, name, area, status,
+                model, temperature, max_tokens, channels
             )
             VALUES (
-                :id, :tenant_id, 'Yanua', 'Asistente Principal', 'activo',
+                :id, :tenant_id, 'Yanua', 'Asistente Principal', 'is_active',
                 'nomic-embed-text', 0.7, 512, ARRAY['web_chat']::text[]
             )
         """),
@@ -204,8 +204,8 @@ async def register(
     token_payload = PayloadToken(
         sub=str(usuario_id),
         tenant_id=str(tenant_id),
-        rol="admin",
-        nombre=nombre_usuario_str,
+        role="admin",
+        name=nombre_usuario_str,
         plan=datos.plan,
     )
     token = crear_access_token(token_payload)
@@ -215,12 +215,12 @@ async def register(
         access_token=token,
         usuario={
             "id":          str(usuario_id),
-            "nombre":      nombre_usuario_str,
+            "name":      nombre_usuario_str,
             "email":       email_normalizado,
-            "rol":         "admin",
+            "role":         "admin",
             "plan":        datos.plan,
             "tenant_id":   str(tenant_id),
-            "nombre_empresa": nombre_empresa_final,
+            "company_name": nombre_empresa_final,
         },
     )
 
@@ -240,7 +240,7 @@ async def login(
 ):
     """
     Verifica email + contraseña con bcrypt.
-    Si son correctas, retorna un JWT que incluye tenant_id, rol y nombre.
+    Si son correctas, retorna un JWT que incluye tenant_id, role y name.
 
     El frontend debe guardar este token (localStorage o cookie httpOnly)
     y enviarlo en cada request como: Authorization: Bearer <token>
@@ -249,7 +249,7 @@ async def login(
 
     # Buscar usuario usando fn_login_usuario (SECURITY DEFINER, bypassa RLS)
     result = await db.execute(
-        text("SELECT id, tenant_id, password_hash, nombre, rol, plan, nombre_empresa, estado_tenant FROM fn_login_usuario(:email)"),
+        text("SELECT id, tenant_id, password_hash, name, role, plan, company_name, estado_tenant FROM fn_login_usuario(:email)"),
         {"email": email},
     )
     fila = result.fetchone()
@@ -260,10 +260,10 @@ async def login(
             detail="Email o contraseña incorrectos.",
         )
 
-    user_id, tenant_id, pwd_hash, nombre, rol, plan, empresa, tenant_estado = fila
+    user_id, tenant_id, pwd_hash, name, role, plan, empresa, tenant_estado = fila
 
-    # Verificar tenant activo
-    if tenant_estado != "activo":
+    # Verificar tenant is_active
+    if tenant_estado != "is_active":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Tu cuenta está suspendida. Contacta al soporte.",
@@ -279,7 +279,7 @@ async def login(
     # Actualizar último login (usando fn o SET RLS context)
     await configurar_rls(db, tenant_id)
     await db.execute(
-        text("UPDATE usuarios SET ultimo_login = NOW() WHERE id = :id"),
+        text("UPDATE users SET last_login = NOW() WHERE id = :id"),
         {"id": str(user_id)},
     )
     await db.commit()
@@ -288,23 +288,23 @@ async def login(
     token_payload = PayloadToken(
         sub=str(user_id),
         tenant_id=str(tenant_id),
-        rol=rol,
-        nombre=nombre,
+        role=role,
+        name=name,
         plan=plan,
     )
     token = crear_access_token(token_payload)
 
-    logger.info(f"Login exitoso: {email} | tenant={tenant_id} | rol={rol}")
+    logger.info(f"Login exitoso: {email} | tenant={tenant_id} | role={role}")
     return TokenResponse(
         access_token=token,
         usuario={
             "id":             str(user_id),
-            "nombre":         nombre,
+            "name":         name,
             "email":          email,
-            "rol":            rol,
+            "role":            role,
             "plan":           plan,
             "tenant_id":      str(tenant_id),
-            "nombre_empresa": empresa,
+            "company_name": empresa,
         },
     )
 
@@ -323,13 +323,13 @@ async def me(
 ):
     """
     Retorna los datos del usuario actual extraídos del JWT + DB.
-    Usado por el frontend para mostrar el nombre y plan en la barra superior.
+    Usado por el frontend para mostrar el name y plan en la barra superior.
     """
     result = await db.execute(
         text("""
-            SELECT u.nombre, u.email, u.rol, u.ultimo_login,
-                   t.nombre_empresa, t.plan, t.estado
-            FROM   usuarios u
+            SELECT u.name, u.email, u.role, u.last_login,
+                   t.company_name, t.plan, t.status
+            FROM   users u
             JOIN   tenants  t ON t.id = u.tenant_id
             WHERE  u.id = :user_id
         """),
@@ -339,17 +339,17 @@ async def me(
     if not fila:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado.")
 
-    nombre, email, rol, ultimo_login, empresa, plan, estado = fila
+    name, email, role, last_login, empresa, plan, status = fila
     return {
         "id":             usuario.sub,
         "tenant_id":      usuario.tenant_id,
-        "nombre":         nombre,
+        "name":         name,
         "email":          email,
-        "rol":            rol,
+        "role":            role,
         "plan":           plan,
-        "nombre_empresa": empresa,
-        "estado_tenant":  estado,
-        "ultimo_login":   str(ultimo_login) if ultimo_login else None,
+        "company_name": empresa,
+        "estado_tenant":  status,
+        "last_login":   str(last_login) if last_login else None,
     }
 
 
@@ -370,26 +370,26 @@ async def refresh_token(
     Emite un nuevo JWT con fecha de expiración actualizada.
     El token anterior sigue siendo válido hasta que expire.
     """
-    # Verificar que el usuario siga activo en DB
+    # Verificar que el usuario siga is_active en DB
     result = await db.execute(
-        text("SELECT estado FROM usuarios WHERE id = :id"),
+        text("SELECT status FROM users WHERE id = :id"),
         {"id": usuario.sub},
     )
     fila = result.fetchone()
-    if not fila or fila[0] != "activo":
+    if not fila or fila[0] != "is_active":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Cuenta desactivada.")
 
     nuevo_payload = PayloadToken(
         sub=usuario.sub,
         tenant_id=usuario.tenant_id,
-        rol=usuario.rol,
-        nombre=usuario.nombre,
+        role=usuario.role,
+        name=usuario.name,
         plan=usuario.plan,
     )
     token = crear_access_token(nuevo_payload)
     return TokenResponse(
         access_token=token,
-        usuario={"nombre": usuario.nombre, "rol": usuario.rol, "plan": usuario.plan},
+        usuario={"name": usuario.name, "role": usuario.role, "plan": usuario.plan},
     )
 
 # =============================================================================
@@ -420,7 +420,7 @@ async def social_login_or_register(
     
     # 2. Verificar si el usuario ya existe
     result = await db.execute(
-        text("SELECT id, nombre, tenant_id, rol, plan_actual as plan FROM usuarios u JOIN tenants t ON u.tenant_id = t.id WHERE u.email = :email"),
+        text("SELECT id, name, tenant_id, role, plan_actual as plan FROM users u JOIN tenants t ON u.tenant_id = t.id WHERE u.email = :email"),
         {"email": email_normalizado}
     )
     existing_user = result.fetchone()
@@ -433,7 +433,7 @@ async def social_login_or_register(
         # Actualizar último login
         await configurar_rls(db, tenant_id)
         await db.execute(
-            text("UPDATE usuarios SET ultimo_login = NOW() WHERE id = :id"),
+            text("UPDATE users SET last_login = NOW() WHERE id = :id"),
             {"id": str(user_id)}
         )
         await db.commit()
@@ -441,8 +441,8 @@ async def social_login_or_register(
         token_payload = PayloadToken(
             sub=str(user_id),
             tenant_id=str(tenant_id),
-            rol=existing_user.rol,
-            nombre=existing_user.nombre,
+            role=existing_user.role,
+            name=existing_user.name,
             plan=existing_user.plan,
         )
         token = crear_access_token(token_payload)
@@ -452,9 +452,9 @@ async def social_login_or_register(
             is_new_user=False,
             usuario={
                 "id": str(user_id),
-                "nombre": existing_user.nombre,
+                "name": existing_user.name,
                 "email": email_normalizado,
-                "rol": existing_user.rol,
+                "role": existing_user.role,
                 "plan": existing_user.plan,
                 "tenant_id": str(tenant_id)
             }
@@ -463,21 +463,21 @@ async def social_login_or_register(
         # === CASO B: SIGN UP (Súper Transacción) ===
         tenant_id = uuid4()
         user_id = uuid4()
-        nombre_empresa = f"{user_data['name'].strip()} Store"
+        company_name = f"{user_data['name'].strip()} Store"
         
         # B.1 Crear Tenant
         await db.execute(
             text("""
-                INSERT INTO tenants (id, nombre_empresa, email_contacto, plan,
-                                     max_agentes, max_mensajes_mes, max_instancias_whatsapp,
-                                     color_primario)
+                INSERT INTO tenants (id, company_name, contact_email, plan,
+                                     max_agents, max_messages_month, max_whatsapp_instances,
+                                     primary_color)
                 VALUES (:id, :empresa, :email, 'starter',
                         1, 500, 1,
                         '#6366f1')
             """),
             {
                 "id": str(tenant_id),
-                "empresa": nombre_empresa,
+                "empresa": company_name,
                 "email": email_normalizado
             }
         )
@@ -487,7 +487,7 @@ async def social_login_or_register(
         await db.execute(
             text("""
                 SELECT fn_crear_usuario(
-                    CAST(:uid AS UUID), CAST(:tid AS UUID), :email, :phash, :nombre, 'admin'
+                    CAST(:uid AS UUID), CAST(:tid AS UUID), :email, :phash, :name, 'admin'
                 )
             """),
             {
@@ -495,7 +495,7 @@ async def social_login_or_register(
                 "tid": str(tenant_id),
                 "email": email_normalizado,
                 "phash": dummy_password,
-                "nombre": user_data["name"].strip()
+                "name": user_data["name"].strip()
             }
         )
         
@@ -504,11 +504,11 @@ async def social_login_or_register(
         await db.execute(
             text("""
                 INSERT INTO agents (
-                    id, tenant_id, nombre, area, estado,
-                    modelo, temperatura, max_tokens, canales
+                    id, tenant_id, name, area, status,
+                    model, temperature, max_tokens, channels
                 )
                 VALUES (
-                    :id, :tenant_id, 'Yanua', 'Asistente Principal', 'activo',
+                    :id, :tenant_id, 'Yanua', 'Asistente Principal', 'is_active',
                     'nomic-embed-text', 0.7, 512, ARRAY['web_chat']::text[]
                 )
             """),
@@ -547,8 +547,8 @@ async def social_login_or_register(
         token_payload = PayloadToken(
             sub=str(user_id),
             tenant_id=str(tenant_id),
-            rol="admin",
-            nombre=user_data["name"].strip(),
+            role="admin",
+            name=user_data["name"].strip(),
             plan="starter",
         )
         token = crear_access_token(token_payload)
@@ -558,11 +558,11 @@ async def social_login_or_register(
             is_new_user=True,
             usuario={
                 "id": str(user_id),
-                "nombre": user_data["name"].strip(),
+                "name": user_data["name"].strip(),
                 "email": email_normalizado,
-                "rol": "admin",
+                "role": "admin",
                 "plan": "starter",
                 "tenant_id": str(tenant_id),
-                "nombre_empresa": nombre_empresa
+                "company_name": company_name
             }
         )

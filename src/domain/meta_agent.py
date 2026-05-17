@@ -27,7 +27,7 @@ class SOPStep(BaseModel):
     """
     order: int
     instruction: str
-    required_action: Optional[str] = None # Referencia al nombre de una AgentAction
+    required_action: Optional[str] = None # Referencia al name de una AgentAction
     validation_criteria: str
     failure_protocol: str # Qué hacer si el paso falla
 
@@ -53,9 +53,9 @@ class BaseRole(BaseModel):
     goals: List[str]
     constraints: List[str]
     allowed_actions: List[str] # Lista de nombres de AgentAction
-    assigned_sops: List[str] # Lista de IDs de SOPs que este rol puede ejecutar
+    assigned_sops: List[str] # Lista de IDs de SOPs que este role puede ejecutar
     
-    # Contexto específico del rol
+    # Contexto específico del role
     context_template: str = ""
 
 class AgentState(BaseModel):

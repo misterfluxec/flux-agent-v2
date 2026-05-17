@@ -26,11 +26,11 @@ const ACTION_DEFINITIONS: Record<string, ActionDefinition[]> = {
     { id: 'extend_validity', label: 'Extender validez', icon: '⏰', variant: 'secondary', enabled: false },
   ],
   'quote.accepted': [
-    { id: 'create_order', label: 'Crear orden', icon: '📦', variant: 'primary', enabled: true },
+    { id: 'create_order', label: 'Crear sort_order', icon: '📦', variant: 'primary', enabled: true },
     { id: 'send_confirmation', label: 'Enviar confirmación', icon: '✅', variant: 'secondary', enabled: false },
   ],
   'order.created': [
-    { id: 'view_order', label: 'Ver orden', icon: '👁️', variant: 'primary', enabled: true },
+    { id: 'view_order', label: 'Ver sort_order', icon: '👁️', variant: 'primary', enabled: true },
     { id: 'send_payment_link', label: 'Enviar link de pago', icon: '💳', variant: 'primary', enabled: false },
     { id: 'escalate_to_human', label: 'Escalar a humano', icon: '👤', variant: 'warning', enabled: true },
   ],
@@ -110,7 +110,7 @@ export function ActionMenu({ event, onAction }: Props) {
     },
     onError: (err, newTodo, context) => {
       queryClient.setQueryData(['operations', 'priority-queue'], context?.previousQueue);
-      toast.error('No se pudo actualizar el estado del evento.');
+      toast.error('No se pudo actualizar el status del evento.');
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['operations'] });

@@ -1,0 +1,29 @@
+{
+  "industries": {
+    "badge": "Casos de Uso",
+    "title_1": "Adaptado a tu",
+    "title_2": "Industria",
+    "items": [
+      {
+        "name": "Retail",
+        "description": "Ventas automáticas",
+        "icon": "🛒"
+      },
+      {
+        "name": "Salud",
+        "description": "Agendamiento de citas",
+        "icon": "🏥"
+      },
+      {
+        "name": "Servicios",
+        "description": "Soporte 24/7",
+        "icon": "⚙️"
+      },
+      {
+        "name": "Inmobiliaria",
+        "description": "Calificación de leads",
+        "icon": "🏢"
+      }
+    ]
+  }
+}

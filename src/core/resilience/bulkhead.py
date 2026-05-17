@@ -192,7 +192,7 @@ class AsyncBulkhead:
                     pass
     
     def get_status(self) -> Dict[str, Any]:
-        """Retorna estado actual y métricas"""
+        """Retorna status actual y métricas"""
         return {
             "name": self.config.name,
             "strategy": self.config.strategy.value,
@@ -363,7 +363,7 @@ def create_bulkhead(service_name: str, **overrides) -> AsyncBulkhead:
 
 # Endpoint para monitoreo de bulkheads
 async def get_all_bulkheads_status() -> Dict[str, Any]:
-    """Retorna estado de todos los bulkheads"""
+    """Retorna status de todos los bulkheads"""
     status = {}
     for name, bulkhead in _bulkheads.items():
         status[name] = bulkhead.get_status()
@@ -404,7 +404,7 @@ class BulkheadManager:
         return False
     
     def get_bulkhead(self, name: str) -> Optional[AsyncBulkhead]:
-        """Obtiene un bulkhead por nombre"""
+        """Obtiene un bulkhead por name"""
         return self.bulkheads.get(name)
     
     def list_bulkheads(self) -> list[str]:

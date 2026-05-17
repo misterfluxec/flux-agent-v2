@@ -91,7 +91,7 @@ export default function DashboardPage() {
             <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-3.5 flex items-center gap-3">
               <div className="relative">
                 <div className={`w-2.5 h-2.5 rounded-full ${isConnected ? "bg-emerald-500/80" : "bg-amber-500"}`}></div>
-                {/* Ping solo cuando NO está conectado (estado anormal) */}
+                {/* Ping solo cuando NO está conectado (status anormal) */}
                 {!isConnected && <div className="w-2.5 h-2.5 rounded-full bg-amber-500 absolute inset-0 animate-ping opacity-40"></div>}
               </div>
               <div>

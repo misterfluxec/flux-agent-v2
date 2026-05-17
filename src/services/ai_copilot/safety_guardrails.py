@@ -7,7 +7,7 @@ class SafetyGuardrails:
     """
     Fase 4C — Sprint 4C.1: AI Safety Guardrails.
     
-    El firewall obligatorio antes de conectar cualquier modelo IA.
+    El firewall obligatorio antes de conectar cualquier model IA.
     Protege contra alucinaciones, fuga de PII, prompts maliciosos y
     acciones operacionales no autorizadas (fuerza READ_ONLY).
     """

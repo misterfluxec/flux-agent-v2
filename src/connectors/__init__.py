@@ -1,5 +1,5 @@
 # ERP Connector Framework — FluxAgent V2
-from .legacy.base import ERPConnectorInterface
+from .v2.base_connector import BaseDataConnector as ERPConnectorInterface
 from .canonical import (
     CanonicalProduct,
     CanonicalCustomer,

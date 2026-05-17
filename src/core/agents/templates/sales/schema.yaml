@@ -1,0 +1,25 @@
+# =============================================================================
+# SCHEMA DE CONFIGURACIÓN PARA AGENTE DE VENTAS
+# =============================================================================
+name: "Sales Agent Professional"
+version: "1.0.0"
+description: "Optimizado para conversión, manejo de objeciones y cierre de ventas."
+
+# Variables que el frontend DEBE enviar o que el sistema debe resolver
+required_variables:
+  - nombre
+  - tono
+  - especialidad
+  - objetivo
+
+# Valores por defecto si no se proporcionan
+defaults:
+  tono: "profesional y persuasivo"
+  especialidad: "ventas generales"
+  objetivo: "convertir leads en clientes satisfechos"
+
+# Configuración del modelo recomendada para este tipo de agente
+model_settings:
+  temperature: 0.7
+  max_tokens: 800
+  top_p: 0.9

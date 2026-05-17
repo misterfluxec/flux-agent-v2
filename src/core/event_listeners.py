@@ -5,7 +5,7 @@ Integra:
   - SeverityEngine: calcula severidad automáticamente antes de persistir
   - Correlation: propaga correlation_id del evento padre al contexto
   - Event Versioning: guarda event_version para compatibilidad histórica
-  - Redis Stream: retention policy clara por tipo de tenant
+  - Redis Stream: retention policy clara por type de tenant
 """
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -125,7 +125,7 @@ async def persist_event_to_timeline(
 
         # Tags: merger de auto-tags + tags del metadata del evento
         explicit_tags = list(getattr(meta, "tags", []))
-        all_tags = list(dict.fromkeys(auto_tags + explicit_tags))  # dedup preservando orden
+        all_tags = list(dict.fromkeys(auto_tags + explicit_tags))  # dedup preservando sort_order
 
         # ─────────────────────────────────────────────────────────────────────
         # 3. Postgres: Append-only event log (fuente de verdad inmutable)

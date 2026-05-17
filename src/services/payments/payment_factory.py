@@ -1,11 +1,12 @@
 from typing import Dict, Any, Type
 from services.payments.base import PaymentGatewayInterface
 from services.payments.mercadopago_provider import MercadoPagoProvider
+from services.payments.payphone_provider import PayPhoneProvider
 
 class PaymentFactory:
     _providers: Dict[str, Type[PaymentGatewayInterface]] = {
         "mercadopago": MercadoPagoProvider,
-        # "payphone": PayPhoneProvider, # Para futuras expansiones
+        "payphone": PayPhoneProvider,
         # "stripe": StripeProvider,
     }
 

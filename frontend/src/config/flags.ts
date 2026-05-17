@@ -96,7 +96,7 @@ export const UPGRADE_PROMPTS: Record<Feature, string> = {
   multi_workforce:     "Workforce IA multi-agente colaborativo",
   predictive_insights: "Predicciones de revenue con IA",
   compliance_export:   "Exportación de datos para RGPD/LOPD",
-  rbac_full:           "Control de acceso granular por rol",
+  rbac_full:           "Control de acceso granular por role",
   // Los siguientes no tienen upsell (son base)
   operations:          "",
   basic_metrics:       "",

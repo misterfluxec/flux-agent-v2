@@ -143,7 +143,7 @@ class HeartbeatMonitor:
         async with sesion_db() as db:
             from sqlalchemy import text
             
-            # Encontramos canales desconectados o degradados
+            # Encontramos channels desconectados o degradados
             # Threshold: 90 seconds (3 missed heartbeats) -> degraded
             query = text("""
                 SELECT id, tenant_id, channel_type, status, last_heartbeat

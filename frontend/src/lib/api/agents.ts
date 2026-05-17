@@ -12,27 +12,27 @@ import { api } from '../api';
 // =============================================================================
 
 export interface AgentCreate {
-  nombre: string;
+  name: string;
   area?: string | null;
-  descripcion?: string | null;
-  genero?: string;
-  humor?: string;
-  personalidad?: string | null;
-  idioma?: string;
-  tono?: string;
-  coleccion_rag?: string | null;
-  tipo_negocio?: string | null;
-  objetivo?: string | null;
-  instrucciones?: string | null;
-  modelo?: string;
-  temperatura?: number;
+  description?: string | null;
+  gender?: string;
+  mood?: string;
+  personality?: string | null;
+  language?: string;
+  tone?: string;
+  rag_collection?: string | null;
+  business_type?: string | null;
+  objective?: string | null;
+  instructions?: string | null;
+  model?: string;
+  temperature?: number;
   max_tokens?: number;
-  canales?: string[];
-  horario_inicio?: string | null;
-  horario_fin?: string | null;
-  dias_atencion?: string[] | null;
-  mensaje_fuera_horario?: string | null;
-  script_ventas?: ScriptVentas;
+  channels?: string[];
+  schedule_start?: string | null;
+  schedule_end?: string | null;
+  service_days?: string[] | null;
+  off_hours_message?: string | null;
+  sales_script?: ScriptVentas;
   agent_type?: string;
   system_prompt?: string;
   specialty?: string;
@@ -49,38 +49,38 @@ export interface ScriptVentas {
 }
 
 export interface AgentUpdate extends Partial<AgentCreate> {
-  estado?: string;
+  status?: string;
 }
 
 export interface AgentResponse {
   id: string;
-  nombre: string;
+  name: string;
   area?: string | null;
-  descripcion?: string | null;
-  genero: string;
-  humor: string;
-  personalidad?: string | null;
-  idioma: string;
-  tono: string;
-  coleccion_rag?: string | null;
-  tipo_negocio?: string | null;
-  objetivo?: string | null;
-  instrucciones?: string | null;
-  modelo: string;
-  temperatura: number;
+  description?: string | null;
+  gender: string;
+  mood: string;
+  personality?: string | null;
+  language: string;
+  tone: string;
+  rag_collection?: string | null;
+  business_type?: string | null;
+  objective?: string | null;
+  instructions?: string | null;
+  model: string;
+  temperature: number;
   max_tokens: number;
-  canales: string[];
-  horario_inicio?: string | null;
-  horario_fin?: string | null;
-  dias_atencion?: string[] | null;
-  mensaje_fuera_horario?: string | null;
-  script_ventas?: ScriptVentas;
+  channels: string[];
+  schedule_start?: string | null;
+  schedule_end?: string | null;
+  service_days?: string[] | null;
+  off_hours_message?: string | null;
+  sales_script?: ScriptVentas;
   agent_type: string;
   system_prompt?: string;
   specialty?: string;
-  estado: string;
-  creado_en: string;
-  actualizado_en: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
 }
 
 // =============================================================================
@@ -92,9 +92,9 @@ export interface AgentResponse {
  */
 function generateDefaultPrompt(agent: Partial<AgentCreate>): string {
   const base = `Eres un asistente ${agent.agent_type || 'profesional'}`;
-  const personality = agent.personalidad ? `. Tu personalidad: ${agent.personalidad}` : '';
-  const instructions = agent.instrucciones ? `. Instrucciones: ${agent.instrucciones}` : '';
-  const business = agent.tipo_negocio ? `. Contexto de negocio: ${agent.tipo_negocio}` : '';
+  const personality = agent.personality ? `. Tu personality: ${agent.personality}` : '';
+  const instructions = agent.instructions ? `. Instrucciones: ${agent.instructions}` : '';
+  const business = agent.business_type ? `. Contexto de negocio: ${agent.business_type}` : '';
   return `${base}${personality}${instructions}${business}.`;
 }
 
@@ -105,7 +105,7 @@ export async function createAgent(payload: AgentCreate): Promise<{ mensaje: stri
   const response = await api.post<{ mensaje: string; agente_id: string }>('/agents', {
     ...payload,
     // Garantizar estructura mínima si el frontend no la envía
-    script_ventas: payload.script_ventas ?? {
+    sales_script: payload.sales_script ?? {
       fases: [],
       reglas: [],
       scripts: [],
@@ -113,7 +113,7 @@ export async function createAgent(payload: AgentCreate): Promise<{ mensaje: stri
     },
     agent_type: payload.agent_type ?? 'sales',
     system_prompt: payload.system_prompt ?? generateDefaultPrompt(payload),
-    specialty: payload.specialty ?? payload.tipo_negocio ?? 'general'
+    specialty: payload.specialty ?? payload.business_type ?? 'general'
   });
   return response.data;
 }
@@ -185,7 +185,7 @@ export async function fetchAgentStats(id: string, days: number = 30): Promise<{
  */
 export async function duplicateAgent(id: string, newName: string): Promise<{ mensaje: string; agente_id: string }> {
   const { data } = await api.post<{ mensaje: string; agente_id: string }>(`/agents/${id}/duplicate`, {
-    nombre: newName
+    name: newName
   });
   return data;
 }
@@ -195,7 +195,7 @@ export async function duplicateAgent(id: string, newName: string): Promise<{ men
  */
 export async function toggleAgentStatus(id: string, enabled: boolean): Promise<{ mensaje: string }> {
   const { data } = await api.patch<{ mensaje: string }>(`/agents/${id}/status`, {
-    estado: enabled ? 'activo' : 'inactivo'
+    status: enabled ? 'is_active' : 'inactivo'
   });
   return data;
 }

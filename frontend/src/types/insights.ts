@@ -26,7 +26,7 @@ export const MOCK_INSIGHTS: AIInsight[] = [
   },
   {
     id: '2', type: 'sentiment_drop', title: '📉 Caída de Sentimiento',
-    message: 'El 15% de las conversaciones en Telegram hoy tuvieron tono negativo. Revisa los tiempos de respuesta.',
+    message: 'El 15% de las conversaciones en Telegram hoy tuvieron tone negativo. Revisa los tiempos de respuesta.',
     confidence: 0.88, actionRequired: false, timestamp: '2026-05-05T13:30:00Z'
   },
   {

@@ -38,7 +38,7 @@ class ConnectorSession:
 
 class IntegrationLifecycleEngine:
     """
-    Controlador de estado para el ciclo de vida de una integración.
+    Controlador de status para el ciclo de vida de una integración.
     Maneja transiciones seguras entre estados (Configuración -> Discovery -> Sync).
     """
     def __init__(self):
@@ -68,7 +68,7 @@ class IntegrationLifecycleEngine:
 
     def start_test_connection(self, session_id: str, secret_ref_id: str) -> ConnectorSession:
         """
-        Transición al estado de prueba de credenciales.
+        Transición al status de prueba de credenciales.
         """
         session = self.get_session(session_id)
         if not session:

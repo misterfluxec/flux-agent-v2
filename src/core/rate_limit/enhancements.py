@@ -42,7 +42,7 @@ class SlowAPICompatibility:
             "day": 86400
         }.get(period, 60)
         
-        # Generar nombre de regla
+        # Generar name de regla
         rule_name = f"slowapi_{key_func}_{limit_count}_{period}"
         
         # Path patterns según key_func
@@ -135,7 +135,7 @@ class HybridRateLimitMiddleware(RateLimitMiddleware):
         slowapi_rules = RateLimitCategories.get_rules()
         self.rules.extend(slowapi_rules)
         
-        # Reordenar por prioridad
+        # Reordenar por priority
         self.rules.sort(key=lambda r: r.priority)
     
     async def dispatch(self, request, call_next):

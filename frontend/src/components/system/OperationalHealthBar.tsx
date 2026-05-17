@@ -69,17 +69,17 @@ export function OperationalHealthBar() {
           ([k]) => k.includes("whatsapp") || k.includes("telegram") || k.includes("evolution")
         );
         const connectedCh = channelEntries.filter(
-          ([, v]: any) => v.estado === "conectado" || v.estado === "saludable"
+          ([, v]: any) => v.status === "conectado" || v.status === "saludable"
         ).length;
 
         const ollamaService: any = services["ollama"] || services["ai"] || {};
         const iaLatency = ollamaService.latencia_ms;
         const iaStatus: "ok" | "slow" | "down" =
-          ollamaService.estado === "saludable"
+          ollamaService.status === "saludable"
             ? iaLatency && iaLatency > 1500 ? "slow" : "ok"
             : "down";
 
-        // Infra score: canales + IA + conexión EventBus
+        // Infra score: channels + IA + conexión EventBus
         const channelScore = channelEntries.length > 0
           ? (connectedCh / channelEntries.length) * 100 : 100;
         const iaScore = iaStatus === "ok" ? 100 : iaStatus === "slow" ? 65 : 0;
@@ -154,13 +154,13 @@ export function OperationalHealthBar() {
     }
   }, [history]);
 
-  // ─── Config visual por estado ─────────────────────────────────────────────
+  // ─── Config visual por status ─────────────────────────────────────────────
   const cfg = {
     healthy: {
       bg: "bg-transparent",
       border: "border-white/[0.04]",
       dot: "bg-emerald-500",
-      dotGlow: false,        // ← sin animación en estado saludable (anti-fatiga)
+      dotGlow: false,        // ← sin animación en status saludable (anti-fatiga)
       text: "text-emerald-400/80",
       label: FLUX_LEXICON.HEALTHY,
       icon: CheckCircle2,
@@ -207,7 +207,7 @@ export function OperationalHealthBar() {
         className="w-full flex items-center justify-between px-6 py-2 hover:bg-white/[0.015] transition-colors"
       >
         <div className="flex items-center gap-4">
-          {/* Indicador de estado */}
+          {/* Indicador de status */}
           <div className="flex items-center gap-2">
             <div className="relative">
               <div className={cn("h-2 w-2 rounded-full", cfg.dot)} />

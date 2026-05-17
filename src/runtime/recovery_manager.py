@@ -5,7 +5,7 @@ from typing import Dict, Any
 class RecoveryAction(StrEnum):
     RETRY = "RETRY"           # Reintentar en la misma capa (ej. timeout de red)
     RESUME = "RESUME"         # Reanudar desde el último checkpoint
-    REPLAY = "REPLAY"         # Reconstruir el estado desde el log de eventos
+    REPLAY = "REPLAY"         # Reconstruir el status desde el log de eventos
     HANDOFF = "HANDOFF"       # Derivar a operador humano
     CANCEL = "CANCEL"         # Abortar el flujo permanentemente
 

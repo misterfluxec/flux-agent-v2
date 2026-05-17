@@ -39,9 +39,9 @@ async def test_1_tts_piper_import():
         
         voice = get_piper_voice()
         if voice is None:
-            test_result("Cargar modelo Piper (sin modelo = OK)", True, "Modelo no encontrado (esperado sin archivo)")
+            test_result("Cargar model Piper (sin model = OK)", True, "Modelo no encontrado (esperado sin archivo)")
         else:
-            test_result("Cargar modelo Piper", True)
+            test_result("Cargar model Piper", True)
             
     except ImportError as e:
         test_result("Importar PiperTTSCapability", False, f"ImportError: {e}")

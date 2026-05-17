@@ -10,7 +10,7 @@ interface AgentAnalyticsTabProps {
 
 export function AgentAnalyticsTab({ agentId }: AgentAnalyticsTabProps) {
   // TODO: Conectar a endpoint /analytics/agent/{id} cuando esté disponible
-  // Por ahora mostramos un estado informativo
+  // Por ahora mostramos un status informativo
   
   return (
     <div className="space-y-4">

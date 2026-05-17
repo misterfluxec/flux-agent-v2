@@ -96,7 +96,7 @@ async def get_analytics_overview(
                 SELECT COUNT(*)
                 FROM mensajes
                 WHERE tenant_id = :tid
-                    AND creado_en >= NOW() - {interval_days('days')}
+                    AND created_at >= NOW() - {interval_days('days')}
             """), {"tid": usuario.tenant_id, "days": days})
             
             row_messages = await result2.fetchone()
@@ -192,7 +192,7 @@ async def get_daily_stats(
                     SELECT COUNT(*) as messages
                     FROM mensajes
                     WHERE tenant_id = :tid
-                        AND DATE(creado_en) = :date
+                        AND DATE(created_at) = :date
                 """), {
                     "tid": usuario.tenant_id,
                     "date": str(row.date)
@@ -265,7 +265,7 @@ async def get_agent_stats(
                     JOIN conversaciones c ON m.conversation_id = c.id
                     WHERE c.tenant_id = :tid
                         AND c.agent_id = :agent_id
-                        AND m.creado_en >= NOW() - {interval_days('days')}
+                        AND m.created_at >= NOW() - {interval_days('days')}
                 """), {
                     "tid": usuario.tenant_id,
                     "agent_id": row.agent_id

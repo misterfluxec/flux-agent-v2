@@ -11,8 +11,8 @@ try:
     from pipecat.serializers.base_serializer import FrameSerializer
     from pipecat.frames.frames import EndFrame, Frame, InputAudioRawFrame, OutputAudioRawFrame
     from pipecat.audio.vad.silero import SileroVADAnalyzer
-    from pipecat.audio.vad.vad_analyzer import VADParams
-    from pipecat.processors.audio.vad_processor import VADProcessor
+    from pipecat.processors.aggregators.llm_response_universal import LLMContextAggregatorPair, LLMUserAggregatorParams
+    from pipecat.processors.aggregators.llm_response_universal import LLMContext # Fallback import
     from pipecat.services.whisper.stt import WhisperSTTService
     from pipecat.services.ollama.llm import OLLamaLLMService
     from pipecat.services.piper.tts import PiperTTSService
@@ -77,7 +77,7 @@ class OpenSourceVoicePipeline:
         self.piper_voice = self._select_piper_voice(tenant_config.get("locale", "es"))
     
     def _select_piper_voice(self, locale: str) -> str:
-        """Selecciona voz Piper según idioma, con fallback seguro"""
+        """Selecciona voz Piper según language, con fallback seguro"""
         voice_map = {
             "es": "es_ES-davefx-medium",  # Disponible por defecto
             "es_MX": "es_MX-ald-medium",   # Verificar disponibilidad al inicio
@@ -116,14 +116,14 @@ class OpenSourceVoicePipeline:
         # 2. VAD (Silero - CPU efficient, parámetros reducidos para más sensibilidad)
         vad_analyzer = SileroVADAnalyzer(
             sample_rate=self.sample_rate,
-            params=VADParams(
-                confidence=0.5,     # más sensible (default 0.7)
-                start_secs=0.2,
-                stop_secs=0.5,
-                min_volume=0.0,     # sin barrera de volumen EBU R128 (bloques cortos dan -inf)
-            )
         )
-        vad = VADProcessor(vad_analyzer=vad_analyzer)
+        context = LLMContext()
+        user_aggregator, assistant_aggregator = LLMContextAggregatorPair(
+            context,
+            user_params=LLMUserAggregatorParams(
+                vad_analyzer=vad_analyzer,
+            ),
+        )
         
         # 3. STT (Whisper tiny - optimizado para CPU)
         stt = WhisperSTTService(
@@ -152,15 +152,15 @@ class OpenSourceVoicePipeline:
             # Optimizaciones para CPU
         )
         
-        # 6. Construir pipeline (orden crítico)
+        # 6. Construir pipeline (sort_order crítico)
         pipeline = Pipeline([
             transport.input(),      # Audio entrante
-            vad,                    # Detecta cuándo hablar
             stt,                    # Voz → Texto
+            user_aggregator,        # Add user message to context con VAD
             llm,                    # Texto → Respuesta (cerebro)
             tts,                    # Texto → Voz
             transport.output(),     # Audio saliente
-            # EndFrame() no es una capa del pipeline, se manda a la cola después si se requiere.
+            assistant_aggregator,   # Add bot response to context
         ])
         
         return pipeline

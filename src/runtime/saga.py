@@ -20,7 +20,7 @@ class SagaManager:
     """
     Saga Coordinator para ejecutar flujos de transacciones distribuidas.
     Asegura que si un paso falla, se llamen a las compensaciones de los pasos
-    previamente completados en orden inverso.
+    previamente completados en sort_order inverso.
     """
     def __init__(self, steps: List[SagaStep]):
         self.steps = steps
@@ -52,7 +52,7 @@ class SagaManager:
 
     async def compensate(self, completed_steps: List[SagaStep], context: Dict[str, Any], results: Dict[str, Any]):
         """
-        Ejecuta las compensaciones en orden inverso.
+        Ejecuta las compensaciones en sort_order inverso.
         """
         # Se invierte la lista para compensar desde el último completado hasta el primero
         for step in reversed(completed_steps):

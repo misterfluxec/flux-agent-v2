@@ -18,7 +18,7 @@ class ToolContract(BaseModel):
     timeout_ms: int = Field(default=5000, description="Tiempo máximo de ejecución")
     requires_human: bool = Field(default=False, description="¿Requiere aprobación humana (Human-in-the-loop)?")
     max_calls_per_session: int = Field(default=10, description="Límite por sesión/conversación para evitar loops")
-    side_effects: bool = Field(default=False, description="¿Muta estado en sistemas externos?")
+    side_effects: bool = Field(default=False, description="¿Muta status en sistemas externos?")
     allowed_roles: List[str] = Field(default_factory=list, description="Roles permitidos para usarla (vacío = cualquiera)")
     
     # Restricciones de valor (opcionales, ej: no hacer un refund > 100 USD)

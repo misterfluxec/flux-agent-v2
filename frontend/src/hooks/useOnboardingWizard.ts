@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api/axios';
 
 export interface OnboardingData {
-  nombre: string;
+  name: string;
   avatar: string | null;
   industria: string;
   conocimiento_cargado: boolean;
@@ -12,7 +12,7 @@ export interface OnboardingData {
 }
 
 const DEFAULT_DATA: OnboardingData = {
-  nombre: 'Yanua',
+  name: 'Yanua',
   avatar: null,
   industria: '',
   conocimiento_cargado: false,
@@ -42,17 +42,17 @@ export function useOnboardingWizard() {
     setIsLoading(true);
     try {
       // Magia Backend: Autoconfiguración inteligente según industria
-      // Mapeamos la industria seleccionada al tipo de agente y el prompt predeterminado
+      // Mapeamos la industria seleccionada al type de agente y el prompt predeterminado
       let agentType = "sales";
       if (data.industria === "clinica" || data.industria === "educacion") agentType = "bookings";
       if (data.industria === "tecnologia" || data.industria === "seguridad") agentType = "support";
 
       const payload = {
-        nombre: data.nombre || 'Yanua',
-        descripcion: `Agente especializado en la industria: ${data.industria}`,
+        name: data.name || 'Yanua',
+        description: `Agente especializado en la industria: ${data.industria}`,
         agent_type: agentType,
         specialty: data.industria,
-        canales: ["web_chat", "whatsapp"]
+        channels: ["web_chat", "whatsapp"]
       };
 
       await api.post('/agents', payload);

@@ -1,0 +1,43 @@
+{
+  "plans": {
+    "stability": {
+      "name": "Estabilidade",
+      "tagline": "Seu negócio nunca dorme",
+      "price": "45",
+      "period": "/mês",
+      "features": [
+        "3.000 mensagens / mês",
+        "Treinamento RAG Ilimitado",
+        "Respostas de Texto Ultrarrápidas"
+      ],
+      "cta": "Selecionar Estabilidade",
+      "recommended": false
+    },
+    "human": {
+      "name": "Conexão Humana",
+      "tagline": "Venda por mensagens de voz",
+      "price": "85",
+      "period": "/mês",
+      "features": [
+        "7.000 mensagens / mês",
+        "Ouça Mensagens de Voz (STT)",
+        "Responda com Voz Humana (TTS)"
+      ],
+      "cta": "Ativar Conexão Humana",
+      "recommended": true
+    },
+    "peace": {
+      "name": "Paz de Espírito",
+      "tagline": "Escalabilidade Total",
+      "price": "160",
+      "period": "/mês",
+      "features": [
+        "15.000 mensagens / mês",
+        "Visão IA: Lê fotos e catálogos",
+        "Raciocínio Multimodal Completo"
+      ],
+      "cta": "Escolher Paz de Espírito",
+      "recommended": false
+    }
+  }
+}

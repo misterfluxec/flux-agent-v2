@@ -5,9 +5,9 @@ from pydantic import BaseModel
 import uuid
 from datetime import datetime
 
-# from src.core.database import get_db
-# from src.core.middleware.tenant_isolation import get_tenant_id
-from src.domain.workflow_schemas import WorkflowDefinition
+# from core.database import get_db
+# from core.middleware.tenant_isolation import get_tenant_id
+from domain.workflow_schemas import WorkflowDefinition
 
 router = APIRouter(prefix="/api/v1/workflows", tags=["Workflows"])
 

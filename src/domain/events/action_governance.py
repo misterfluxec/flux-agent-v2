@@ -104,7 +104,7 @@ ActionGovernanceRegistry.register(ActionPolicy(
                    "ai_operator"],
     max_per_hour_per_tenant=50,
     audit_required=True,
-    description="Cancelar una orden confirmada y liberar inventario.",
+    description="Cancelar una sort_order confirmada y liberar inventario.",
 ))
 
 ActionGovernanceRegistry.register(ActionPolicy(
@@ -123,7 +123,7 @@ ActionGovernanceRegistry.register(ActionPolicy(
     allowed_roles=["operations_admin", "finance_manager"],
     max_per_hour_per_tenant=20,
     audit_required=True,
-    description="Sobrescribir precio de catálogo manualmente. "
+    description="Sobrescribir price de catálogo manualmente. "
                 "Solo roles financieros senior.",
 ))
 
@@ -154,7 +154,7 @@ ActionGovernanceRegistry.register(ActionPolicy(
     allowed_roles=["operations_admin", "ai_operator"],
     max_per_hour_per_tenant=10,
     audit_required=True,
-    description="Modificar el prompt base o instrucciones de un agente. "
+    description="Modificar el prompt base o instructions de un agente. "
                 "Cambios de comportamiento requieren revisión.",
 ))
 

@@ -155,7 +155,7 @@ function PriorityBar({ handoffs, hotLeads, totalActive, eventsToday }: {
   if (items.length === 0) return null;
 
   return (
-    // Priority bar: solo aparece cuando hay items de prioridad (PriorityBar ya filtro)
+    // Priority bar: solo aparece cuando hay items de priority (PriorityBar ya filtro)
     <div className="flex items-center gap-2 px-4 py-2 border-b border-white/[0.04] bg-black/30 shrink-0 overflow-x-auto">
       {items.map((item, i) => {
         const Icon = item.icon;
@@ -197,8 +197,8 @@ function PipelineView() {
 
   const stats = {
     total: leads.length,
-    cerrados: leads.filter(l => l.estado === "cerrado").length,
-    ingresos: leads.filter(l => l.estado === "cerrado").reduce((s, l) => s + l.monto, 0),
+    cerrados: leads.filter(l => l.status === "cerrado").length,
+    ingresos: leads.filter(l => l.status === "cerrado").reduce((s, l) => s + l.monto, 0),
   };
 
   return (
@@ -231,7 +231,7 @@ function PipelineView() {
       {/* Kanban Columns */}
       <div className="flex-1 flex gap-3 overflow-x-auto p-4">
         {pipelineStages.map(stage => {
-          const stageLeads = filtered.filter(l => l.estado === stage);
+          const stageLeads = filtered.filter(l => l.status === stage);
           return (
             <div key={stage} className="flex-none w-72 bg-white/[0.02] border border-white/5 rounded-2xl p-3 flex flex-col">
               <div className="flex items-center justify-between mb-3 px-1">

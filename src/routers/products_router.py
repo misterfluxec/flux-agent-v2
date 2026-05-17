@@ -11,7 +11,7 @@ from auth import get_tenant_actual_opcional
 router = APIRouter(prefix="/api/v1/products", tags=["Inventario"])
 
 class ProductUpdate(BaseModel):
-    precio: Optional[float] = None
+    price: Optional[float] = None
     stock: Optional[int] = None
 
 @router.get("")
@@ -26,10 +26,10 @@ async def listar_productos(
     await configurar_rls(db, tenant_id)
     
     result = await db.execute(text("""
-        SELECT id, codigo, nombre, precio, stock, estado, descripcion
+        SELECT id, codigo, name, price, stock, status, description
         FROM productos
         WHERE tenant_id = :tid
-        ORDER BY creado_en DESC
+        ORDER BY created_at DESC
     """), {"tid": str(tenant_id)})
     
     productos = []
@@ -37,11 +37,11 @@ async def listar_productos(
         productos.append({
             "id": str(row.id),
             "codigo": row.codigo,
-            "nombre": row.nombre,
-            "precio": float(row.precio) if row.precio else 0,
+            "name": row.name,
+            "price": float(row.price) if row.price else 0,
             "stock": row.stock,
-            "estado": row.estado,
-            "descripcion": row.descripcion
+            "status": row.status,
+            "description": row.description
         })
         
     return productos
@@ -53,7 +53,7 @@ async def actualizar_producto(
     tenant_id: UUID = Depends(get_tenant_actual_opcional),
     db: AsyncSession = Depends(obtener_sesion)
 ):
-    """Actualiza precio o stock de un producto."""
+    """Actualiza price o stock de un producto."""
     if not tenant_id:
         raise HTTPException(status_code=401, detail="No autenticado")
         
@@ -69,9 +69,9 @@ async def actualizar_producto(
     updates = []
     params = {"id": str(producto_id), "tid": str(tenant_id)}
     
-    if datos.precio is not None:
-        updates.append("precio = :precio")
-        params["precio"] = datos.precio
+    if datos.price is not None:
+        updates.append("price = :price")
+        params["price"] = datos.price
         
     if datos.stock is not None:
         updates.append("stock = :stock")
@@ -80,7 +80,7 @@ async def actualizar_producto(
     if not updates:
         return {"mensaje": "No hay cambios"}
         
-    updates.append("actualizado_en = NOW()")
+    updates.append("updated_at = NOW()")
     query = f"UPDATE productos SET {', '.join(updates)} WHERE id = :id AND tenant_id = :tid"
     
     await db.execute(text(query), params)

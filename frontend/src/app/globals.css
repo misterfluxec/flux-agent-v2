@@ -36,26 +36,26 @@
   }
 
   .dark {
-    /* FluxAgent Premium Dark — Calibrado anti-fatiga */
-    --background: 222 47% 5%;       /* #080c14 — más profundo, menos contraste */
-    --foreground: 215 20% 82%;      /* #c8d0dc — blanco suavizado, no puro */
-    --card: 220 40% 8%;             /* #0f1520 */
-    --card-foreground: 215 20% 82%;
-    --popover: 222 47% 6%;
-    --popover-foreground: 215 20% 82%;
-    --primary: 188 80% 42%;         /* Cyan ligeramente más cálido */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 215 30% 15%;
-    --secondary-foreground: 215 20% 75%;
-    --muted: 215 28% 12%;
-    --muted-foreground: 215 16% 48%; /* Slate 500 — texto secundario legible */
-    --accent: 188 80% 42%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 72% 52%;
+    /* FluxAgent V2 Enterprise Gateway — ui-ux-pro-max MASTER.md */
+    --background: 228 84% 5%;       /* #020617 (Deep Navy/Black) */
+    --foreground: 210 40% 98%;      /* #F8FAFC */
+    --card: 222 47% 7%;             /* Ligeramente más claro que el fondo */
+    --card-foreground: 210 40% 98%;
+    --popover: 228 84% 5%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 222 47% 11%;         /* #0F172A */
+    --primary-foreground: 210 40% 98%;
+    --secondary: 215 32% 15%;       /* #1E293B */
+    --secondary-foreground: 210 40% 98%;
+    --muted: 228 29% 14%;           /* #1A1E2F */
+    --muted-foreground: 215 20% 65%;
+    --accent: 142 71% 45%;          /* #22C55E (Verde Enterprise) */
+    --accent-foreground: 228 84% 5%;
+    --destructive: 0 84% 60%;       /* #EF4444 */
     --destructive-foreground: 0 0% 100%;
-    --border: 215 28% 12%;
-    --input: 215 28% 12%;
-    --ring: 188 80% 42%;
+    --border: 215 25% 27%;          /* #334155 */
+    --input: 215 25% 27%;
+    --ring: 222 47% 11%;            /* #0F172A */
   }
 }
 
@@ -70,12 +70,11 @@
 
   body {
     @apply bg-background text-foreground;
-    /* Inter inyectado por next/font en layout.tsx — var(--font-inter) disponible */
-    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
-    /* Base: 14px para trabajo sostenido (>13px mínimo operacional) */
-    font-size: 14px;
-    line-height: 1.6;             /* leading-relaxed — reduce fatiga en lectura */
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11'; /* Inter optical */
+    /* Plus Jakarta Sans inyectado vía layout.tsx */
+    font-family: var(--font-jakarta), system-ui, -apple-system, sans-serif;
+    /* Base: 16px para mejor accesibilidad (regla ui-ux-pro-max) */
+    font-size: 16px;
+    line-height: 1.5;             /* leading-normal — B2B estándar */
   }
 
   /* Scrollbar discreta — no distrae en trabajo prolongado */
@@ -103,31 +102,27 @@
 
   /* Títulos de sección: visible pero no grita */
   .flux-title {
-    @apply text-base font-bold text-white/75 tracking-tight;
+    @apply text-lg font-bold text-foreground tracking-tight;
   }
 
   /* Label de campo: suficientemente legible en trabajo prolongado */
   .flux-label {
-    font-size: 13px;
-    @apply font-semibold text-slate-400 leading-snug;
+    @apply text-sm font-semibold text-muted-foreground leading-snug;
   }
 
   /* Cuerpo de datos: baseline para lectura sostenida */
   .flux-body {
-    font-size: 13px;
-    @apply text-slate-300 leading-relaxed;
+    @apply text-sm text-foreground/90 leading-relaxed;
   }
 
   /* Metadata / timestamps / IDs */
   .flux-meta {
-    font-size: 11px;
-    @apply text-slate-500 font-medium;
+    @apply text-xs text-muted-foreground font-medium;
   }
 
   /* Caption crítico (alertas, errors) */
   .flux-caption {
-    font-size: 11px;
-    @apply font-bold uppercase tracking-widest text-white/20;
+    @apply text-xs font-bold uppercase tracking-widest text-foreground/50;
   }
 
   /* ── Cards con densidad operacional ─────────────────────────────────────── */
@@ -194,5 +189,116 @@
   }
   .animate-event-appear { 
     animation: event-appear 0.4s ease-out forwards; 
+  }
+
+  /* --- AGENT-BUILD TEMPLATE STYLES --- */
+  .font-display {
+    font-family: var(--font-display, 'Instrument Serif', Georgia, serif);
+  }
+  
+  .text-stroke {
+    -webkit-text-stroke: 1.5px currentColor;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  .marquee {
+    animation: marquee 30s linear infinite;
+  }
+  
+  .marquee-reverse {
+    animation: marquee-reverse 25s linear infinite;
+  }
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  
+  @keyframes marquee-reverse {
+    0% { transform: translateX(-50%); }
+    100% { transform: translateX(0); }
+  }
+  
+  .line-reveal {
+    clip-path: inset(0 100% 0 0);
+    animation: line-reveal 0.8s cubic-bezier(0.77, 0, 0.175, 1) forwards;
+  }
+  
+  @keyframes line-reveal {
+    to { clip-path: inset(0 0 0 0); }
+  }
+  
+  .hover-lift {
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-4px);
+  }
+  
+  .letter-spin {
+    display: inline-block;
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  .letter-spin:hover {
+    transform: rotateY(360deg);
+  }
+  
+  .animate-char-in {
+    animation: char-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    opacity: 0;
+    transform: translateY(60%);
+  }
+  
+  @keyframes char-in {
+    0% {
+      opacity: 0;
+      transform: translateY(60%);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .noise-overlay {
+    position: relative;
+  }
+  
+  .noise-overlay::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  .how-it-works-bg {
+    background-color: hsl(222, 47%, 7%);
+  }
+
+  .word-gradient {
+    background: linear-gradient(
+      45deg,
+      #eca8d6 0%,
+      #a78bfa 25%,
+      #67e8f9 50%,
+      #fbbf24 75%,
+      #eca8d6 100%
+    );
+    background-size: 300% 300%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradient-shift 1.5s ease infinite;
+  }
+
+  @keyframes gradient-shift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
   }
 }

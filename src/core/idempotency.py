@@ -11,7 +11,7 @@ _idempotency_key_var: ContextVar[Optional[str]] = ContextVar("idempotency_key", 
 IDEMPOTENCY_HEADER = "Idempotency-Key"
 
 def get_idempotency_key() -> Optional[str]:
-    """Retorna el idempotency_key activo en este contexto async."""
+    """Retorna el idempotency_key is_active en este contexto async."""
     return _idempotency_key_var.get()
 
 def set_idempotency_key(key: str):

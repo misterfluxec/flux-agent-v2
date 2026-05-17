@@ -160,7 +160,7 @@ class UnifiedTimelineService:
                 evt["type"],
                 {"category": "system", "default_severity": "low"}
             )
-            # Postgres severity tiene prioridad; sino usar el default del tipo de evento
+            # Postgres severity tiene priority; sino usar el default del type de evento
             effective_severity = evt.get("severity") or category_info["default_severity"]
 
             timeline.append({
@@ -188,7 +188,7 @@ class UnifiedTimelineService:
         """
         Timeline global del tenant (todas las entidades).
         Útil para el Operations Dashboard principal.
-        Soporta filtro por tipo de evento y por severidad mínima.
+        Soporta filtro por type de evento y por severidad mínima.
         """
         severity_order = {"low": 0, "medium": 1, "high": 2, "critical": 3}
         min_sev = severity_order.get(severity_filter or "low", 0)

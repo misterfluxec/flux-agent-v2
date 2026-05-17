@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, Any, List
 from pydantic import BaseModel, Field
-from src.runtime.runtime_metrics import RuntimeMetrics
+from runtime.runtime_metrics import RuntimeMetrics
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ class RuntimeSLO(BaseModel):
     
     def evaluate(self, metrics: RuntimeMetrics) -> SLOReport:
         """
-        Evalúa el estado actual de las métricas contra los SLOs definidos.
+        Evalúa el status actual de las métricas contra los SLOs definidos.
         """
         violations = []
         

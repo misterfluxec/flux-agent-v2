@@ -1,0 +1,182 @@
+{
+  "nav": {
+    "features": "Características",
+    "comparison": "Comparativa",
+    "pricing": "Planes",
+    "tech": "Tecnología"
+  },
+  "auth": {
+    "login": "Iniciar Sesión",
+    "free_trial": "🚀 7 Días Gratis"
+  },
+  "market": {
+    "title": "POTENCIA LOCAL DE CLASE MUNDIAL",
+    "subtitle": "Las opciones más caras del mercado que puedes evitar",
+    "fluxagent_value": "Con FluxAgent V2: Todo incluido desde $45/mes"
+  },
+  "features": {
+    "badge": "Características",
+    "title_1": "Automatiza tu atención",
+    "title_2": "y multiplica tus ventas",
+    "subtitle": "No es solo un bot. Es tu mejor vendedor digital trabajando 24/7.",
+    "items": [
+      {
+        "title": "🚀 Responde al instante",
+        "description": "No pierdas ventas por demorar 5 minutos.",
+        "highlight": "24/7 Activo"
+      },
+      {
+        "title": "🎙️ Escucha Audios",
+        "description": "Tus clientes mandan notas de voz, tu agente también.",
+        "highlight": "Audio Nativo"
+      },
+      {
+        "title": "💰 Cierra Ventas",
+        "description": "Reconoce fotos de tus productos y cobra por ti.",
+        "highlight": "Visión IA"
+      }
+    ]
+  },
+  "chat": {
+    "welcome": "¡Hola! Soy Yanua, tu asistente de FluxAgent V2. ¿En qué puedo ayudarte hoy?",
+    "responses": [
+      "¡Excelente pregunta! Puedo ayudarte a configurar tu primer agente de IA en minutos.",
+      "Con FluxAgent V2 puedes ahorrar hasta 3X comparado con otras soluciones. ¿Te gustaría ver una comparativa?",
+      "Nuestra prueba gratuita de 7 días te permite probar todas las funcionalidades sin compromiso.",
+      "¿Tienes un ERP específico? Puedo explicarte cómo funciona nuestra integración nativa.",
+      "El plan Conexión Humana incluye notas de voz ultra-realistas para atender a tus clientes las 24/7."
+    ]
+  },
+  "comparison": {
+    "rows": [
+      {
+        "benefit": "Modelo de Pago",
+        "competitor": "Recargas por charla",
+        "ventacore": "Suscripción de Abundancia",
+        "highlight": false
+      },
+      {
+        "benefit": "Capacidad Mensajes",
+        "competitor": "1,000 - 2,000",
+        "ventacore": "3,000 - 15,000",
+        "highlight": true
+      },
+      {
+        "benefit": "Sentidos de la IA",
+        "competitor": "Solo Texto",
+        "ventacore": "Ve, Oye y Habla nativamente",
+        "highlight": false
+      }
+    ]
+  },
+  "marketAlternatives": {
+    "items": [
+      {
+        "name": "GPT-4 Turbo",
+        "category": "Nube Pública",
+        "price": "~$0.03/mensaje",
+        "limit": "Limitado por API"
+      },
+      {
+        "name": "Claude 3",
+        "category": "Nube Pública",
+        "price": "~$0.025/mensaje",
+        "limit": "Limitado por API"
+      },
+      {
+        "name": "Amazon Lex",
+        "category": "Nube Pública",
+        "price": "~$0.04/mensaje",
+        "limit": "Limitado por API"
+      },
+      {
+        "name": "IBM Watson",
+        "category": "Enterprise Cloud",
+        "price": "Desde $0.06/mensaje",
+        "limit": "Costo escalable"
+      }
+    ]
+  },
+  "stats": {
+    "items": [
+      {
+        "value": "3-15K",
+        "label": "Mensajes incluídos"
+      },
+      {
+        "value": "7 Días",
+        "label": "Prueba gratuita"
+      },
+      {
+        "value": "< 500ms",
+        "label": "Latencia ultra-baja"
+      },
+      {
+        "value": "100%",
+        "label": "Soberanía de datos"
+      }
+    ]
+  },
+  "footer": {
+    "rights": "© 2026 FluxAgent V2. Todos los derechos reservados.",
+    "sections": [
+      {
+        "title": "Sede Principal",
+        "content": [
+          "FluxAgent V2",
+          "20-22 Wenlock Road, London, England, N1 7GU",
+          "London Tech Hub - Ep centro europeo de innovación en IA"
+        ]
+      },
+      {
+        "title": "Cumplimiento y Gobernanza",
+        "content": [
+          "Data Protection Act 2018 + GDPR",
+          "Soberanía de datos para Latinoamérica",
+          "Infraestructura empresarial privada"
+        ]
+      },
+      {
+        "title": "Distribución Autorizada",
+        "content": [
+          "Operación exclusiva para Latinoamérica",
+          "Canal de distribución oficial: FluxAgent Latam"
+        ]
+      },
+      {
+        "title": "Fortaleza Tecnológica",
+        "content": [
+          "Infraestructura Edge Computing dedicada",
+          "Procesamiento de Voz en tiempo real",
+          "Latencia <500ms - Costo cero por escala",
+          "Memoria Inteligente RAG"
+        ]
+      }
+    ]
+  },
+  "final_cta": {
+    "title_1": "¿Listo para automatizar",
+    "title_2": "tu negocio?",
+    "subtitle": "Crea tu cuenta en segundos y obtén 7 días gratis.",
+    "button": "🚀 Crear Cuenta Gratis"
+  },
+  "pain_solution": {
+    "title": "¿Cuántas ventas pierdes por no responder en los primeros 5 minutos?",
+    "pain": {
+      "title": "Lo Tradicional",
+      "items": [
+        "Clientes ignorados en la madrugada",
+        "Respuestas robóticas y frustrantes",
+        "Personal saturado respondiendo lo mismo"
+      ]
+    },
+    "solution": {
+      "title": "FluxAgent V2",
+      "items": [
+        "Respuestas instantáneas y naturales",
+        "Atención cálida incluso por notas de voz",
+        "Tu equipo humano libre para tareas estratégicas"
+      ]
+    }
+  }
+}

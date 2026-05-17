@@ -6,7 +6,7 @@ from core.event_bus import EventBus
 class LeadScorer:
     """
     Scoring Engine + Cola de Prioridad.
-    Motor event-driven que calcula prioridad en tiempo real y empuja
+    Motor event-driven que calcula priority en tiempo real y empuja
     a Redis Sorted Sets para alimentar la UI y las Notificaciones.
     """
     PRIORITY_QUEUE = "lead:priority:{tenant}"
@@ -45,7 +45,7 @@ class LeadScorer:
         
         score = self._calculate(sentiment, intent, channel)
         
-        # Push a Redis Sorted Set (score determina prioridad)
+        # Push a Redis Sorted Set (score determina priority)
         await self.redis.zadd(self.PRIORITY_QUEUE.format(tenant=tenant_id), {str(lead_id): score})
         
         # Si es un lead caliente/crítico, forzar notificación al Event Bus

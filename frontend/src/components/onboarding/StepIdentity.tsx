@@ -33,7 +33,7 @@ const PREDEFINED_AVATARS = [
 ];
 
 export function StepIdentity({ data, onChange, onNext }: Props) {
-  const isValid = data.nombre.trim().length >= 2;
+  const isValid = data.name.trim().length >= 2;
 
   return (
     <div className="relative space-y-8 animate-in slide-in-from-bottom-4 fade-in duration-500 flex flex-col justify-center py-4">
@@ -99,8 +99,8 @@ export function StepIdentity({ data, onChange, onNext }: Props) {
             </label>
             <input
               type="text"
-              value={data.nombre}
-              onChange={(e) => onChange('nombre', e.target.value)}
+              value={data.name}
+              onChange={(e) => onChange('name', e.target.value)}
               placeholder="Ej: Yanua, Alex, Sofia..."
               className="w-full px-5 py-3.5 bg-white/[0.03] border border-white/10 rounded-xl focus:border-primary/50 outline-none transition-all text-foreground text-sm font-medium placeholder:text-muted-foreground/40"
             />

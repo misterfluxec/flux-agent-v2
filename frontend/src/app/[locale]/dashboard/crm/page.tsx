@@ -42,8 +42,8 @@ export default function CRMPage() {
 
   const stats = {
     total: leadsData.length,
-    cerrados: leadsData.filter(l => l.estado === "cerrado").length,
-    ingresos: leadsData.filter(l => l.estado === "cerrado").reduce((acc, curr) => acc + curr.monto, 0),
+    cerrados: leadsData.filter(l => l.status === "cerrado").length,
+    ingresos: leadsData.filter(l => l.status === "cerrado").reduce((acc, curr) => acc + curr.monto, 0),
   };
 
   const filteredLeads = leadsData.filter(lead => {
@@ -145,7 +145,7 @@ export default function CRMPage() {
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
           <input
-            placeholder="Buscar por nombre, correo o teléfono..."
+            placeholder="Buscar por name, correo o teléfono..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full h-11 pl-11 pr-4 bg-white/5 border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500/50 placeholder:text-white/30 transition-colors"
@@ -170,7 +170,7 @@ export default function CRMPage() {
         /* PIPELINE KANBAN VIEW */
         <div className="flex gap-4 overflow-x-auto pb-8 snap-x">
           {pipelineStages.map((stage) => {
-            const stageLeads = filteredLeads.filter(l => l.estado === stage);
+            const stageLeads = filteredLeads.filter(l => l.status === stage);
             return (
               <div key={stage} className="flex-none w-80 bg-black/20 rounded-[24px] border border-white/5 p-4 snap-start flex flex-col h-[calc(100vh-380px)] min-h-[500px]">
                 <div className="flex items-center justify-between mb-4 px-2">
@@ -278,8 +278,8 @@ export default function CRMPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border ${statusColors[lead.estado] || statusColors.nuevo}`}>
-                          {lead.estado}
+                        <span className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border ${statusColors[lead.status] || statusColors.nuevo}`}>
+                          {lead.status}
                         </span>
                       </td>
                       <td className="px-6 py-4">

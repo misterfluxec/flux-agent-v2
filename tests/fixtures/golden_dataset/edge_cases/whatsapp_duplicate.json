@@ -1,0 +1,11 @@
+{
+  "event_id": "evt_dup_001",
+  "type": "whatsapp_message",
+  "duplicate_of": "evt_dup_001",
+  "notes": "Simula un mensaje de WhatsApp que llega dos veces por error de red en el proveedor",
+  "payload": {
+    "from": "+593987654321",
+    "text": "Hola, necesito info",
+    "provider_id": "wa_msg_id_999"
+  }
+}

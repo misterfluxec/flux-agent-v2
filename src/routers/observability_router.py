@@ -14,7 +14,7 @@ async def get_connector_status(
     current_tenant: PayloadToken = Depends(get_tenant_actual_opcional),
     db: AsyncSession = Depends(obtener_sesion)
 ):
-    """Retorna el estado de salud en tiempo real de un conector específico."""
+    """Retorna el status de salud en tiempo real de un conector específico."""
     if not current_tenant:
         raise HTTPException(status_code=401, detail="No autenticado")
         

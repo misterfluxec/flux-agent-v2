@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from typing import Any
 
-from src.core.event_bus import EventBus
+from core.event_bus import EventBus
 
 logger = logging.getLogger(__name__)
 

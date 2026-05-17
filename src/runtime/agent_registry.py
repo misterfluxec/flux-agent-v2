@@ -51,7 +51,7 @@ class AgentRegistry:
         if not candidates:
             return None
             
-        # Ordenamos por prioridad (mayor primero), luego latencia, luego costo
+        # Ordenamos por priority (mayor primero), luego latencia, luego costo
         candidates.sort(key=lambda a: (-a.priority, a.avg_latency_ms, a.cost_per_turn))
         
         best = candidates[0]

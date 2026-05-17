@@ -1,8 +1,8 @@
 from typing import Dict, Any, Optional
 from dataclasses import dataclass
 
-from src.domain.workflow_schemas import NodeDefinition, WorkflowActionType, StepRunStatus
-from src.services.workflow.json_logic_evaluator import JsonLogicEvaluator
+from domain.workflow_schemas import NodeDefinition, WorkflowActionType, StepRunStatus
+from services.workflow.json_logic_evaluator import JsonLogicEvaluator
 
 @dataclass
 class StepExecutionResult:

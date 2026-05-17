@@ -2,7 +2,7 @@ import json
 import os
 import logging
 from typing import Dict, List, Optional
-from src.domain.meta_agent import SOP, SOPStep, BaseRole, ActionCategory, AgentAction
+from domain.meta_agent import SOP, SOPStep, BaseRole, ActionCategory, AgentAction
 
 logger = logging.getLogger(__name__)
 
@@ -45,13 +45,13 @@ class SOPManager:
             name="Calificación y Cierre de Venta EC/CO",
             version="1.0",
             description="Procedimiento para calificar un lead y llevarlo al checkout.",
-            trigger_conditions=["comprar", "precio", "pedido", "orden"],
+            trigger_conditions=["comprar", "price", "pedido", "sort_order"],
             steps=[
                 SOPStep(
                     order=1,
                     instruction="Verificar identidad del cliente y saludar profesionalmente.",
                     validation_criteria="Cliente identificado en DB.",
-                    failure_protocol="Solicitar datos básicos (nombre/email)."
+                    failure_protocol="Solicitar datos básicos (name/email)."
                 ),
                 SOPStep(
                     order=2,
@@ -62,7 +62,7 @@ class SOPManager:
                 ),
                 SOPStep(
                     order=3,
-                    instruction="Generar link de pago o pre-orden.",
+                    instruction="Generar link de pago o pre-sort_order.",
                     required_action="create_draft_order",
                     validation_criteria="Orden creada en el ERP.",
                     failure_protocol="Informar error técnico y solicitar espera."

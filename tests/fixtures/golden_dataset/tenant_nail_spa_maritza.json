@@ -1,0 +1,44 @@
+{
+  "tenant_id": "nail-spa-maritza-ec",
+  "name": "Nail Spa Maritza",
+  "country": "EC",
+  "currency": "USD",
+  "tax_id": "1792345678001",
+  "business_type": "services",
+  "customers": [
+    {
+      "id": "cust_001",
+      "name": "Ana García",
+      "phone": "+593987654321",
+      "email": "ana.garcia@gmail.com",
+      "last_activity": "2026-05-13T15:00:00Z"
+    }
+  ],
+  "orders": [
+    {
+      "id": "ord_101",
+      "customer_id": "cust_001",
+      "total": 45.00,
+      "status": "completed",
+      "items": [
+        { "product_id": "service_manicure", "name": "Manicura Premium", "price": 45.00 }
+      ],
+      "created_at": "2026-05-13T10:30:00Z"
+    }
+  ],
+  "workflows": [
+    {
+      "id": "wf_reminders",
+      "name": "Recordatorio de Citas",
+      "active": true,
+      "steps": ["whatsapp_reminder", "calendar_sync"]
+    }
+  ],
+  "activity_stream": [
+    {
+      "type": "order_completed",
+      "timestamp": "2026-05-13T11:15:00Z",
+      "metadata": { "order_id": "ord_101" }
+    }
+  ]
+}

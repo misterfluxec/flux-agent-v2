@@ -42,9 +42,9 @@ class SubscriptionResponse(BaseModel):
     id: str
     tenant_id: str
     plan: str
-    estado: str
+    status: str
     monto: float
-    moneda: str
+    currency: str
     periodo: str
     fecha_inicio: str
     fecha_proxima_renovacion: str
@@ -58,7 +58,7 @@ class InvoiceResponse(BaseModel):
     fecha_emision: str
     fecha_vencimiento: str
     monto: float
-    estado: str
+    status: str
     pdf_url: Optional[str] = None
 
 
@@ -85,9 +85,9 @@ async def get_subscription(
     
     result = await db.execute(
         text("""
-            SELECT id, plan, estado, monto, moneda, periodo, fecha_inicio, fecha_proxima_renovacion
+            SELECT id, plan, status, monto, currency, periodo, fecha_inicio, fecha_proxima_renovacion
             FROM subscriptions
-            WHERE tenant_id = :tid AND estado = 'activa'
+            WHERE tenant_id = :tid AND status = 'activa'
             ORDER BY fecha_inicio DESC
             LIMIT 1
         """),
@@ -106,9 +106,9 @@ async def get_subscription(
         "suscripcion": {
             "id": str(row.id),
             "plan": row.plan,
-            "estado": row.estado,
+            "status": row.status,
             "monto": float(row.monto),
-            "moneda": row.moneda,
+            "currency": row.currency,
             "periodo": row.periodo,
             "fecha_inicio": str(row.fecha_inicio),
             "fecha_proxima_renovacion": str(row.fecha_proxima_renovacion),
@@ -133,9 +133,9 @@ async def create_subscription(
     await configurar_rls(db, uuid.UUID(usuario.tenant_id))
     
     PLANES = {
-        "starter": {"monto": 0, "moneda": "USD", "periodo": "mensual"},
-        "pro": {"monto": 49, "moneda": "USD", "periodo": "mensual"},
-        "enterprise": {"monto": 199, "moneda": "USD", "periodo": "mensual"},
+        "starter": {"monto": 0, "currency": "USD", "periodo": "mensual"},
+        "pro": {"monto": 49, "currency": "USD", "periodo": "mensual"},
+        "enterprise": {"monto": 199, "currency": "USD", "periodo": "mensual"},
     }
     
     plan_info = PLANES.get(datos.plan_id, PLANES["starter"])
@@ -147,10 +147,10 @@ async def create_subscription(
     await db.execute(
         text("""
             INSERT INTO subscriptions (
-                id, tenant_id, plan, estado, monto, moneda, periodo,
+                id, tenant_id, plan, status, monto, currency, periodo,
                 fecha_inicio, fecha_proxima_renovacion, external_subscription_id
             ) VALUES (
-                :id, :tid, :plan, 'activa', :monto, :moneda, :periodo,
+                :id, :tid, :plan, 'activa', :monto, :currency, :periodo,
                 :inicio, :renovacion, :external_id
             )
         """),
@@ -159,7 +159,7 @@ async def create_subscription(
             "tid": usuario.tenant_id,
             "plan": datos.plan_id,
             "monto": plan_info["monto"],
-            "moneda": plan_info["moneda"],
+            "currency": plan_info["currency"],
             "periodo": plan_info["periodo"],
             "inicio": fecha_inicio,
             "renovacion": fecha_renovacion,
@@ -176,7 +176,7 @@ async def create_subscription(
         "subscription_id": str(subscription_id),
         "plan": datos.plan_id,
         "monto": plan_info["monto"],
-        "moneda": plan_info["moneda"],
+        "currency": plan_info["currency"],
         "fecha_proxima_renovacion": str(fecha_renovacion),
     }
 
@@ -195,7 +195,7 @@ async def list_invoices(
     
     result = await db.execute(
         text("""
-            SELECT id, numero, fecha_emision, fecha_vencimiento, monto, estado
+            SELECT id, numero, fecha_emision, fecha_vencimiento, monto, status
             FROM invoices
             WHERE tenant_id = :tid
             ORDER BY fecha_emision DESC
@@ -212,7 +212,7 @@ async def list_invoices(
             "fecha_emision": str(row.fecha_emision),
             "fecha_vencimiento": str(row.fecha_vencimiento),
             "monto": float(row.monto),
-            "estado": row.estado,
+            "status": row.status,
         })
     
     return {"facturas": invoices}
@@ -256,7 +256,7 @@ async def create_coupon(
     db: AsyncSession = Depends(obtener_sesion),
 ):
     """Crea un nuevo cupón de descuento (solo para Super Admin)."""
-    if usuario.rol != "super_admin":
+    if usuario.role != "super_admin":
         raise HTTPException(status_code=403, detail="Solo Super Admin puede crear cupones")
     
     coupon_id = uuid4()
@@ -264,12 +264,12 @@ async def create_coupon(
     await db.execute(
         text("""
             INSERT INTO coupons (id, codigo, tipo_descuento, valor, valido_hasta, uso_maximo, uso_actual, plan_aplicable)
-            VALUES (:id, :codigo, :tipo, :valor, :valido, :maximo, 0, :plan)
+            VALUES (:id, :codigo, :type, :valor, :valido, :maximo, 0, :plan)
         """),
         {
             "id": str(coupon_id),
             "codigo": datos.codigo.upper().strip(),
-            "tipo": datos.tipo_descuento,
+            "type": datos.tipo_descuento,
             "valor": datos.valor,
             "valido": datos.valido_hasta,
             "maximo": datos.uso_maximo,
@@ -343,7 +343,7 @@ async def mercadopago_webhook(
     """
     Recibe notificaciones de pago de MercadoPago.
     Valida la firma HMAC x-signature antes de procesar.
-    Actualiza estado de suscripciones en background.
+    Actualiza status de suscripciones en background.
     """
     try:
         payload = await request.json()

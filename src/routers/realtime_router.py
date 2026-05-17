@@ -8,7 +8,7 @@ router = APIRouter(prefix="/ws/v1", tags=["realtime"])
 class ConnectionManager:
     """
     WebSocket Gateway Manager (Sprint 4A.1).
-    Soporta aislamiento por tenant, particionamiento de canales, y heartbeats.
+    Soporta aislamiento por tenant, particionamiento de channels, y heartbeats.
     """
     def __init__(self):
         # channel_name -> conjunto de WebSockets
@@ -36,7 +36,7 @@ class ConnectionManager:
     async def broadcast_to_channel(self, tenant_id: str, channel: str, message: dict, priority: str = "NORMAL"):
         """
         Emite un mensaje a todos los clientes suscritos al canal del tenant.
-        Respeta la prioridad (en una implementación completa asincrónica usaría colas distintas).
+        Respeta la priority (en una implementación completa asincrónica usaría colas distintas).
         """
         channel_id = f"tenant:{tenant_id}:{channel}"
         if channel_id in self.active_connections:
@@ -51,7 +51,7 @@ manager = ConnectionManager()
 @router.websocket("/{tenant_id}/{channel}")
 async def websocket_endpoint(websocket: WebSocket, tenant_id: str, channel: str):
     """
-    Endpoint de WebSocket. Los canales permitidos son:
+    Endpoint de WebSocket. Los channels permitidos son:
     - operations
     - payments
     - inventory

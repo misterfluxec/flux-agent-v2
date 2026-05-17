@@ -1,0 +1,67 @@
+[
+  {
+    "event_type": "task_started",
+    "task_id": "c138b1f2-51a4-4d8e-994f-cc810d28de8b",
+    "timestamp": "2024-03-15T10:30:00Z",
+    "data": {
+      "tenant_id": "test-tenant-123",
+      "human_message": "Iniciando nueva tarea en segundo plano..."
+    }
+  },
+  {
+    "event_type": "step_started",
+    "task_id": "c138b1f2-51a4-4d8e-994f-cc810d28de8b",
+    "timestamp": "2024-03-15T10:30:01Z",
+    "data": {
+      "label": "Descargando documento PDF",
+      "weight": 0.2,
+      "tenant_id": "test-tenant-123",
+      "human_message": "Iniciando paso: Descargando documento PDF."
+    }
+  },
+  {
+    "event_type": "step_completed",
+    "task_id": "c138b1f2-51a4-4d8e-994f-cc810d28de8b",
+    "timestamp": "2024-03-15T10:30:03Z",
+    "data": {
+      "label": "Descargando documento PDF",
+      "weight": 0.2,
+      "duration_ms": 2100,
+      "tenant_id": "test-tenant-123",
+      "human_message": "Paso completado: Descargando documento PDF (en 2100ms)."
+    }
+  },
+  {
+    "event_type": "step_started",
+    "task_id": "c138b1f2-51a4-4d8e-994f-cc810d28de8b",
+    "timestamp": "2024-03-15T10:30:03Z",
+    "data": {
+      "label": "Indexando fragmentos RAG",
+      "weight": 0.8,
+      "tenant_id": "test-tenant-123",
+      "human_message": "Iniciando paso: Indexando fragmentos RAG."
+    }
+  },
+  {
+    "event_type": "step_completed",
+    "task_id": "c138b1f2-51a4-4d8e-994f-cc810d28de8b",
+    "timestamp": "2024-03-15T10:30:10Z",
+    "data": {
+      "label": "Indexando fragmentos RAG",
+      "weight": 0.8,
+      "duration_ms": 7000,
+      "tenant_id": "test-tenant-123",
+      "human_message": "Paso completado: Indexando fragmentos RAG (en 7000ms)."
+    }
+  },
+  {
+    "event_type": "task_completed",
+    "task_id": "c138b1f2-51a4-4d8e-994f-cc810d28de8b",
+    "timestamp": "2024-03-15T10:30:10Z",
+    "data": {
+      "tenant_id": "test-tenant-123",
+      "duration_ms": 9100,
+      "human_message": "Tarea completada exitosamente."
+    }
+  }
+]

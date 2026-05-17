@@ -131,7 +131,7 @@ async def lifespan(app: FastAPI):
 
     try:
         await redis_conn.ping()
-        logger.info("✅ Redis disponible (pool singleton activo)")
+        logger.info("✅ Redis disponible (pool singleton is_active)")
     except Exception as exc:
         logger.warning(f"⚠️  Redis no disponible: {exc}")
 

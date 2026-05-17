@@ -109,7 +109,7 @@ async def get_my_quota_config(
     tenant_id: UUID = Depends(get_tenant_actual),
     db: AsyncSession = Depends(obtener_sesion),
 ):
-    """Devuelve la configuración de cuotas y el estado de consumo actual del tenant."""
+    """Devuelve la configuración de cuotas y el status de consumo actual del tenant."""
     tenant = await _get_tenant_row(tenant_id, db)
 
     cloud_quota    = tenant["cloud_api_quota"]

@@ -41,8 +41,8 @@ const getStatusColor = (status: 'passed' | 'failed') => status === 'passed' ? 't
 
 const getSimulatedResponse = (input: string): string => {
   const lowerInput = input.toLowerCase();
-  if (lowerInput.includes('precio') || lowerInput.includes('costo') || lowerInput.includes('cuanto')) {
-    return '¡Hola! Entiendo que el precio es un factor importante. Para darte la mejor cotización, ¿podrías contarme un poco más sobre el volumen que manejas?';
+  if (lowerInput.includes('price') || lowerInput.includes('costo') || lowerInput.includes('cuanto')) {
+    return '¡Hola! Entiendo que el price es un factor importante. Para darte la mejor cotización, ¿podrías contarme un poco más sobre el volumen que manejas?';
   }
   if (lowerInput.includes('hola') || lowerInput.includes('buenas')) {
     return '¡Hola! Qué gusto saludarte. Soy el asistente virtual de La Bodega. ¿En qué puedo apoyarte con tus compras hoy?';
@@ -68,7 +68,7 @@ export default function PruebasPage() {
   ]);
 
   const [testResults] = useState<TestResult[]>([
-    { id: '1', scenario: 'Saludo Inicial', passed: true, responseTime: 1.2, score: 95, feedback: 'Excelente tono profesional', timestamp: INITIAL_DATE },
+    { id: '1', scenario: 'Saludo Inicial', passed: true, responseTime: 1.2, score: 95, feedback: 'Excelente tone profesional', timestamp: INITIAL_DATE },
     { id: '2', scenario: 'Consulta de Inventario', passed: true, responseTime: 2.1, score: 88, feedback: 'Datos precisos', timestamp: INITIAL_DATE }
   ]);
 

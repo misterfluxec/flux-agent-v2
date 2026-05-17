@@ -27,7 +27,7 @@ const STEPS: Step[] = [
   {
     id: "agent",
     label: "Crear tu primer Agente IA",
-    desc: "Dale nombre, personalidad y un propósito a tu workforce digital",
+    desc: "Dale name, personality y un propósito a tu workforce digital",
     icon: Bot,
     href: "/dashboard/agents",
     check: async () => {
@@ -47,7 +47,7 @@ const STEPS: Step[] = [
       try {
         // Check if any agent has channels configured
         const agents = await fetchAgents();
-        return agents.some(a => a.canales && a.canales.length > 0);
+        return agents.some(a => a.channels && a.channels.length > 0);
       } catch { return false; }
     },
   },

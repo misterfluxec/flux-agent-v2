@@ -18,7 +18,7 @@ const NAV_ITEMS = [
   { href: "/portal/agentes", icon: Bot, label: "Mis Agentes", desc: "Configurar IA" },
   { href: "/portal/conocimiento", icon: BookOpen, label: "Mi Base de Conocimiento", desc: "Documentos RAG" },
   { href: "/portal/catalogo", icon: Package, label: "Mi Catálogo", desc: "Productos y servicios" },
-  { href: "/portal/canales", icon: LinkIcon, label: "Mis Canales", desc: "WhatsApp y más" },
+  { href: "/portal/channels", icon: LinkIcon, label: "Mis Canales", desc: "WhatsApp y más" },
   { href: "/portal/equipo", icon: Briefcase, label: "Mi Equipo", desc: "Usuarios internos" },
   { href: "/portal/reportes", icon: Gauge, label: "Reportes", desc: "Analytics" },
   { href: "/portal/branding", icon: PaletteIcon, label: "Branding", desc: "Personalizar marca" },
@@ -43,7 +43,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
   const router = useRouter();
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
-  const [nombre, setNombre] = useState("");
+  const [name, setNombre] = useState("");
   const [empresa, setEmpresa] = useState("");
   const [email, setEmail] = useState("");
   const [plan, setPlan] = useState("enterprise");
@@ -155,11 +155,11 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
             display: "flex", alignItems: "center", justifyContent: "center", 
             fontSize: 13, fontWeight: 700, color: brandingColor, flexShrink: 0 
           }}>
-            {(nombre || email).charAt(0).toUpperCase() || "A"}
+            {(name || email).charAt(0).toUpperCase() || "A"}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontSize: 12, fontWeight: 700, color: "var(--sidebar-foreground)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>
-              {nombre || email}
+              {name || email}
             </p>
             <p style={{ fontSize: 10, color: "var(--sidebar-muted)", margin: 0 }}>
               <span style={{ textTransform: "capitalize", fontWeight: 600, color: brandingColor }}>{plan}</span>

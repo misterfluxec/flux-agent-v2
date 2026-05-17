@@ -20,14 +20,14 @@ const MOCK_EXPLANATIONS: Record<string, ExplanationResponse> = {
   lead: {
     signals: [
       "Sentimiento positivo detectado en 4 de 5 mensajes",
-      "Preguntó por precio y disponibilidad en <10 min",
+      "Preguntó por price y disponibilidad en <10 min",
       "Historial: 2 visitas previas al catálogo",
       "Tiempo de respuesta del lead: <45 segundos",
     ],
     policy_applied: "lead_hot_threshold (score ≥ 80)",
     source: "Memoria episódica + Catálogo RAG v3",
     confidence_pct: 92,
-    reasoning_summary: "Lead clasificado como HOT por alta intención de compra y engagement activo.",
+    reasoning_summary: "Lead clasificado como HOT por alta intención de compra y engagement is_active.",
   },
   response: {
     signals: [
@@ -101,7 +101,7 @@ export const MOCK_INSIGHTS: Insight[] = [
     id: "ins_003",
     type: "performance",
     title: "Agente 'Vendedor Pro' convirtió 32% mejor esta semana",
-    context: "Considera asignarle más canales o clonar su configuración para los nuevos agentes.",
+    context: "Considera asignarle más channels o clonar su configuración para los nuevos agentes.",
     priority: "medium",
     actions: [
       { label: "📈 Ver Workforce IA", variant: "primary", href: "/dashboard/agents" },

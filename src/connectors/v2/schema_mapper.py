@@ -20,7 +20,7 @@ class CanonicalEntity:
 class SchemaMapper:
     """
     V2 Architecture: SCHEMA TRANSLATOR.
-    Traduce la fila cruda obtenida por el conector al modelo canónico,
+    Traduce la fila cruda obtenida por el conector al model canónico,
     aplicando reglas de normalización y parsing.
     """
     def __init__(self, mapping_json: Dict[str, Any]):

@@ -182,7 +182,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     async def _add_rate_limit_headers(self, response: Response, identifier: str):
         """Agrega headers informativos de rate limiting"""
         
-        # Obtener estado actual de rate limits
+        # Obtener status actual de rate limits
         headers = {}
         
         for rule in self.rules:

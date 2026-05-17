@@ -125,6 +125,12 @@ async def procesar_y_responder_whatsapp_bg(
     """Procesa RAG, llamadas a LLM y multimedia en segundo plano para no bloquear el Webhook."""
     try:
         from core.plan_manager import PlanManager
+        from services.whatsapp_sender import send_presence
+        
+        # Enviar presencia escribiendo por 15 segundos para dar feedback al usuario
+        if not es_audio and not es_imagen:
+            await send_presence(instancia_nombre, telefono_cliente, delay=15000, presence="composing")
+            
         async with sesion_db(tenant_id) as db:
             try:
                 # Si es mensaje de texto normal
@@ -188,32 +194,32 @@ async def procesar_y_responder_whatsapp_bg(
             instancia_nombre=instancia_nombre
         )
 
-        # 5. Enviar la respuesta vía Evolution API
-        await enviar_mensaje_whatsapp(instancia_nombre, telefono_cliente, respuesta)
-        
-        # 6. Si fue audio y soporta TTS, enviar nota de voz
+        # 5 y 6. Enviar la respuesta vía Evolution API
+        has_tts = False
         if es_audio:
-            has_tts = False
             async with sesion_db(tenant_id) as db:
                 try:
                     await PlanManager.check_feature_tenant(tenant_id, db, "tts")
                     has_tts = True
                 except Exception:
                     pass
-            
-            if has_tts:
-                try:
-                    from services.multimedia import ServicioMultimedia
-                    from services.whatsapp_sender import send_whatsapp_message
-                    audio_b64 = await ServicioMultimedia.sintetizar_voz(respuesta)
-                    await send_whatsapp_message(
-                        instancia_nombre, 
-                        telefono_cliente, 
-                        respuesta, 
-                        audio_b64
-                    )
-                except Exception as e:
-                    logger.error(f"Error enviando TTS: {e}")
+                    
+        if es_audio and has_tts:
+            try:
+                from services.multimedia import ServicioMultimedia
+                from services.whatsapp_sender import send_whatsapp_message
+                audio_b64 = await ServicioMultimedia.sintetizar_voz(respuesta)
+                await send_whatsapp_message(
+                    instancia_nombre, 
+                    telefono_cliente, 
+                    respuesta, 
+                    audio_b64
+                )
+            except Exception as e:
+                logger.error(f"Error enviando TTS: {e}")
+                await enviar_mensaje_whatsapp(instancia_nombre, telefono_cliente, respuesta)
+        else:
+            await enviar_mensaje_whatsapp(instancia_nombre, telefono_cliente, respuesta)
         
         PlanManager.registrar_uso(str(tenant_id), "messages", 1)
 

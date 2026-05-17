@@ -1,0 +1,19 @@
+# =============================================================================
+# SCHEMA DE CONFIGURACIÓN PARA AGENTE DE SOPORTE
+# =============================================================================
+name: "Support Specialist Agent"
+version: "1.0.0"
+description: "Enfocado en resolución de problemas, paciencia y satisfacción del cliente."
+
+required_variables:
+  - nombre
+  - tono
+  - especialidad
+
+defaults:
+  tono: "paciente y resolutivo"
+  especialidad: "soporte técnico general"
+
+model_settings:
+  temperature: 0.4 # Menor temperatura para respuestas más precisas y consistentes
+  max_tokens: 1000

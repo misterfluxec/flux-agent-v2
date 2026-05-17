@@ -205,7 +205,7 @@ async def get_task_status(
     task_id: str,
     usuario: PayloadToken = Depends(get_usuario_actual)
 ):
-    """Obtiene estado de tarea de WhatsApp"""
+    """Obtiene status de tarea de WhatsApp"""
     try:
         from tasks.async_tasks import get_task_status
         
@@ -219,10 +219,10 @@ async def get_task_status(
         }
         
     except Exception as e:
-        logger.error(f"Error obteniendo estado de tarea {task_id}: {e}")
+        logger.error(f"Error obteniendo status de tarea {task_id}: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error obteniendo estado: {str(e)}"
+            detail=f"Error obteniendo status: {str(e)}"
         )
 
 @router.get("/queue/stats")
@@ -274,10 +274,10 @@ async def get_whatsapp_status(
         }
         
     except Exception as e:
-        logger.error(f"Error verificando estado WhatsApp: {e}")
+        logger.error(f"Error verificando status WhatsApp: {e}")
         return {
             "status": "error",
-            "message": f"Error verificando estado: {str(e)}"
+            "message": f"Error verificando status: {str(e)}"
         }
 
 # =============================================================================

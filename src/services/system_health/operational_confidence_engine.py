@@ -51,7 +51,7 @@ class OperationalConfidenceEngine:
         try:
             r = self.db.execute(q, {"t": self.tenant_id}).fetchone()
             drifts = r.active_drifts if r else 0
-            # Cada drift activo resta 25 puntos, mínimo 0
+            # Cada drift is_active resta 25 puntos, mínimo 0
             return max(100.0 - (drifts * 25.0), 0.0)
         except Exception:
             return 100.0

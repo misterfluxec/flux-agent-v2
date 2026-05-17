@@ -26,7 +26,7 @@ async def get_leads(
             c.id,
             c.lead_externo_id,
             c.canal,
-            c.estado,
+            c.status,
             c.sentimiento,
             c.venta_cerrada,
             c.valor_venta,
@@ -58,13 +58,13 @@ async def get_leads(
             else:
                 name = row.lead_externo_id
         
-        # Mapeo de estado para el frontend CRM
+        # Mapeo de status para el frontend CRM
         estado_crm = "nuevo"
         if row.venta_cerrada:
             estado_crm = "cerrado"
-        elif row.estado == "cerrada":
+        elif row.status == "cerrada":
             estado_crm = "perdido" if not row.venta_cerrada else "cerrado"
-        elif row.estado == "activa":
+        elif row.status == "activa":
             estado_crm = "contactado"
             
         leads.append({
@@ -73,7 +73,7 @@ async def get_leads(
             "phone": phone,
             "email": email,
             "canal": row.canal.replace("_chat", ""), # web_chat -> web
-            "estado": estado_crm,
+            "status": estado_crm,
             "monto": float(row.valor_venta) if row.valor_venta else 0.0,
             "fecha": row.iniciada_en.strftime("%Y-%m-%d %H:%M") if row.iniciada_en else "",
             "sentimiento": float(row.sentimiento) if row.sentimiento else 0.0

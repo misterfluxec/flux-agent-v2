@@ -12,8 +12,8 @@ def generate_test_token():
         "sub": "test@example.com",
         "tenant_id": TENANT_ID,
         "exp": datetime.utcnow() + timedelta(minutes=60),
-        "rol": "admin",
-        "nombre": "Test User"
+        "role": "admin",
+        "name": "Test User"
     }
     return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
 

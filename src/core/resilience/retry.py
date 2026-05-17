@@ -367,7 +367,7 @@ class RetryMetrics:
         else:
             self.service_stats[service]["failed"] += 1
         
-        # Calcular promedio de intentos
+        # Calcular promedio de attempts
         total_service = self.service_stats[service]["total"]
         self.service_stats[service]["avg_attempts"] = (
             self.service_stats[service]["total_delay"] / total_service

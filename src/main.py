@@ -191,7 +191,7 @@ async def lifespan(app: FastAPI):
 
     try:
         await redis_conn.ping()
-        logger.info("✅ Redis disponible (pool singleton activo)")
+        logger.info("✅ Redis disponible (pool singleton is_active)")
     except Exception as exc:
         logger.warning(f"⚠️  Redis no disponible: {exc}")
 
@@ -398,8 +398,8 @@ app.include_router(ai_copilot_router)
 # =============================================================================
 # HANDLERS DE EXCEPCIONES ESPECÍFICOS
 # =============================================================================
-# Manejo granular de errores según tipo y contexto
-# Mejor experiencia para desarrolladores y usuarios
+# Manejo granular de errores según type y contexto
+# Mejor experiencia para desarrolladores y users
 # =============================================================================
 
 from fastapi.exceptions import RequestValidationError
@@ -474,7 +474,7 @@ async def db_integrity_handler(request: Request, exc: IntegrityError):
     """Maneja errores de integridad de DB (unique constraints, FK, etc)"""
     logger.error(f"Error de integridad DB: {exc.orig}")
     
-    # Detectar tipo específico de error
+    # Detectar type específico de error
     error_msg = str(exc.orig).lower()
     
     if "unique" in error_msg:
@@ -593,15 +593,15 @@ async def raiz():
     return {
         "servicio": config.app_nombre,
         "version":  config.app_version,
-        "estado":   "operativo",
+        "status":   "operativo",
         "entorno":  config.app_env,
         "docs":     "/docs",
     }
 
 
 @app.get("/health", tags=["Sistema"])
-async def health_check():
-    """Verifica el estado de PostgreSQL, Redis y Ollama."""
+async def health_check(request: Request):
+    """Verifica el status de PostgreSQL, Redis y Ollama."""
     estado_servicios = {"postgres": "desconocido", "redis": "desconocido", "ollama": "desconocido"}
 
     try:
@@ -627,14 +627,14 @@ async def health_check():
     except Exception:
         estado_servicios["ollama"] = "error"
 
-    # Solo Postgres y Redis son críticos para el estado 200/503
+    # Solo Postgres y Redis son críticos para el status 200/503
     criticos_ok = estado_servicios["postgres"] == "ok" and estado_servicios["redis"] == "ok"
     hay_error_en_alguno = any(v == "error" for v in estado_servicios.values())
     
     return JSONResponse(
         status_code=200 if criticos_ok else 503,
         content={
-            "estado": "saludable" if not hay_error_en_alguno else ("degradado" if criticos_ok else "fuera_de_servicio"),
+            "status": "saludable" if not hay_error_en_alguno else ("degradado" if criticos_ok else "fuera_de_servicio"),
             "servicios": estado_servicios,
             "version": config.app_version,
         },
@@ -660,7 +660,7 @@ async def listar_conocimiento(
     await configurar_rls(db, tenant_id)
     result = await db.execute(
         text("""
-            SELECT fuente_nombre, fuente_tipo, COUNT(*) as chunks, MAX(creado_en) as ultima_ingesta
+            SELECT fuente_nombre, fuente_tipo, COUNT(*) as chunks, MAX(created_at) as ultima_ingesta
             FROM knowledge_chunks
             WHERE tenant_id = :tid
             GROUP BY fuente_nombre, fuente_tipo
@@ -694,7 +694,7 @@ async def listar_conocimiento(
 @app.delete(
     "/api/v1/knowledge/{fuente_nombre}",
     tags=["Conocimiento RAG"],
-    summary="Elimina todos los chunks de un documento por su nombre",
+    summary="Elimina todos los chunks de un documento por su name",
 )
 async def eliminar_fuente(
     fuente_nombre: str,
@@ -707,9 +707,9 @@ async def eliminar_fuente(
     result = await db.execute(
         text("""
             DELETE FROM knowledge_chunks
-            WHERE tenant_id = :tid AND fuente_nombre = :nombre
+            WHERE tenant_id = :tid AND fuente_nombre = :name
         """),
-        {"tid": str(tenant_id), "nombre": fuente_nombre},
+        {"tid": str(tenant_id), "name": fuente_nombre},
     )
     await db.commit()
     return {"eliminados": result.rowcount, "fuente": fuente_nombre}
@@ -784,7 +784,7 @@ async def obtener_chunks_fuente(
     return {
         "fuente": fuente_decodificada,
         "total_chunks": len(chunks),
-        "chunks": [{"id": str(c.id), "contenido": c.contenido, "orden": c.orden_chunk, "tipo": c.fuente_tipo} for c in chunks]
+        "chunks": [{"id": str(c.id), "contenido": c.contenido, "sort_order": c.orden_chunk, "type": c.fuente_tipo} for c in chunks]
     }
 
 # =============================================================================
@@ -792,7 +792,7 @@ async def obtener_chunks_fuente(
 # =============================================================================
 
 class MensajeChatSchema(BaseModel):
-    rol:       str   # 'usuario' | 'asistente'
+    role:       str   # 'usuario' | 'asistente'
     contenido: str
 
 
@@ -804,14 +804,14 @@ class SolicitudChat(BaseModel):
     historial:   list[MensajeChatSchema] = []
     # Configuración del agente (se puede sobreescribir desde la DB en versiones futuras)
     configuracion: dict = {
-        "nombre":       "Asistente",
-        "genero":       "femenino",
-        "humor":        "profesional",
-        "personalidad": "Soy un asistente de ventas eficiente.",
-        "tipo_negocio": "Empresa de servicios",
-        "instrucciones": "Ayuda al cliente a encontrar lo que necesita.",
-        "modelo":       "qwen2.5:3b",
-        "temperatura":  0.7,
+        "name":       "Asistente",
+        "gender":       "femenino",
+        "mood":        "profesional",
+        "personality": "Soy un asistente de ventas eficiente.",
+        "business_type": "Empresa de servicios",
+        "instructions": "Ayuda al cliente a encontrar lo que necesita.",
+        "model":       "qwen2.5:3b",
+        "temperature":  0.7,
         "max_tokens":   512,
     }
 
@@ -821,7 +821,7 @@ class SolicitudChat(BaseModel):
             "session_id": "sesion-abc-123",
             "mensaje":    "¿Qué productos tienen disponibles?",
             "historial":  [],
-            "configuracion": {"nombre": "Luna", "humor": "amigable", "modelo": "qwen2.5:3b"},
+            "configuracion": {"name": "Luna", "mood": "amigable", "model": "qwen2.5:3b"},
         }
     }}
 
@@ -867,7 +867,7 @@ async def chat_completo(
         agent_id=solicitud.agent_id,
         session_id=solicitud.session_id,
         mensaje_usuario=solicitud.mensaje,
-        historial=[MensajeChat(rol=m.rol, contenido=m.contenido) for m in solicitud.historial],
+        historial=[MensajeChat(role=m.role, contenido=m.contenido) for m in solicitud.historial],
         configuracion=solicitud.configuracion,
     )
 
@@ -880,7 +880,7 @@ async def chat_completo(
             sentimiento = random.uniform(0.2, 1.0) # Simulación positiva para dashboard
             await db.execute(text("""
                 INSERT INTO conversaciones 
-                (tenant_id, agent_id, lead_externo_id, canal, tokens_salida, estado, sentimiento)
+                (tenant_id, agent_id, lead_externo_id, canal, tokens_salida, status, sentimiento)
                 VALUES (:tid, :aid, :session, 'web_chat', :tokens, 'activa', :sentimiento)
             """), {
                 "tid": str(tid),
@@ -897,7 +897,7 @@ async def chat_completo(
             "session_id":   solicitud.session_id,
             "respuesta":    respuesta.contenido,
             "tokens":       respuesta.tokens_usados,
-            "modelo":       respuesta.modelo_usado,
+            "model":       respuesta.modelo_usado,
             "fuentes_rag":  respuesta.fuentes_rag,
             "chunks_usados": respuesta.metadatos.get("chunks_usados", 0),
         }
@@ -913,8 +913,7 @@ async def chat_completo(
     "/api/v1/chat/stream",
     tags=["Chat"],
     summary="Conversación con streaming SSE (token a token)",
-    response_class=StreamingResponse,
-    dependencies=[Depends(PlanManager.verificar_limite_diario("messages"))]
+    response_class=StreamingResponse
 )
 async def chat_stream(
     solicitud: SolicitudChat,
@@ -926,7 +925,7 @@ async def chat_stream(
 
     Protocolo SSE:
       - Cada token se emite como: `data: {"token": "...", "done": false}\\n\\n`
-      - Al terminar:              `data: {"token": "", "done": true, "modelo": "..."}\\n\\n`
+      - Al terminar:              `data: {"token": "", "done": true, "model": "..."}\\n\\n`
       - Si hay error:             `data: {"error": "...", "done": true}\\n\\n`
 
     Ideal para: Web Chat, aplicaciones React/Next.js con EventSource.
@@ -956,7 +955,7 @@ async def chat_stream(
         agent_id=solicitud.agent_id,
         session_id=solicitud.session_id,
         mensaje_usuario=solicitud.mensaje,
-        historial=[MensajeChat(rol=m.rol, contenido=m.contenido) for m in solicitud.historial],
+        historial=[MensajeChat(role=m.role, contenido=m.contenido) for m in solicitud.historial],
         configuracion=solicitud.configuracion,
     )
 
@@ -1015,30 +1014,30 @@ async def procesar_mensaje_whatsapp(tenant_id: UUID, session_id: str, mensaje: s
 
             # Obtener el agente (usamos el primero encontrado si no hay ID específico)
             res_agent = await db.execute(text("""
-                SELECT nombre, humor, personalidad, genero, tipo_negocio, instrucciones, modelo, temperatura, max_tokens, script_ventas
+                SELECT name, mood, personality, gender, business_type, instructions, model, temperature, max_tokens, sales_script
                 FROM agents WHERE tenant_id = :tid LIMIT 1
             """), {"tid": str(tenant_id)})
             agente_db = res_agent.fetchone()
 
             if agente_db:
                 config_agente = {
-                    "nombre": agente_db.nombre,
-                    "humor": agente_db.humor,
-                    "personalidad": agente_db.personalidad,
-                    "genero": agente_db.genero,
-                    "tipo_negocio": agente_db.tipo_negocio,
-                    "instrucciones": agente_db.instrucciones,
-                    "modelo": agente_db.modelo,
-                    "temperatura": agente_db.temperatura,
+                    "name": agente_db.name,
+                    "mood": agente_db.mood,
+                    "personality": agente_db.personality,
+                    "gender": agente_db.gender,
+                    "business_type": agente_db.business_type,
+                    "instructions": agente_db.instructions,
+                    "model": agente_db.model,
+                    "temperature": agente_db.temperature,
                     "max_tokens": agente_db.max_tokens,
-                    "script_ventas": agente_db.script_ventas
+                    "sales_script": agente_db.sales_script
                 }
             else:
                 config_agente = {
-                    "nombre": "FluxBot",
-                    "humor": "profesional",
-                    "modelo": "qwen2.5:3b",
-                    "temperatura": 0.7,
+                    "name": "FluxBot",
+                    "mood": "profesional",
+                    "model": "qwen2.5:3b",
+                    "temperature": 0.7,
                     "max_tokens": 512,
                 }
 
@@ -1161,7 +1160,7 @@ async def whatsapp_get_qr():
     summary="Estado de conexión de la instancia de WhatsApp",
 )
 async def whatsapp_instance_status():
-    """Retorna el estado actual de conexión (open, connecting, close)."""
+    """Retorna el status actual de conexión (open, connecting, close)."""
     async with httpx.AsyncClient(timeout=10.0) as client:
         try:
             resp = await client.get(

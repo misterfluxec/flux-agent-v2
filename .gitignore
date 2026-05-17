@@ -31,3 +31,17 @@ __pycache__/
 *.pyc
 .env
 logs/
+
+# Datos pesados y Backups
+data/
+backups/
+scratch/
+*.sql
+*.mp3
+*.wav
+*.ogg
+
+# Base de datos y métricas locales
+grafana/
+prometheus_data/
+grafana_data/

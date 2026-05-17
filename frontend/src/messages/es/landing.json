@@ -1,217 +1,217 @@
 {
   "nav": {
-    "features": "Características",
-    "comparison": "Comparativa",
-    "pricing": "Planes",
-    "tech": "Tecnología"
+    "features": "El Ecosistema",
+    "comparison": "La Realidad",
+    "pricing": "Inversión",
+    "tech": "Seguridad y Conexión"
   },
   "auth": {
-    "login": "Iniciar Sesión",
-    "free_trial": "🚀 7 Días Gratis"
+    "login": "Ingresar al Panel",
+    "free_trial": "⚡ Obtén Súper Poderes Gratis por 7 Días"
   },
   "hero": {
-    "badge": "Infraestructura Edge Computing disponible",
-    "title_1": "La IA que no solo responde.",
-    "title_2": "Ve, escucha y razona como tú.",
-    "subtitle_1": "Olvídate de los bots rígidos y las recargas constantes.",
-    "subtitle_2": "FluxAgent V2 es la infraestructura de inteligencia local que automatiza tu atención al 100%.",
-    "cta_activate": "🚀 Activar mis Super Poderes - 7 Días Gratis"
+    "badge": "Tecnología de millones de dólares, ahora para tu negocio",
+    "title_1": "Tu Mejor Vendedor,",
+    "title_2": "Trabajando 24/7 en todas tus redes.",
+    "subtitle_1": "Atiende, negocia y cobra automáticamente en WhatsApp, Instagram, Telegram y Messenger.",
+    "subtitle_2": "FluxAgent es una capa de inteligencia artificial que se conecta a tu tienda online o base de datos. Responde al instante con información real, sin importar si eres un emprendedor o una gran empresa.",
+    "cta_activate": "⚡ Obtén Súper Poderes Gratis por 7 Días"
   },
   "market": {
-    "title": "POTENCIA LOCAL DE CLASE MUNDIAL",
-    "subtitle": "Las opciones más caras del mercado que puedes evitar",
-    "fluxagent_value": "Con FluxAgent V2: Todo incluido desde $45/mes"
+    "title": "LA VENTAJA INJUSTA",
+    "subtitle": "Mientras tu competencia duerme o usa bots rígidos que frustran al cliente, tú tienes un vendedor experto cerrando tratos.",
+    "fluxagent_value": "IA de Nivel Corporativo, accesible para todos."
   },
   "features": {
-    "badge": "Características",
-    "title_1": "Automatiza tu atención",
-    "title_2": "y multiplica tus ventas",
-    "subtitle": "No es solo un bot. Es tu mejor vendedor digital trabajando 24/7.",
+    "badge": "Omnicanal y Sincronizado",
+    "title_1": "Vende en Piloto Automático",
+    "title_2": "Con Datos en Tiempo Real",
+    "subtitle": "Conecta FluxAgent a tu E-commerce o Excel, y deja que nuestra IA haga el trabajo pesado de vender y cobrar.",
     "items": [
       {
-        "title": "Atención 24/7 Sin Pausas",
-        "description": "Tu vendedor virtual nunca duerme, nunca se cansa y responde instantáneamente a cualquier hora del día.",
-        "highlight": "Respuesta Instantánea"
+        "title": "Inventario Siempre Sincronizado",
+        "description": "Se conecta a tu tienda online o sistema actual. Si el producto se acaba en tu web, el agente lo sabe al instante y no lo vende.",
+        "highlight": "Tiempo Real"
       },
       {
-        "title": "Conversiones Maximizadas",
-        "description": "Cada consulta se convierte en venta. El agente cualifica leads, maneja objeciones y cierra operaciones.",
-        "highlight": "+300% Conversión"
+        "title": "Presencia Omnicanal Completa",
+        "description": "Un solo cerebro inteligente respondiendo simultáneamente en WhatsApp, Instagram, Facebook Messenger y Telegram.",
+        "highlight": "Multi Red"
       },
       {
-        "title": "Costos Predictibles",
-        "description": "Olvídate de las facturas sorpresas. Un precio fijo mensual incluye todo, sin recargas ni extras.",
-        "highlight": "Sin Sorpresas"
+        "title": "Cobros en el Propio Chat",
+        "description": "El cliente no se escapa a otras páginas. Generamos botones de pago seguros directamente en la conversación.",
+        "highlight": "Conversión"
       },
       {
-        "title": "Datos 100% Privados",
-        "description": "Tus datos y los de tus clientes nunca abandonan tu infraestructura. Completo control y soberanía.",
-        "highlight": "Soberanía Total"
+        "title": "Entiende Audios e Imágenes",
+        "description": "¿Te mandan una foto de un zapato o un audio de 3 minutos? Nuestra IA lo procesa y responde exactamente lo que el cliente busca.",
+        "highlight": "Súper Inteligente"
       }
     ]
   },
   "chat": {
-    "welcome": "¡Hola! Soy Yanua, tu asistente de FluxAgent V2. ¿En qué puedo ayudarte hoy?",
+    "welcome": "¡Hola! Soy la Inteligencia Comercial de FluxAgent. Estoy conectado a la base de datos de tu tienda y puedo vender por WhatsApp, Instagram o Messenger. ¿En qué te ayudo hoy?",
     "responses": [
-      "¡Excelente pregunta! Puedo ayudarte a configurar tu primer agente de IA en minutos.",
-      "Con FluxAgent V2 puedes ahorrar hasta 3X comparado con otras soluciones. ¿Te gustaría ver una comparativa?",
-      "Nuestra prueba gratuita de 7 días te permite probar todas las funcionalidades sin compromiso.",
-      "¿Tienes un ERP específico? Puedo explicarte cómo funciona nuestra integración nativa.",
-      "El plan Conexión Humana incluye notas de voz ultra-realistas para atender a tus clientes las 24/7."
+      "Mi tecnología solía costar millones de dólares, pero ahora puedes usarme por una fracción de ese costo.",
+      "Toda la información que me das está protegida con seguridad de grado bancario. Nadie más accede a tus datos.",
+      "Si tienes 1 o 10,000 clientes escribiéndote al mismo tiempo, yo los atiendo a todos al instante.",
+      "Te doy súper poderes gratis por 7 días para que pruebes cómo multiplico tus ventas.",
+      "Me sincronizo en tiempo real. Si cambias el precio de un producto en tu tienda, yo lo ofrezco con el nuevo precio al segundo."
     ]
   },
   "comparison": {
     "rows": [
       {
-        "benefit": "Modelo de Pago",
-        "competitor": "Recargas por charla",
-        "ventacore": "Suscripción de Abundancia",
+        "benefit": "Capacidad de Respuesta",
+        "competitor": "15%",
+        "ventacore": "98%",
         "highlight": false
       },
       {
-        "benefit": "Capacidad Mensajes",
-        "competitor": "1,000 - 2,000",
-        "ventacore": "3,000 - 15,000",
+        "benefit": "Sincronización de Tienda",
+        "competitor": "10%",
+        "ventacore": "100%",
         "highlight": true
       },
       {
-        "benefit": "Sentidos de la IA",
-        "competitor": "Solo Texto",
-        "ventacore": "Ve, Oye y Habla nativamente",
+        "benefit": "Protección de Datos",
+        "competitor": "50%",
+        "ventacore": "100%",
         "highlight": false
       }
     ]
   },
   "plans": {
     "stability": {
-      "name": "Estabilidad",
-      "tagline": "Tu negocio nunca duerme",
+      "name": "Plan Start",
+      "tagline": "Para negocios que empiezan a crecer",
       "price": "45",
       "period": "/mes",
       "features": [
-        "3,000 mensajes / mes",
-        "Entrenamiento RAG Ilimitado",
-        "Respuestas de Texto Ultra-rápidas"
+        "Conexión a WhatsApp e Instagram",
+        "Inteligencia Artificial Base",
+        "Links de Pago Integrados"
       ],
-      "cta": "Seleccionar Estabilidad",
+      "cta": "⚡ Empezar Gratis",
       "recommended": false
     },
     "human": {
-      "name": "Conexión Humana",
-      "tagline": "Vende por notas de voz",
+      "name": "Plan Pro",
+      "tagline": "El vendedor perfecto",
       "price": "85",
       "period": "/mes",
       "features": [
-        "7,000 mensajes / mes",
-        "Escucha Notas de Voz (STT)",
-        "Responde con Voz Humana (TTS)"
+        "Todas las Redes Sociales",
+        "Sincronización E-commerce (Tiempo Real)",
+        "Entiende Notas de Voz y Fotos"
       ],
-      "cta": "Activar Conexión Humana",
+      "cta": "⚡ Empezar Gratis",
       "recommended": true
     },
     "peace": {
-      "name": "Paz Mental",
-      "tagline": "Escalabilidad Total",
+      "name": "Plan Corporativo",
+      "tagline": "Infraestructura ciega y blindada",
       "price": "160",
       "period": "/mes",
       "features": [
-        "15,000 mensajes / mes",
-        "Visión IA: Lee fotos y catálogos",
-        "Razonamiento Multimodal Completo"
+        "Bases de Datos Ilimitadas",
+        "Servidores Privados Exclusivos",
+        "Seguridad de Grado Bancario"
       ],
-      "cta": "Elegir Paz Mental",
+      "cta": "Contactar Especialista",
       "recommended": false
     }
   },
   "marketAlternatives": {
     "items": [
       {
-        "name": "GPT-4 Turbo",
-        "category": "Nube Pública",
-        "price": "~$0.03/mensaje",
-        "limit": "Limitado por API"
+        "name": "Bots de Menús",
+        "category": "Frustrantes",
+        "price": "Económico",
+        "limit": "No entienden nada"
       },
       {
-        "name": "Claude 3",
-        "category": "Nube Pública",
-        "price": "~$0.025/mensaje",
-        "limit": "Limitado por API"
+        "name": "Plataformas Básicas",
+        "category": "Desconectadas",
+        "price": "Medio",
+        "limit": "Inventario Manual"
       },
       {
-        "name": "Amazon Lex",
-        "category": "Nube Pública",
-        "price": "~$0.04/mensaje",
-        "limit": "Limitado por API"
+        "name": "Agencias de Ventas",
+        "category": "Humanos",
+        "price": "Muy Alto",
+        "limit": "Lento y Costoso"
       },
       {
-        "name": "IBM Watson",
-        "category": "Enterprise Cloud",
-        "price": "Desde $0.06/mensaje",
-        "limit": "Costo escalable"
+        "name": "FluxAgent AI",
+        "category": "Vendedor Inteligente",
+        "price": "Marginal",
+        "limit": "Sincronización Total"
       }
     ]
   },
   "stats": {
     "items": [
       {
-        "value": "3-15K",
-        "label": "Mensajes incluídos"
+        "value": "4",
+        "label": "Redes Simultáneas"
       },
       {
-        "value": "7 Días",
-        "label": "Prueba gratuita"
-      },
-      {
-        "value": "< 500ms",
-        "label": "Latencia ultra-baja"
+        "value": "0 ms",
+        "label": "Sincronización de Tienda"
       },
       {
         "value": "100%",
-        "label": "Soberanía de datos"
+        "label": "Seguridad Bancaria"
+      },
+      {
+        "value": "GDPR",
+        "label": "Cumplimiento Global"
       }
     ]
   },
   "footer": {
-    "rights": "© 2026 FluxAgent V2. Todos los derechos reservados.",
+    "rights": "© 2026 FluxAgent AI. Tecnología de Alta Gama a tu alcance.",
     "sections": [
       {
-        "title": "Sede Principal",
+        "title": "La Plataforma",
         "content": [
-          "FluxAgent V2",
-          "20-22 Wenlock Road, London, England, N1 7GU",
-          "London Tech Hub - Ep centro europeo de innovación en IA"
+          "FluxAgent AI",
+          "Conexión de E-commerce",
+          "Integración Omnicanal"
         ]
       },
       {
-        "title": "Cumplimiento y Gobernanza",
+        "title": "Blindaje y Privacidad",
         "content": [
-          "Data Protection Act 2018 + GDPR",
-          "Soberanía de datos para Latinoamérica",
-          "Infraestructura empresarial privada"
+          "Seguridad de Grado Bancario",
+          "Cumplimiento GDPR/Normas Int.",
+          "Información 100% Confidencial"
         ]
       },
       {
-        "title": "Distribución Autorizada",
+        "title": "Conectividad",
         "content": [
-          "Operación exclusiva para Latinoamérica",
-          "Canal de distribución oficial: FluxAgent Latam"
+          "WhatsApp & Telegram",
+          "Instagram & Messenger",
+          "Bases de Datos en Tiempo Real"
         ]
       },
       {
-        "title": "Fortaleza Tecnológica",
+        "title": "Soporte",
         "content": [
-          "Infraestructura Edge Computing dedicada",
-          "Procesamiento de Voz en tiempo real",
-          "Latencia <500ms - Costo cero por escala",
-          "Memoria Inteligente RAG"
+          "Ayuda de Integración",
+          "Ventas y Alianzas",
+          "Material Exclusivo"
         ]
       }
     ]
   },
   "final_cta": {
-    "title_1": "Es hora de automatizar y",
-    "title_2": "escalar tu negocio",
-    "subtitle": "Crea tu cuenta ahora y pon a trabajar a tu clon digital.\n7 días gratis, cancela cuando quieras.",
-    "button": "🚀 Crear Cuenta Gratis"
+    "title_1": "Ten acceso a la misma inteligencia",
+    "title_2": "que usan los gigantes globales",
+    "subtitle": "La IA más potente y segura del mercado, ahora trabajando para ti.\nConecta tus datos y empieza a vender en automático.",
+    "button": "⚡ Obtén Súper Poderes Gratis por 7 Días"
   }
 }

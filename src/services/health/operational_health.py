@@ -1,7 +1,7 @@
 """
 Operational Health Engine
 
-Provee una vista consolidada del estado de salud operacional del tenant.
+Provee una vista consolidada del status de salud operacional del tenant.
 No es monitoring de infraestructura — es monitoring de NEGOCIO.
 
 Indicadores que calcula:
@@ -151,16 +151,16 @@ class OperationalHealthEngine:
 
             if overdue >= 10:
                 status = "critical"
-                message = f"🚨 {overdue} seguimientos vencidos sin enviar"
+                message = f"🚨 {overdue} follow_ups vencidos sin enviar"
             elif overdue >= 3:
                 status = "warning"
-                message = f"⚠️ {overdue} seguimientos con SLA vencido"
+                message = f"⚠️ {overdue} follow_ups con SLA vencido"
             elif overdue > 0:
                 status = "warning"
                 message = f"{overdue} seguimiento(s) pendiente(s) de envío"
             else:
                 status = "ok"
-                message = "Todos los seguimientos al día"
+                message = "Todos los follow_ups al día"
 
             return {"check": "followup_sla", "status": status, "message": message, "details": {"overdue": overdue}}
         except Exception as e:
@@ -205,7 +205,7 @@ class OperationalHealthEngine:
             return {"check": "first_response_sla", "status": "ok", "message": "No disponible", "details": {}}
 
     async def _check_channel_health(self, db: AsyncSession, tenant_id: str) -> Dict[str, Any]:
-        """Detecta si hay canales con alta tasa de desconexiones recientes."""
+        """Detecta si hay channels con alta tasa de desconexiones recientes."""
         try:
             result = await db.execute(text("""
                 SELECT COUNT(*) AS disconnections
@@ -234,8 +234,8 @@ class OperationalHealthEngine:
     async def _check_quota_health(self, tenant_id: str) -> Dict[str, Any]:
         """Verifica si alguna cuota facturable supera el 80% del límite mensual."""
         try:
-            from core.plan_manager import redis_client, BILLABLE_QUOTAS
             from datetime import datetime, timezone
+            BILLABLE_QUOTAS = ["messages", "ai_requests", "file_uploads"]
 
             mes = datetime.now(tz=timezone.utc).strftime("%Y-%m")
             warnings = []

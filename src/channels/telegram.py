@@ -47,13 +47,13 @@ class TelegramAdapter(ChannelAdapter):
         """Parsea webhook de Telegram."""
         update = payload.get("update", {})
         
-        # Determinar tipo de mensaje
+        # Determinar type de mensaje
         message = update.get("message") or update.get("edited_message") or {}
         
         if not message:
             raise ValueError("No message in Telegram update")
         
-        # Extraer contenido según tipo
+        # Extraer contenido según type
         content_type = self._get_content_type(message)
         content = self._extract_content(message, content_type)
         
@@ -77,7 +77,7 @@ class TelegramAdapter(ChannelAdapter):
         )
     
     def _get_content_type(self, message: dict) -> str:
-        """Determina el tipo de contenido del mensaje."""
+        """Determina el type de contenido del mensaje."""
         if "text" in message:
             return "text"
         elif "voice" in message:
@@ -101,7 +101,7 @@ class TelegramAdapter(ChannelAdapter):
         return "text"
     
     def _extract_content(self, message: dict, content_type: str) -> Union[str, Dict[str, Any]]:
-        """Extrae el contenido según el tipo."""
+        """Extrae el contenido según el type."""
         if content_type == "text":
             return message.get("text", "")
         
@@ -210,7 +210,7 @@ class TelegramAdapter(ChannelAdapter):
         if not self.bot_token:
             return ChannelResponse(success=False, error="Telegram bot token not configured")
         
-        # Determinar método según tipo
+        # Determinar método según type
         method_map = {
             "image": "sendPhoto",
             "video": "sendVideo",

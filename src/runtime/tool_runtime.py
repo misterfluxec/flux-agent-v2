@@ -1,13 +1,13 @@
 import logging
 from typing import Dict, Any, Optional
-from src.runtime.tool_intent import ToolIntent
-from src.runtime.tool_contract import ToolContract
-from src.runtime.tool_policy_guard import ToolPolicyGuard, PolicyGuardException
-from src.runtime.idempotency import IdempotencyGuard, IdempotencyGuardException
-from src.core.resilience.circuit_breaker import create_circuit_breaker
-from src.core.resilience.retry import create_retry
-from src.core.resilience.distributed_lock import DistributedLockManager
-from src.core.observability.tracing import trace_method, get_tracing_manager
+from runtime.tool_intent import ToolIntent
+from runtime.tool_contract import ToolContract
+from runtime.tool_policy_guard import ToolPolicyGuard, PolicyGuardException
+from runtime.idempotency import IdempotencyGuard, IdempotencyGuardException
+from core.resilience.circuit_breaker import create_circuit_breaker
+from core.resilience.retry import create_retry
+from core.resilience.distributed_lock import DistributedLockManager
+from core.observability.tracing import trace_method, get_tracing_manager
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +76,7 @@ class ToolRuntime:
         
         # 4. Approval Guard
         if contract.requires_human:
-            from src.runtime.human_approval import ApprovalRequest
+            from runtime.human_approval import ApprovalRequest
             # TODO: Emitir evento y pausar
             logger.info(f"[ToolRuntime] {tool_id} requiere aprobación humana. Pausando ejecución.")
             # Crear y registrar el request

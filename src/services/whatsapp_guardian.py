@@ -245,7 +245,7 @@ class WhatsAppBanProtector:
                 pass
     
     async def get_health_status(self, tenant_id: str) -> Dict[str, Any]:
-        """Retorna estado de salud del número de WhatsApp."""
+        """Retorna status de salud del número de WhatsApp."""
         if not self.redis:
             return {"status": "unknown", "reason": "Redis not available"}
         
@@ -278,7 +278,7 @@ class WhatsAppBanProtector:
     def _get_recommendation(self, quality: str, blocks: int) -> str:
         """Recomienda acciones según calidad."""
         if quality == "GREEN":
-            return "Número en buen estado. Continúa operación normal."
+            return "Número en buen status. Continúa operación normal."
         elif quality == "YELLOW":
             return "Precaución: Reduces mensajes de marketing por 24h. Evita palabras spam."
         else:

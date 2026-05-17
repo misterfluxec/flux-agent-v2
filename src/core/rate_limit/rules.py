@@ -33,7 +33,7 @@ class RateLimitRule:
     tenant_ids: Optional[Set[str]] = None
     user_roles: Optional[Set[str]] = None
     headers: Optional[Dict[str, str]] = None
-    priority: int = 100  # Menor = mayor prioridad
+    priority: int = 100  # Menor = mayor priority
     enabled: bool = True
     
     def matches(self, request: Request) -> bool:
@@ -294,9 +294,9 @@ def get_tenant_specific_rules(tenant_id: str, plan: str = "free") -> List[RateLi
     ]
 
 def get_user_specific_rules(user_id: str, role: str = "user") -> List[RateLimitRule]:
-    """Retorna reglas específicas por usuario según rol"""
+    """Retorna reglas específicas por usuario según role"""
     
-    # Límites por rol
+    # Límites por role
     role_limits = {
         "user": {
             "requests_per_hour": 100,
@@ -420,18 +420,18 @@ class RuleManager:
             raise RateLimitError(f"Regla inválida: {errors}")
         
         self.rules.append(rule)
-        # Ordenar por prioridad
+        # Ordenar por priority
         self.rules.sort(key=lambda r: r.priority)
         return True
     
     def remove_rule(self, name: str) -> bool:
-        """Remueve una regla por nombre"""
+        """Remueve una regla por name"""
         original_length = len(self.rules)
         self.rules = [r for r in self.rules if r.name != name]
         return len(self.rules) < original_length
     
     def get_rule(self, name: str) -> Optional[RateLimitRule]:
-        """Obtiene una regla por nombre"""
+        """Obtiene una regla por name"""
         for rule in self.rules:
             if rule.name == name:
                 return rule

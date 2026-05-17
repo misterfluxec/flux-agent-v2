@@ -70,7 +70,7 @@ export function CommandPalette() {
             session_id: "yanua-overlay",
             mensaje: userMsg,
             historial: [],
-            configuracion: { nombre: "Yanua", humor: "profesional" },
+            configuracion: { name: "Yanua", mood: "profesional" },
           });
           setChatMessages(prev => [...prev, { role: "assistant", text: res.respuesta }]);
         } catch {
@@ -92,8 +92,8 @@ export function CommandPalette() {
         const res = await sendChat({
           session_id: "yanua-overlay",
           mensaje: userMsg,
-          historial: chatMessages.map(m => ({ rol: m.role === "user" ? "user" : "assistant", contenido: m.text })),
-          configuracion: { nombre: "Yanua", humor: "profesional" },
+          historial: chatMessages.map(m => ({ role: m.role === "user" ? "user" : "assistant", contenido: m.text })),
+          configuracion: { name: "Yanua", mood: "profesional" },
         });
         setChatMessages(prev => [...prev, { role: "assistant", text: res.respuesta }]);
       } catch {

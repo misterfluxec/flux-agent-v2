@@ -6,13 +6,14 @@ import logging
 from database import obtener_sesion
 from auth import PayloadToken, get_usuario_actual
 from services.timeline.unified_timeline import UnifiedTimelineService
-from core.plan_manager import redis_client
+from fastapi import Request
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/operations", tags=["operations", "timeline"])
 
-timeline_service = UnifiedTimelineService(redis_client)
+def get_timeline_service(request: Request) -> UnifiedTimelineService:
+    return UnifiedTimelineService(request.app.state.redis)
 
 
 @router.get("/{aggregate_type}/{aggregate_id}/timeline")
@@ -22,7 +23,8 @@ async def get_entity_timeline(
     realtime: bool = Query(default=True, description="Incluir eventos de Redis Stream"),
     limit: int = Query(default=50, le=100, description="Número máximo de eventos"),
     usuario: PayloadToken = Depends(get_usuario_actual),
-    db: AsyncSession = Depends(obtener_sesion)
+    db: AsyncSession = Depends(obtener_sesion),
+    timeline_service: UnifiedTimelineService = Depends(get_timeline_service)
 ):
     """
     Línea de tiempo de eventos para una entidad específica.
@@ -48,11 +50,12 @@ async def get_operations_dashboard_feed(
     severity: Optional[str] = Query(default=None, description="Severidad mínima: low|medium|high|critical"),
     limit: int = Query(default=50, le=100),
     usuario: PayloadToken = Depends(get_usuario_actual),
-    db: AsyncSession = Depends(obtener_sesion)
+    db: AsyncSession = Depends(obtener_sesion),
+    timeline_service: UnifiedTimelineService = Depends(get_timeline_service)
 ):
     """
     Feed global de eventos del tenant para el Operations Dashboard.
-    Soporte para filtros por tipo de evento y severidad mínima.
+    Soporte para filtros por type de evento y severidad mínima.
     Este es el endpoint que consume la vista 'Requieren Atención' y 'Todo'.
     """
     try:

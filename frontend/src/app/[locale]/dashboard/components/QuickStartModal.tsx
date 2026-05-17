@@ -57,9 +57,9 @@ export default function QuickStartModal({ isOpen, onClose, onComplete }: QuickSt
           // El agente "Yanua" (u otro) ya existe
           const firstAgent = agents[0];
           setAgentId(firstAgent.id);
-          setName(firstAgent.nombre);
+          setName(firstAgent.name);
           localStorage.setItem('flux_agent_id', firstAgent.id);
-          localStorage.setItem('flux_agent_nombre', firstAgent.nombre);
+          localStorage.setItem('flux_agent_nombre', firstAgent.name);
           
           // Saltamos directamente a la fase de Conocimiento (Paso 3)
           setStep(3);
@@ -77,7 +77,7 @@ export default function QuickStartModal({ isOpen, onClose, onComplete }: QuickSt
 
   const handleNext = async () => {
     if (step === 1 && !name) {
-      toast.error('Por favor, ingresa un nombre para tu agente');
+      toast.error('Por favor, ingresa un name para tu agente');
       return;
     }
 
@@ -85,19 +85,19 @@ export default function QuickStartModal({ isOpen, onClose, onComplete }: QuickSt
       setLoading(true);
       try {
         const payload = {
-          nombre: name,
+          name: name,
           area: industry || 'ventas',
-          tipo_negocio: industry,
-          humor: tone,
-          tono: tone,
-          genero: 'femenino',
-          personalidad: `Asistente de ventas ${industry ? `de ${industry}` : 'profesional'}`,
-          modelo: 'qwen2.5:3b',
-          temperatura: 0.7,
+          business_type: industry,
+          mood: tone,
+          tone: tone,
+          gender: 'femenino',
+          personality: `Asistente de ventas ${industry ? `de ${industry}` : 'profesional'}`,
+          model: 'qwen2.5:3b',
+          temperature: 0.7,
           max_tokens: 512,
-          canales: ['web_chat'],
-          script_ventas: {
-            rol_agente: { tipo: role, area: industry }
+          channels: ['web_chat'],
+          sales_script: {
+            rol_agente: { type: role, area: industry }
           }
         };
         const result = await createAgent(payload);
@@ -194,8 +194,8 @@ export default function QuickStartModal({ isOpen, onClose, onComplete }: QuickSt
         session_id: 'test-session',
         mensaje: testMessage,
         agent_id: agentId,
-        historial: chatHistory.map(m => ({ rol: m.role === 'user' ? 'user' : 'assistant', contenido: m.content })),
-        configuracion: { nombre: name, humor: tone, tipo_negocio: industry }
+        historial: chatHistory.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', contenido: m.content })),
+        configuracion: { name: name, mood: tone, business_type: industry }
       });
       
       setChatHistory(prev => [...prev, { role: 'assistant', content: response.respuesta }]);
@@ -262,7 +262,7 @@ export default function QuickStartModal({ isOpen, onClose, onComplete }: QuickSt
             <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
               <div className="text-center space-y-2">
                 <h3 className="text-2xl font-bold text-white">Identidad Visual</h3>
-                <p className="text-slate-400 text-sm">Dale un rostro y un nombre a tu asistente.</p>
+                <p className="text-slate-400 text-sm">Dale un rostro y un name a tu asistente.</p>
               </div>
               
               <div className="flex flex-col items-center gap-6">

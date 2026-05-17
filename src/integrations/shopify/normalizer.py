@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Dict, Any
-from src.integrations.canonical import CanonicalOrder
+from integrations.canonical import CanonicalOrder
 
 class ShopifyNormalizer:
     """

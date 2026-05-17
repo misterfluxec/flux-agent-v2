@@ -13,8 +13,9 @@ from datetime import datetime
 
 from core.queue.broker import get_queue_config
 from services.whatsapp_sender import enviar_whatsapp_async
-from services.voice_pipeline_service import procesar_audio_pipeline
-from services.analytics import actualizar_analytics_async
+# from services.voice_pipeline_service import procesar_audio_pipeline
+# from services.analytics import actualizar_analytics_async
+
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,6 @@ logger = logging.getLogger(__name__)
 @dramatiq.actor(
     queue_name="whatsapp",
     max_retries=3,
-    retry_delay=30,
     time_limit=300  # 5 minutos timeout
 )
 def enviar_whatsapp_task(
@@ -68,7 +68,6 @@ def enviar_whatsapp_task(
 @dramatiq.actor(
     queue_name="whatsapp",
     max_retries=2,
-    retry_delay=60,
     time_limit=180
 )
 def procesar_webhook_whatsapp_task(
@@ -111,7 +110,6 @@ def procesar_webhook_whatsapp_task(
 @dramatiq.actor(
     queue_name="voice",
     max_retries=2,
-    retry_delay=60,
     time_limit=600  # 10 minutos para procesamiento de audio
 )
 def procesar_audio_task(
@@ -150,7 +148,6 @@ def procesar_audio_task(
 @dramatiq.actor(
     queue_name="voice",
     max_retries=1,
-    retry_delay=120,
     time_limit=300
 )
 def generar_respuesta_voz_task(
@@ -194,7 +191,6 @@ def generar_respuesta_voz_task(
 @dramatiq.actor(
     queue_name="analytics",
     max_retries=1,
-    retry_delay=300,  # 5 minutos
     time_limit=120
 )
 def actualizar_analytics_task(
@@ -236,7 +232,6 @@ def actualizar_analytics_task(
 @dramatiq.actor(
     queue_name="analytics",
     max_retries=1,
-    retry_delay=600,  # 10 minutos
     time_limit=1800  # 30 minutos
 )
 def limpiar_cache_task(tenant_id: Optional[str] = None):
@@ -266,7 +261,6 @@ def limpiar_cache_task(tenant_id: Optional[str] = None):
 @dramatiq.actor(
     queue_name="analytics",
     max_retries=1,
-    retry_delay=3600,  # 1 hora
     time_limit=3600  # 1 hora
 )
 def generar_reporte_diario_task(tenant_id: str):
@@ -300,7 +294,6 @@ def generar_reporte_diario_task(tenant_id: str):
 @dramatiq.actor(
     queue_name="default",
     max_retries=3,
-    retry_delay=60,
     time_limit=300
 )
 def sincronizar_oauth_task(
@@ -350,7 +343,7 @@ def enqueue_task(task_func, *args, **kwargs):
         raise
 
 def get_task_status(message_id: str) -> Dict[str, Any]:
-    """Obtiene estado de tarea (si el broker lo soporta)"""
+    """Obtiene status de tarea (si el broker lo soporta)"""
     try:
         broker = get_broker()
         # Implementar según broker específico
@@ -360,7 +353,7 @@ def get_task_status(message_id: str) -> Dict[str, Any]:
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
-        logger.error(f"Error obteniendo estado de tarea {message_id}: {e}")
+        logger.error(f"Error obteniendo status de tarea {message_id}: {e}")
         return {
             "message_id": message_id,
             "status": "unknown",

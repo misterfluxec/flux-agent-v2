@@ -232,7 +232,7 @@ class AsyncTimeout:
             logger.error(f"Error in timeout callback: {e}")
     
     def get_status(self) -> Dict[str, Any]:
-        """Retorna estado actual y métricas"""
+        """Retorna status actual y métricas"""
         return {
             "name": self.config.name,
             "config": {
@@ -410,7 +410,7 @@ def create_timeout(service_name: str, **overrides) -> AsyncTimeout:
 
 # Endpoint para monitoreo de timeouts
 async def get_all_timeouts_status() -> Dict[str, Any]:
-    """Retorna estado de todos los timeouts"""
+    """Retorna status de todos los timeouts"""
     status = {}
     for name, timeout in _timeouts.items():
         status[name] = timeout.get_status()
@@ -450,7 +450,7 @@ class TimeoutManager:
         return False
     
     def get_timeout(self, name: str) -> Optional[AsyncTimeout]:
-        """Obtiene un timeout por nombre"""
+        """Obtiene un timeout por name"""
         return self.timeouts.get(name)
     
     def list_timeouts(self) -> list[str]:

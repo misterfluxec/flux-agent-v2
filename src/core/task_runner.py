@@ -34,7 +34,7 @@ class TaskRunner:
                 return await celery_task.delay(*args, task_id=task_id, **kwargs)
             else:
                 # Ruta BackgroundTasks (MVP)
-                # Guardar estado inicial en Redis
+                # Guardar status inicial en Redis
                 self.update_progress(task_id, 0, "pending", "Iniciando tarea...", "pending")
                 # Ejecutar en background nativo
                 return await task_func(*args, task_id=task_id, **kwargs)

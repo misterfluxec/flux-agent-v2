@@ -32,7 +32,7 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
     tags: ['cliente-nuevo', 'alto-interes'],
     messages: [
       { id: 'm1', role: 'user', content: 'Hola, busco zapatillas para correr', timestamp: '2026-05-05T10:25:00Z' },
-      { id: 'm2', role: 'agent', content: '¡Hola María! Claro, tenemos el modelo AirZoom. ¿Qué talla usas?', timestamp: '2026-05-05T10:26:00Z' },
+      { id: 'm2', role: 'agent', content: '¡Hola María! Claro, tenemos el model AirZoom. ¿Qué talla usas?', timestamp: '2026-05-05T10:26:00Z' },
       { id: 'm3', role: 'user', content: '¿Tienen stock de las zapatillas Nike?', timestamp: '2026-05-05T10:30:00Z' }
     ]
   },

@@ -38,7 +38,7 @@ CAUSATION_HEADER = "X-Causation-ID"
 # =============================================================================
 
 def get_correlation_id() -> Optional[UUID]:
-    """Retorna el correlation_id activo en este contexto async."""
+    """Retorna el correlation_id is_active en este contexto async."""
     val = _correlation_id_var.get()
     if val:
         try:
@@ -49,7 +49,7 @@ def get_correlation_id() -> Optional[UUID]:
 
 
 def get_causation_id() -> Optional[UUID]:
-    """Retorna el causation_id activo (ID del evento que causó este)."""
+    """Retorna el causation_id is_active (ID del evento que causó este)."""
     val = _causation_id_var.get()
     if val:
         try:

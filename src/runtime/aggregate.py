@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 class AggregateRoot:
     """
     Base class for Domain Aggregates.
-    Reconstruye el estado del dominio reproduciendo los eventos almacenados.
+    Reconstruye el status del dominio reproduciendo los eventos almacenados.
     """
     
     def __init__(self, aggregate_id: str):
@@ -17,7 +17,7 @@ class AggregateRoot:
 
     def apply(self, event: StoredEvent):
         """
-        Aplica un evento al estado actual y actualiza la versión.
+        Aplica un evento al status actual y actualiza la versión.
         Busca un método `_apply_{event_type}` en la subclase.
         """
         method_name = f"_apply_{event.event_type.lower()}"
@@ -31,7 +31,7 @@ class AggregateRoot:
         self.version = event.version
 
     def load_from_events(self, events: List[StoredEvent]):
-        """Reconstruye el estado aplicando una historia de eventos secuencialmente."""
+        """Reconstruye el status aplicando una historia de eventos secuencialmente."""
         for event in events:
             self.apply(event)
 

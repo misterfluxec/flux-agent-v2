@@ -192,7 +192,7 @@ class PolicyEngine:
         final_decision = "allowed"
         applied_mods = {}
         
-        # 2. Evaluar en orden de prioridad
+        # 2. Evaluar en sort_order de priority
         for rule in sorted(rules, key=lambda r: r.priority, reverse=True):
             if all(cond.evaluate(request.context) for cond in rule.conditions):
                 result = PolicyEvaluationResult(

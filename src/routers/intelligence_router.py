@@ -42,7 +42,7 @@ async def create_connection(payload: dict, db: AsyncSession = Depends(get_db_ses
 
 @router.get("/connections")
 async def list_connections(db: AsyncSession = Depends(get_db_session), tenant_id: str = Depends(require_tenant_id)):
-    """Lista todas las conexiones con su estado de salud"""
+    """Lista todas las conexiones con su status de salud"""
     query = text("""
         SELECT id, connection_type, name, status, sync_frequency, 
                last_sync_at, next_sync_at, total_rows_synced, last_error_message

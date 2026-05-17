@@ -71,7 +71,7 @@ async def payment_webhook(
     if not order_id:
         return {"status": "processed", "result": "missing_order_id"}
 
-    # Obtener orden para idempotencia
+    # Obtener sort_order para idempotencia
     query = text("SELECT id, tenant_id, payment_status, total_amount, payment_method FROM orders WHERE id = :order_id")
     order_row = (await db.execute(query, {"order_id": order_id})).mappings().first()
     
@@ -81,7 +81,7 @@ async def payment_webhook(
     if order_row["payment_status"] == status:
         return {"status": "processed", "result": "idempotent"}
         
-    # Update orden
+    # Update sort_order
     await db.execute(text("""
         UPDATE orders 
         SET payment_status = :status, payment_id = :payment_id, payment_method = :payment_method, status = :new_status

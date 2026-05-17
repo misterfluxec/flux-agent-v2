@@ -1,6 +1,6 @@
 from typing import Optional
-from src.runtime.tool_intent import ToolIntent
-from src.runtime.tool_contract import ToolContract
+from runtime.tool_intent import ToolIntent
+from runtime.tool_contract import ToolContract
 
 class PolicyGuardException(Exception):
     pass

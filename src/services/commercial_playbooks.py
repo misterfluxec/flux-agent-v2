@@ -53,7 +53,7 @@ class CommercialPlaybookService:
     Arquitectura de 3 niveles:
       1. System Template  → Templates globales por industria (código)
       2. Tenant Playbook  → Personalización del negocio (DB, con config_hash)
-      3. Agent Overrides  → Micro-personalidad individual (whitelist estricta)
+      3. Agent Overrides  → Micro-personality individual (whitelist estricta)
 
     El orquestador NO recibe el playbook completo.
     En su lugar, usa get_contextual_strategy() para inyectar SOLO lo relevante
@@ -124,7 +124,7 @@ class CommercialPlaybookService:
                 "closing_style": "consultative",
                 "objection_rules": {
                     "scope": "Define entregables claros + fases aprobables",
-                    "timeline": "Ofrece prioridad con recargo o fase inicial gratuita",
+                    "timeline": "Ofrece priority con recargo o fase inicial gratuita",
                     "price": "Presenta ROI proyectado + testimonios de clientes"
                 },
                 "urgency_triggers": ["deadline específico", "presupuesto limitado", "necesidad inmediata"]
@@ -142,7 +142,7 @@ class CommercialPlaybookService:
         db: AsyncSession,
         use_system_template: bool = True
     ) -> Optional[Dict[str, Any]]:
-        """Obtiene playbook activo del tenant o lo crea desde template del sistema."""
+        """Obtiene playbook is_active del tenant o lo crea desde template del sistema."""
 
         result = await db.execute(text("""
             SELECT id, industry, version, name, personality, commercial_strategy,
@@ -278,7 +278,7 @@ class CommercialPlaybookService:
         El orquestador inyecta esto al LLM, NO el playbook completo.
 
         Situaciones soportadas:
-          - "price_objection"     → Regla de objeción de precio
+          - "price_objection"     → Regla de objeción de price
           - "competitor_objection"→ Regla de objeción de competidor
           - "urgency"             → Triggers de urgencia
           - "closing"             → Estilo de cierre

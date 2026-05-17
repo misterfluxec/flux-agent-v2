@@ -26,7 +26,7 @@ interface PendingChanges {
 
 /**
  * Contexto compartido para edición de agente
- * Expone estado + acciones para todos los componentes hijos
+ * Expone status + acciones para todos los componentes hijos
  */
 interface AgentEditContextValue {
   // Estado
@@ -55,7 +55,7 @@ const AgentEditContext = createContext<AgentEditContextValue | undefined>(undefi
 
 /**
  * Provider que envuelve la página /dashboard/agent
- * Maneja estado compartido entre tabs + lógica de guardado atómico
+ * Maneja status compartido entre tabs + lógica de guardado atómico
  * 
  * @example
  * <AgentEditProvider initialAgentId="uuid">
@@ -85,7 +85,7 @@ export function AgentEditProvider({
       queryClient.invalidateQueries({ queryKey: ["agent", variables.agentId] });
       
       // Invalidar analytics si los cambios pueden afectar métricas
-      const metricsAffectedFields = ["agent_type", "system_prompt", "script_ventas", "modelo", "canales", "temperatura"];
+      const metricsAffectedFields = ["agent_type", "system_prompt", "sales_script", "model", "channels", "temperature"];
       const hasMetricsImpact = Object.keys(variables.changes).some(field => 
         metricsAffectedFields.includes(field)
       );
@@ -93,7 +93,7 @@ export function AgentEditProvider({
         queryClient.invalidateQueries({ queryKey: ["analytics"] });
       }
       
-      // Actualizar estado local
+      // Actualizar status local
       setPendingChanges({});
       setLastSavedAt(new Date());
       setSaveError(null);
@@ -124,7 +124,7 @@ export function AgentEditProvider({
 
   /**
    * Registrar un cambio individual (usado por inputs en tabs)
-   * Ej: registerField('nombre', 'Nuevo Nombre')
+   * Ej: registerField('name', 'Nuevo Nombre')
    */
   const registerField = useCallback(<K extends keyof AgentUpdate>(
     field: K,
@@ -138,7 +138,7 @@ export function AgentEditProvider({
 
   /**
    * Registrar múltiples cambios a la vez (usado por formularios complejos)
-   * Ej: registerBulkChanges({ nombre: 'X', tono: 'profesional' })
+   * Ej: registerBulkChanges({ name: 'X', tone: 'profesional' })
    */
   const registerBulkChanges = useCallback((changes: Partial<AgentUpdate>) => {
     setPendingChanges(prev => ({
@@ -235,8 +235,8 @@ export function AgentEditProvider({
  *   
  *   return (
  *     <Input 
- *       value={agent.nombre} 
- *       onChange={(e) => registerField('nombre', e.target.value)}
+ *       value={agent.name} 
+ *       onChange={(e) => registerField('name', e.target.value)}
  *     />
  *   );
  * }

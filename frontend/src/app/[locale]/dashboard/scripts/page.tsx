@@ -77,7 +77,7 @@ export default function SalesScript() {
         ];
 
         const defaultPhases: SalesPhase[] = [
-          { id: 'p1', name: 'Saludo y Presentación', description: 'Primera impresión con el cliente', objective: 'Conocer las necesidades', keyPhrases: ['¡Hola {nombre}! Soy {nombre_agente}', 'Gracias por escribirnos. ¿En qué te podemos ayudar hoy?'], enabled: true },
+          { id: 'p1', name: 'Saludo y Presentación', description: 'Primera impresión con el cliente', objective: 'Conocer las necesidades', keyPhrases: ['¡Hola {name}! Soy {nombre_agente}', 'Gracias por escribirnos. ¿En qué te podemos ayudar hoy?'], enabled: true },
           { id: 'p2', name: 'Descubrimiento', description: 'Identificar necesidades del cliente', objective: 'Generar interés', keyPhrases: ['Para poder ayudarte mejor, ¿podrías indicarme...', '¿Cuál es tu mayor desafío actual...?'], enabled: true },
           { id: 'p3', name: 'Presentación', description: 'Mostrar la solución más adecuada', objective: 'Dar seguridad', keyPhrases: ['Basándome en lo que necesitas...', 'Nuestros servicios están diseñados para...'], enabled: true },
           { id: 'p4', name: 'Manejo de Objeciones', description: 'Resolver dudas y preocupaciones', objective: 'Cerrar el trato', keyPhrases: ['Entiendo tu preocupación sobre...', 'El sistema es modular y podemos adaptarlo...'], enabled: true },
@@ -85,9 +85,9 @@ export default function SalesScript() {
         ];
 
         const defaultScripts = [
-          { id: 's1', name: 'Respuesta a precio', trigger: 'pregunta_precio', enabled: true, content: 'El precio varía según el plan seleccionado. ¿Podrías contarme primero qué necesidades tienes para poder darte una cotización precisa?', uses: 234 },
+          { id: 's1', name: 'Respuesta a price', trigger: 'pregunta_precio', enabled: true, content: 'El price varía según el plan seleccionado. ¿Podrías contarme primero qué necesidades tienes para poder darte una cotización precisa?', uses: 234 },
           { id: 's2', name: 'Respuesta a horario', trigger: 'pregunta_horario', enabled: true, content: 'Estamos disponibles de Lunes a Viernes de 9AM a 6PM. ¿Te gustaría que agendemos una llamada en algún horario específico?', uses: 156 },
-          { id: 's3', name: 'Leads fríos', trigger: 'reengagement', enabled: false, content: 'Hola {nombre}, ¿cómo estás? Quería saber si aún estás interesado/a en {producto}. Tenemos una oferta especial por tiempo limitado.', uses: 89 },
+          { id: 's3', name: 'Leads fríos', trigger: 'reengagement', enabled: false, content: 'Hola {name}, ¿cómo estás? Quería saber si aún estás interesado/a en {producto}. Tenemos una oferta especial por tiempo limitado.', uses: 89 },
           { id: 's4', name: 'Primer Contacto', trigger: 'first_contact', enabled: true, content: '¡Hola! Soy tu asesora virtual. Estoy aquí para ayudarte. ¿En qué puedo servirte hoy?', uses: 0 },
           { id: 's5', name: 'Cliente Retornando', trigger: 'returning', enabled: true, content: '¡Qué bueno verte de nuevo! ¿En qué te puedo ayudar esta vez?', uses: 0 },
           { id: 's6', name: 'Fuera de Horario', trigger: 'after_hours', enabled: true, content: '¡Hola! Actualmente estamos fuera de horario de atención, pero puedes dejar tu mensaje y te responderemos mañana a primera hora.', uses: 0 }
@@ -98,7 +98,7 @@ export default function SalesScript() {
         if (agents && agents.length > 0) {
           const firstAgent = agents[0];
           setAgentId(firstAgent.id);
-          const scriptData = firstAgent.script_ventas || {};
+          const scriptData = firstAgent.sales_script || {};
           
           setGoldenRules(Array.isArray(scriptData.reglas) ? scriptData.reglas : defaultRules);
           setSalesPhases(Array.isArray(scriptData.fases) ? scriptData.fases : defaultPhases);
@@ -127,7 +127,7 @@ export default function SalesScript() {
     setIsSaving(true);
     try {
       const payload = {
-        script_ventas: {
+        sales_script: {
           fases: salesPhases,
           reglas: goldenRules,
           scripts: customScripts,
@@ -143,7 +143,7 @@ export default function SalesScript() {
       if (agentId) {
         await updateAgent(agentId, payload);
       } else {
-        const result = await createAgent({ nombre: "Nuevo Agente", ...payload });
+        const result = await createAgent({ name: "Nuevo Agente", ...payload });
         setAgentId(result.agente_id);
         localStorage.setItem("flux_agent_id", result.agente_id);
       }
@@ -741,11 +741,11 @@ export default function SalesScript() {
               </li>
               <li className="flex items-start gap-3 text-sm text-white/80 font-light">
                 <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                <span>Incluye el nombre del cliente para personalizar</span>
+                <span>Incluye el name del cliente para personalizar</span>
               </li>
               <li className="flex items-start gap-3 text-sm text-white/80 font-light">
                 <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                <span>Las reglas de alta prioridad deben ser claras</span>
+                <span>Las reglas de alta priority deben ser claras</span>
               </li>
               <li className="flex items-start gap-3 text-sm text-white/80 font-light">
                 <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />

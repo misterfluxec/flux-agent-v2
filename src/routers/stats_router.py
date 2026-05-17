@@ -71,11 +71,11 @@ async def get_stats_overview(
     # 4. Actividad Reciente (Últimas 5 conversaciones)
     actividad_query = """
         SELECT 
-            c.estado,
+            c.status,
             c.canal,
             c.iniciada_en,
             c.lead_externo_id,
-            a.nombre as agent_name
+            a.name as agent_name
         FROM conversaciones c
         LEFT JOIN agents a ON c.agent_id = a.id
         WHERE c.tenant_id = :tid
@@ -87,8 +87,8 @@ async def get_stats_overview(
     for row in act_result.fetchall():
         # Formatear el tiempo relativo o dejarlo como string ISO
         # Para simplificar enviaremos la fecha como string y un mensaje de acción
-        action = "Nueva conversación" if row.estado == "activa" else "Conversación finalizada" if row.estado == "cerrada" else "Conversación transferida"
-        status = "success" if row.estado in ["activa", "cerrada"] else "info"
+        action = "Nueva conversación" if row.status == "activa" else "Conversación finalizada" if row.status == "cerrada" else "Conversación transferida"
+        status = "success" if row.status in ["activa", "cerrada"] else "info"
         
         actividad_reciente.append({
             "id": str(row.iniciada_en.timestamp()),
@@ -127,7 +127,7 @@ async def get_ingestion_stats(
     row_chunks = res_chunks.fetchone()
     
     # Total de productos activos
-    query_prods = "SELECT COUNT(*) as cnt FROM productos WHERE tenant_id = :tid AND estado = 'activo'"
+    query_prods = "SELECT COUNT(*) as cnt FROM productos WHERE tenant_id = :tid AND status = 'is_active'"
     res_prods = await db.execute(text(query_prods), {"tid": str(tenant_id)})
     row_prods = res_prods.fetchone()
     

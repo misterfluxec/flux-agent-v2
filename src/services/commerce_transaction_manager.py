@@ -2,7 +2,7 @@ import json
 from typing import Any, Dict, Optional, Callable
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-from contextlib import contextmanager
+from contextlib import asynccontextmanager
 import logging
 
 logger = logging.getLogger(__name__)
@@ -20,14 +20,14 @@ class CommerceTransactionManager:
         self.db = db
         self.tenant_id = tenant_id
 
-    def _write_outbox(self, event_type: str, aggregate_type: str, aggregate_id: str, payload: Dict[str, Any]):
+    async def _write_outbox(self, event_type: str, aggregate_type: str, aggregate_id: str, payload: Dict[str, Any]):
         """Escribe el evento en la tabla Outbox dentro de la misma transacción DB"""
         query = text("""
             INSERT INTO event_outbox 
             (tenant_id, event_type, aggregate_type, aggregate_id, payload, status)
             VALUES (:tenant_id, :event_type, :aggregate_type, :aggregate_id, :payload, 'pending')
         """)
-        self.db.execute(query, {
+        await self.db.execute(query, {
             "tenant_id": self.tenant_id,
             "event_type": event_type,
             "aggregate_type": aggregate_type,
@@ -35,14 +35,14 @@ class CommerceTransactionManager:
             "payload": json.dumps(payload)
         })
 
-    def _write_audit(self, action: str, actor_type: str, actor_id: str, target_resource: str, target_id: str, changes: Dict[str, Any]):
+    async def _write_audit(self, action: str, actor_type: str, actor_id: str, target_resource: str, target_id: str, changes: Dict[str, Any]):
         """Escribe el Audit Log operacional en la misma transacción"""
         query = text("""
             INSERT INTO operational_audit_log 
             (tenant_id, action, actor_type, actor_id, target_resource, target_id, changes)
             VALUES (:tenant_id, :action, :actor_type, :actor_id, :target_resource, :target_id, :changes)
         """)
-        self.db.execute(query, {
+        await self.db.execute(query, {
             "tenant_id": self.tenant_id,
             "action": action,
             "actor_type": actor_type,
@@ -52,8 +52,8 @@ class CommerceTransactionManager:
             "changes": json.dumps(changes)
         })
 
-    @contextmanager
-    def atomic_transaction(
+    @asynccontextmanager
+    async def atomic_transaction(
         self,
         action_name: str,
         actor_type: str,
@@ -64,7 +64,7 @@ class CommerceTransactionManager:
         """
         Context manager que envuelve una operación comercial crítica.
         Uso:
-            with manager.atomic_transaction(action="order.created", ...) as tx:
+            async with manager.atomic_transaction(action="order.created", ...) as tx:
                 # 1. update order
                 # 2. lock inventory
                 tx.add_event("order.created", "order", order.id, order_data)
@@ -90,9 +90,9 @@ class CommerceTransactionManager:
 
             # Si el bloque de negocio terminó sin excepciones, escribimos OUTBOX y AUDIT
             for evt in tx_context.events:
-                self._write_outbox(evt[0], evt[1], evt[2], evt[3])
+                await self._write_outbox(evt[0], evt[1], evt[2], evt[3])
             
-            self._write_audit(
+            await self._write_audit(
                 action=action_name,
                 actor_type=actor_type,
                 actor_id=actor_id,
@@ -102,11 +102,11 @@ class CommerceTransactionManager:
             )
 
             # Si todo está bien, COMMIT de DB (Incluye Negocio + Outbox + Audit)
-            self.db.commit()
+            await self.db.commit()
             logger.info(f"Commerce Transaction '{action_name}' committed successfully for tenant {self.tenant_id}")
 
         except Exception as e:
             # Si ocurre CUALQUIER error de negocio o de DB, ROLLBACK total.
-            self.db.rollback()
+            await self.db.rollback()
             logger.error(f"Commerce Transaction '{action_name}' FAILED. Rollback executed. Error: {str(e)}")
             raise e

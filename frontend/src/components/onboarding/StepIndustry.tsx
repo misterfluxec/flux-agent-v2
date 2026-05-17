@@ -30,7 +30,7 @@ export function StepIndustry({ data, onChange, onNext, onBack }: Props) {
           Selecciona tu <span className="text-primary">Industria</span>
         </h2>
         <p className="text-muted-foreground text-xs max-w-sm mx-auto">
-          Configuraremos la IA de Yanua automáticamente según tu modelo de negocio.
+          Configuraremos la IA de Yanua automáticamente según tu model de negocio.
         </p>
       </div>
 

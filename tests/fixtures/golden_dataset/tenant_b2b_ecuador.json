@@ -1,0 +1,37 @@
+{
+  "tenant_id": "b2b-logistica-ec",
+  "name": "B2B Logística Ecuador",
+  "country": "EC",
+  "currency": "USD",
+  "tax_id": "1790011223001",
+  "business_type": "b2b_logistics",
+  "customers": [
+    {
+      "id": "corp_001",
+      "name": "Corporación Favorita",
+      "tax_id": "1790010020001",
+      "phone": "+59322446688",
+      "email": "logistica@favorita.com"
+    }
+  ],
+  "orders": [
+    {
+      "id": "ord_b2b_505",
+      "customer_id": "corp_001",
+      "total": 12500.50,
+      "status": "pending_delivery",
+      "items": [
+        { "product_id": "skus_pallet_01", "name": "Pallet Insumos A", "quantity": 10, "price": 1250.05 }
+      ],
+      "created_at": "2026-05-12T09:00:00Z"
+    }
+  ],
+  "workflows": [
+    {
+      "id": "wf_b2b_billing",
+      "name": "Facturación Masiva SRI",
+      "active": true,
+      "steps": ["generate_xml", "sign_xml", "send_sri"]
+    }
+  ]
+}

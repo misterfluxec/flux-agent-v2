@@ -17,7 +17,7 @@ class EventBus:
     Event Bus basado en Redis Streams.
     
     - Publica eventos a streams por tenant
-    - Permite suscripción por tipo de evento
+    - Permite suscripción por type de evento
     - Soporta replay desde un timestamp o ID
     - Dead Letter Queue para eventos fallidos
     """

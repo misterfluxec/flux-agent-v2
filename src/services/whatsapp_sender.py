@@ -17,9 +17,9 @@ EVOLUTION_API_URL = config.evolution_api_url
 API_KEY = config.evolution_api_key
 
 
-async def send_presence_recording(instance_name: str, phone_number: str, delay: int = 1200):
+async def send_presence(instance_name: str, phone_number: str, delay: int = 12000, presence: str = "composing"):
     """
-    Activa presencia 'recording' - muestra ondas de voz al cliente.
+    Activa presencia (composing/recording) para mostrar al cliente que estamos procesando.
     """
     if not API_KEY:
         logger.warning("EVOLUTION_API_KEY no configurado")
@@ -29,7 +29,7 @@ async def send_presence_recording(instance_name: str, phone_number: str, delay: 
     payload = {
         "number": phone_number.replace("+", ""),
         "delay": delay,
-        "presence": "recording"
+        "presence": presence
     }
     
     try:
@@ -40,7 +40,7 @@ async def send_presence_recording(instance_name: str, phone_number: str, delay: 
                 headers=headers
             )
             resp.raise_for_status()
-            logger.info(f"Presence 'recording' sent to {phone_number}")
+            logger.info(f"Presence '{presence}' sent to {phone_number}")
     except Exception as e:
         logger.warning(f"Error sending presence: {e}")
 
@@ -136,7 +136,7 @@ async def send_tts_with_fallback(
     # 1. Si hay audio, intentar enviar con efecto recording
     if audio_base64:
         # Enviar presencia "recording" primero
-        await send_presence_recording(instance_name, phone_number)
+        await send_presence(instance_name, phone_number, delay=3000, presence="recording")
         
         # Enviar audio
         success = await send_voice_note_with_streaming_effect(

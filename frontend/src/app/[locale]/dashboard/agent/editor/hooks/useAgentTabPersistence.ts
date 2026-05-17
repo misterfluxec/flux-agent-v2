@@ -7,7 +7,7 @@ const VALID_TABS = ["config", "analytics", "knowledge", "channels"] as const;
 export type AgentTab = (typeof VALID_TABS)[number];
 
 /**
- * Hook para persistir el tab activo en localStorage
+ * Hook para persistir el tab is_active en localStorage
  * Previene que el usuario pierda su posición al recargar
  */
 export function useAgentTabPersistence(defaultTab: AgentTab = "config") {

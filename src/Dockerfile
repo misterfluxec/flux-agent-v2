@@ -43,6 +43,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copiar código fuente
 COPY . /app
+RUN ln -s /app /app/src
 
 # Crear carpeta de uploads y asignar permisos
 RUN mkdir -p /app/uploads && chown -R fluxuser:fluxuser /app

@@ -41,12 +41,12 @@ class AgentService:
             await self._validate_agent_creation(agent_data, tenant_id)
             
             # 2. Generar prompts y scripts
-            system_prompt, script_ventas = AgentPromptFactory.create_system_prompt(
+            system_prompt, sales_script = AgentPromptFactory.create_system_prompt(
                 agent_type=agent_data.agent_type,
-                personality=agent_data.personalidad,
-                instructions=agent_data.instrucciones,
+                personality=agent_data.personality,
+                instructions=agent_data.instructions,
                 specialty=agent_data.specialty,
-                script_ventas=agent_data.script_ventas
+                sales_script=agent_data.sales_script
             )
             
             # 3. Crear entidad agente
@@ -54,7 +54,7 @@ class AgentService:
                 agent_data=agent_data,
                 tenant_id=tenant_id,
                 system_prompt=system_prompt,
-                script_ventas=script_ventas
+                sales_script=sales_script
             )
             
             # 4. Persistir en base de datos
@@ -65,7 +65,7 @@ class AgentService:
                 agent_id=agent_id,
                 agent_data=agent_data,
                 system_prompt=system_prompt,
-                script_ventas=script_ventas
+                sales_script=sales_script
             )
             
         except Exception as e:
@@ -92,13 +92,13 @@ class AgentService:
             # 2. Validar actualización
             await self._validate_agent_update(update_data, existing_agent)
             
-            # 3. Regenerar prompts si cambió tipo o configuración
-            system_prompt, script_ventas = await self._regenerate_prompts_if_needed(
+            # 3. Regenerar prompts si cambió type o configuración
+            system_prompt, sales_script = await self._regenerate_prompts_if_needed(
                 existing_agent, update_data
             )
             
             # 4. Actualizar en BD
-            await self._update_agent_in_db(agent_id, update_data, system_prompt, script_ventas)
+            await self._update_agent_in_db(agent_id, update_data, system_prompt, sales_script)
             
             # 5. Retornar respuesta actualizada
             return await self._get_agent_response(agent_id)
@@ -112,7 +112,7 @@ class AgentService:
         
         Args:
             tenant_id: ID del tenant
-            status: Filtro por estado (opcional)
+            status: Filtro por status (opcional)
             
         Returns:
             List[AgentResponse]: Lista de agentes
@@ -186,11 +186,11 @@ class AgentService:
             return False
     
     async def change_agent_status(self, agent_id: str, new_status: AgentStatus, tenant_id: str) -> bool:
-        """Cambia estado de agente
+        """Cambia status de agente
         
         Args:
             agent_id: ID del agente
-            new_status: Nuevo estado
+            new_status: Nuevo status
             tenant_id: ID del tenant
             
         Returns:
@@ -205,7 +205,7 @@ class AgentService:
             # Validar transición de estados
             await self._validate_status_transition(existing_agent.get('status'), new_status)
             
-            # Actualizar estado
+            # Actualizar status
             await self.db.execute(
                 "UPDATE agents SET status = :status, updated_at = NOW() WHERE id = :agent_id",
                 {"status": new_status.value, "agent_id": agent_id}
@@ -215,7 +215,7 @@ class AgentService:
             return True
             
         except Exception as e:
-            logger.error(f"Error cambiando estado agente {agent_id}: {e}")
+            logger.error(f"Error cambiando status agente {agent_id}: {e}")
             return False
     
     # Métodos privados de validación y persistencia
@@ -232,36 +232,36 @@ class AgentService:
         if current_agents >= max_agents:
             raise ValueError(f"Límite de agentes alcanzado ({max_agents})")
         
-        # Verificar nombre único en tenant
+        # Verificar name único en tenant
         existing = await self.db.execute(
             "SELECT id FROM agents WHERE tenant_id = :tid AND name = :name",
-            {"tid": tenant_id, "name": agent_data.nombre}
+            {"tid": tenant_id, "name": agent_data.name}
         )
         
         if existing.fetchone():
-            raise ValueError(f"Ya existe un agente con nombre '{agent_data.nombre}'")
+            raise ValueError(f"Ya existe un agente con name '{agent_data.name}'")
     
     async def _validate_agent_update(self, update_data: AgentUpdate, existing_agent: Dict[str, Any]):
         """Validaciones para actualización de agente"""
-        if update_data.nombre:
-            # Verificar que nuevo nombre no exista (excluyendo actual)
+        if update_data.name:
+            # Verificar que nuevo name no exista (excluyendo actual)
             existing = await self.db.execute(
                 "SELECT id FROM agents WHERE tenant_id = :tid AND name = :name AND id != :agent_id",
                 {
                     "tid": existing_agent.get('tenant_id'),
-                    "name": update_data.nombre,
+                    "name": update_data.name,
                     "agent_id": existing_agent.get('id')
                 }
             )
             
             if existing.fetchone():
-                raise ValueError(f"Ya existe un agente con nombre '{update_data.nombre}'")
+                raise ValueError(f"Ya existe un agente con name '{update_data.name}'")
     
     async def _validate_status_transition(self, current_status: str, new_status: AgentStatus):
         """Valida que la transición de estados sea válida"""
         # Lógica de validación de transiciones
         invalid_transitions = {
-            AgentStatus.DRAFT: [],  # Puede ir a cualquier estado
+            AgentStatus.DRAFT: [],  # Puede ir a cualquier status
             AgentStatus.TESTING: [AgentStatus.DRAFT],
             AgentStatus.ACTIVE: [AgentStatus.DRAFT],
             AgentStatus.PAUSED: []
@@ -275,16 +275,16 @@ class AgentService:
         await self.db.execute(
             """
             INSERT INTO agents (
-                id, tenant_id, name, area, descripcion, genero, humor, personalidad,
-                idioma, tono, coleccion_rag, tipo_negocio, objetivo, instrucciones,
-                modelo, temperatura, max_tokens, canales, horario_inicio, horario_fin,
-                dias_atencion, mensaje_fuera_horario, script_ventas, agent_type,
+                id, tenant_id, name, area, description, gender, mood, personality,
+                language, tone, rag_collection, business_type, objective, instructions,
+                model, temperature, max_tokens, channels, schedule_start, schedule_end,
+                service_days, off_hours_message, sales_script, agent_type,
                 specialty, system_prompt, status
             ) VALUES (
-                :id, :tenant_id, :name, :area, :descripcion, :genero, :humor, :personalidad,
-                :idioma, :tono, :coleccion_rag, :tipo_negocio, :objetivo, :instrucciones,
-                :modelo, :temperatura, :max_tokens, :canales, :horario_inicio, :horario_fin,
-                :dias_atencion, :mensaje_fuera_horario, :script_ventas, :agent_type,
+                :id, :tenant_id, :name, :area, :description, :gender, :mood, :personality,
+                :language, :tone, :rag_collection, :business_type, :objective, :instructions,
+                :model, :temperature, :max_tokens, :channels, :schedule_start, :schedule_end,
+                :service_days, :off_hours_message, :sales_script, :agent_type,
                 :specialty, :system_prompt, :status
             )
             """,
@@ -329,50 +329,50 @@ class AgentService:
         update_data: AgentUpdate
     ) -> tuple[str, Optional[Dict[str, Any]]]:
         """Regenera prompts si cambió configuración relevante"""
-        # Si cambió tipo, personalidad, instrucciones o especialidad
+        # Si cambió type, personality, instructions o especialidad
         should_regenerate = any([
             update_data.agent_type,
-            update_data.personalidad,
-            update_data.instrucciones,
+            update_data.personality,
+            update_data.instructions,
             update_data.specialty,
-            update_data.script_ventas
+            update_data.sales_script
         ])
         
         if should_regenerate:
             # Combinar datos existentes con actualizaciones
             combined_data = {
                 "agent_type": update_data.agent_type or existing_agent.get('agent_type'),
-                "personality": update_data.personalidad or existing_agent.get('personalidad'),
-                "instructions": update_data.instrucciones or existing_agent.get('instrucciones'),
+                "personality": update_data.personality or existing_agent.get('personality'),
+                "instructions": update_data.instructions or existing_agent.get('instructions'),
                 "specialty": update_data.specialty or existing_agent.get('specialty'),
-                "script_ventas": update_data.script_ventas or existing_agent.get('script_ventas')
+                "sales_script": update_data.sales_script or existing_agent.get('sales_script')
             }
             
             return AgentPromptFactory.create_system_prompt(**combined_data)
         
         # Retornar prompts existentes
-        return existing_agent.get('system_prompt'), existing_agent.get('script_ventas')
+        return existing_agent.get('system_prompt'), existing_agent.get('sales_script')
     
     async def _update_agent_in_db(
         self, 
         agent_id: str, 
         update_data: AgentUpdate, 
         system_prompt: str, 
-        script_ventas: Optional[Dict[str, Any]]
+        sales_script: Optional[Dict[str, Any]]
     ):
         """Actualiza agente en base de datos"""
         update_fields = []
         params = {"agent_id": agent_id, "system_prompt": system_prompt}
         
         # Construir campos dinámicamente
-        if update_data.nombre:
-            update_fields.append("name = :nombre")
-            params["nombre"] = update_data.nombre
+        if update_data.name:
+            update_fields.append("name = :name")
+            params["name"] = update_data.name
         # ... agregar otros campos
         
-        if script_ventas:
-            update_fields.append("script_ventas = :script_ventas")
-            params["script_ventas"] = script_ventas
+        if sales_script:
+            update_fields.append("sales_script = :sales_script")
+            params["sales_script"] = sales_script
         
         update_fields.append("updated_at = NOW()")
         

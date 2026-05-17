@@ -16,6 +16,7 @@ import logging
 import asyncio
 import time
 from typing import Optional, List, AsyncGenerator
+import aiofiles
 from config import obtener_config
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ config = obtener_config()
 
 class CircuitBreaker:
     """
-    Circuit Breaker para APIs externas con estado persistente en Redis.
+    Circuit Breaker para APIs externas con status persistente en Redis.
     Estados: CLOSED (normal), OPEN (bloqueado), HALF_OPEN (probando)
     """
     
@@ -69,7 +70,7 @@ class CircuitBreaker:
                         return False
                 return True
             
-            return state == "HALF_OPEN"  # En HALF_OPEN también permitir intentos
+            return state == "HALF_OPEN"  # En HALF_OPEN también permitir attempts
             
         except Exception as e:
             logger.warning(f"Error verificando circuit breaker: {e}")
@@ -124,7 +125,7 @@ class CircuitBreaker:
                 logger.warning(f"Intento {attempt + 1}/{self.max_retries} falló: {e}. Reintentando en {delay}s...")
                 await asyncio.sleep(delay)
         
-        # Si todos los intentos fallan
+        # Si todos los attempts fallan
         await self.record_failure()
         raise last_error or Exception("TTS falló después de reintentos")
 
@@ -269,6 +270,27 @@ class EdgeTTSCapability:
                 audio_chunks.append(chunk["data"])
         
         return b"".join(audio_chunks)
+
+    async def _call_kokoro_tts(self, text: str) -> bytes:
+        """Llamar a Kokoro TTS local (OpenAI compatible)."""
+        import httpx
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    "http://fluxagent-kokoro:8880/v1/audio/speech",
+                    json={
+                        "model": "kokoro",
+                        "input": text,
+                        "voice": "ef_dora", # Voz en español femenina por defecto
+                        "response_format": "mp3",
+                        "speed": 1.0
+                    }
+                )
+                response.raise_for_status()
+                return response.content
+        except Exception as e:
+            logger.error(f"Kokoro TTS falló: {e}")
+            raise
     
     async def synthesize(self, text: str) -> str:
         """
@@ -284,8 +306,13 @@ class EdgeTTSCapability:
             if cached_audio:
                 return base64.b64encode(cached_audio).decode("utf-8")
         
-        # 2. Intentar Edge-TTS con Circuit Breaker
+        # 2. Intentar TTS
+        # 2. Intentar Edge-TTS (Microsoft) como motor principal
         try:
+            if "KOKORO:" in text:
+                text = text.replace("KOKORO:", "").strip()
+                raise Exception("Forzando fallback a Kokoro por palabra secreta")
+                
             audio_bytes = await self.circuit_breaker.call(self._call_edge_tts, text.strip())
             
             if audio_bytes and len(audio_bytes) > 0:
@@ -298,8 +325,19 @@ class EdgeTTSCapability:
             raise Exception("Edge-TTS retornó audio vacío")
             
         except Exception as e:
-            logger.error(f"Edge TTS falló (circuit open o timeout): {e}")
-            # 4. Fallback: pyttsx3 (offline, sin internet)
+            logger.warning(f"Edge TTS falló o fue forzado: {e}. Iniciando Fallback a Kokoro-82M (Local)...")
+            
+            # FALLBACK 1: KOKORO-82M (Local, Alta Calidad)
+            try:
+                audio_bytes = await self._call_kokoro_tts(text.strip())
+                if audio_bytes and len(audio_bytes) > 0:
+                    if self.cache_manager:
+                        await self.cache_manager.set(text, audio_bytes)
+                    return base64.b64encode(audio_bytes).decode("utf-8")
+            except Exception as k_err:
+                logger.error(f"Kokoro Fallback falló: {k_err}. Iniciando Fallback 2 (pyttsx3)...")
+                
+            # FALLBACK 2: pyttsx3 (Local, Robótico, Emergencia)
             try:
                 import pyttsx3
                 engine = pyttsx3.init()
@@ -405,7 +443,7 @@ class PiperTTSCapability:
     
     @staticmethod
     async def synthesize(text: str) -> str:
-        """Síntesis con Piper - solo si está disponible el modelo."""
+        """Síntesis con Piper - solo si está disponible el model."""
         piper_model = os.getenv("PIPER_MODEL_PATH", "/app/models/es_MX-david-medium.onnx")
         
         if not os.path.exists(piper_model):

@@ -12,7 +12,7 @@ settings = obtener_config()
 class UsageTracker:
     """
     Tracker de consumo con buffer en Redis + flush batch a PostgreSQL.
-    Incluye pre-agregación (rollup) y pricing dinámico multi-modelo.
+    Incluye pre-agregación (rollup) y pricing dinámico multi-model.
     """
     
     BUFFER_KEY = "usage:buffer:{tenant_id}"

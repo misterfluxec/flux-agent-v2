@@ -41,8 +41,8 @@ export const apiRoot = axios.create({
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface HealthResponse {
-  estado: "saludable" | "degradado";
-  servicios: Record<string, { estado: string; latencia_ms?: number }>;
+  status: "saludable" | "degradado";
+  servicios: Record<string, { status: string; latencia_ms?: number }>;
   version: string;
 }
 
@@ -51,28 +51,28 @@ export interface ChatRequest {
   agent_id?: string;
   session_id: string;
   mensaje: string;
-  historial: { rol: string; contenido: string }[];
-  configuracion: { nombre: string; humor: string; tipo_negocio?: string };
+  historial: { role: string; contenido: string }[];
+  configuracion: { name: string; mood: string; business_type?: string };
 }
 
 export interface ChatResponse {
   session_id: string;
   respuesta: string;
   tokens: number;
-  modelo: string;
+  model: string;
   fuentes_rag: string[];
   chunks_usados: number;
 }
 
 export interface IngestResponse {
   job_id: string;
-  estado: string;
+  status: string;
   fuente: string;
   mensaje: string;
 }
 
 export interface IngestStatusResponse {
-  estado: string;
+  status: string;
   progreso: number;
   mensaje: string;
   chunks?: number;
@@ -81,8 +81,8 @@ export interface IngestStatusResponse {
 export interface ChunkItem {
   id: string;
   contenido: string;
-  orden: number;
-  tipo: string;
+  sort_order: number;
+  type: string;
 }
 
 export interface SourceChunksResponse {
@@ -181,7 +181,7 @@ export async function ingestUrl(url: string, agentId?: string): Promise<IngestRe
 }
 
 /**
- * Consulta el estado de un job de ingesta
+ * Consulta el status de un job de ingesta
  */
 export async function fetchIngestionStatus(jobId: string): Promise<IngestStatusResponse> {
   const { data } = await api.get<IngestStatusResponse>(`/ingest/status/${jobId}`);
@@ -202,11 +202,11 @@ export async function fetchSourceChunks(fuenteNombre: string): Promise<SourceChu
 export interface ProductData {
   id: string;
   codigo: string | null;
-  nombre: string;
-  precio: number;
+  name: string;
+  price: number;
   stock: number;
-  estado: string;
-  descripcion: string | null;
+  status: string;
+  description: string | null;
 }
 
 export async function fetchProducts(): Promise<ProductData[]> {
@@ -214,7 +214,7 @@ export async function fetchProducts(): Promise<ProductData[]> {
   return data;
 }
 
-export async function updateProduct(id: string, updates: { precio?: number; stock?: number }): Promise<{ mensaje: string }> {
+export async function updateProduct(id: string, updates: { price?: number; stock?: number }): Promise<{ mensaje: string }> {
   const { data } = await api.patch<{ mensaje: string }>(`/products/${id}`, updates);
   return data;
 }
@@ -230,7 +230,7 @@ export interface LeadData {
   phone: string;
   email: string;
   canal: string;
-  estado: string;
+  status: string;
   monto: number;
   fecha: string;
   sentimiento: number;
@@ -244,65 +244,65 @@ export async function fetchLeads(): Promise<LeadData[]> {
 // ─── Agents API ──────────────────────────────────────────────────────────────
 
 export interface AgentCreate {
-  nombre: string;
+  name: string;
   area?: string | null;
-  descripcion?: string | null;
-  genero?: string;
-  humor?: string;
-  personalidad?: string | null;
-  idioma?: string;
-  tono?: string;
-  coleccion_rag?: string | null;
-  tipo_negocio?: string | null;
-  objetivo?: string | null;
-  instrucciones?: string | null;
-  modelo?: string;
-  temperatura?: number;
+  description?: string | null;
+  gender?: string;
+  mood?: string;
+  personality?: string | null;
+  language?: string;
+  tone?: string;
+  rag_collection?: string | null;
+  business_type?: string | null;
+  objective?: string | null;
+  instructions?: string | null;
+  model?: string;
+  temperature?: number;
   max_tokens?: number;
-  canales?: string[];
-  horario_inicio?: string | null;
-  horario_fin?: string | null;
-  dias_atencion?: string[] | null;
-  mensaje_fuera_horario?: string | null;
-  script_ventas?: any | null;
+  channels?: string[];
+  schedule_start?: string | null;
+  schedule_end?: string | null;
+  service_days?: string[] | null;
+  off_hours_message?: string | null;
+  sales_script?: any | null;
   agent_type?: string;
   specialty?: string | null;
   system_prompt?: string | null;
 }
 
 export interface AgentUpdate extends Partial<AgentCreate> {
-  estado?: string;
+  status?: string;
 }
 
 export interface AgentResponse {
   id: string;
-  nombre: string;
+  name: string;
   area?: string | null;
-  descripcion?: string | null;
-  genero: string;
-  humor: string;
-  personalidad?: string | null;
-  idioma: string;
-  tono: string;
-  coleccion_rag?: string | null;
-  tipo_negocio?: string | null;
-  objetivo?: string | null;
-  instrucciones?: string | null;
-  modelo: string;
-  temperatura: number;
+  description?: string | null;
+  gender: string;
+  mood: string;
+  personality?: string | null;
+  language: string;
+  tone: string;
+  rag_collection?: string | null;
+  business_type?: string | null;
+  objective?: string | null;
+  instructions?: string | null;
+  model: string;
+  temperature: number;
   max_tokens: number;
-  canales: string[];
-  horario_inicio?: string | null;
-  horario_fin?: string | null;
-  dias_atencion?: string[] | null;
-  mensaje_fuera_horario?: string | null;
-  script_ventas?: any | null;
+  channels: string[];
+  schedule_start?: string | null;
+  schedule_end?: string | null;
+  service_days?: string[] | null;
+  off_hours_message?: string | null;
+  sales_script?: any | null;
   agent_type: string;
   specialty?: string | null;
   system_prompt?: string | null;
-  estado: string;
-  creado_en: string;
-  actualizado_en: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
   knowledge_base_size: number;
   last_sync_at?: string | null;
 }
@@ -339,15 +339,15 @@ export async function deleteAgent(id: string): Promise<{ mensaje: string }> {
   return data;
 }
 
-export async function testAgent(id: string, mensaje: string): Promise<{ agente: string; respuesta: string; modelo: string }> {
-  const { data } = await api.post<{ agente: string; respuesta: string; modelo: string }>(`/agents/${id}/test`, { mensaje });
+export async function testAgent(id: string, mensaje: string): Promise<{ agente: string; respuesta: string; model: string }> {
+  const { data } = await api.post<{ agente: string; respuesta: string; model: string }>(`/agents/${id}/test`, { mensaje });
   return data;
 }
 
 export interface GenerateIdentityRequest {
   descripcion_negocio: string;
   agent_type: string;
-  tono: string;
+  tone: string;
 }
 
 export interface GenerateIdentityResponse {

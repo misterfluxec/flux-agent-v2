@@ -16,7 +16,7 @@ asyncpg==0.30.0            # Driver async para PostgreSQL
 pgvector==0.3.6            # Soporte de vectores en SQLAlchemy
 
 # --- Configuración ---
-pydantic==2.10.4
+pydantic>=2.10.6
 pydantic-settings==2.7.0  # Carga .env en BaseSettings
 
 # --- Redis ---
@@ -45,7 +45,7 @@ email-validator>=2.1.1
 # --- Multimedia (Fase 2) ---
 requests==2.32.3
 faster-whisper==1.0.3
-Pillow==10.4.0
+Pillow>=11.1.0
 edge-tts==6.1.12
 pyttsx3==2.90
 
@@ -56,3 +56,16 @@ prometheus-client==0.21.0
 APScheduler==3.10.4        # Cron jobs para reset automático de cuotas
 apscheduler==3.10.4
 mercadopago>=2.2.0
+
+# --- Cola de Tareas Dramatiq ---
+dramatiq[redis]>=1.17.0        # Cola de tareas async con backend Redis
+
+# --- Voice Pipeline (Pipecat) ---
+pipecat-ai
+pipecat-ai[silero]
+pipecat-ai[ollama]
+pipecat-ai[piper]
+websockets==11.0.3
+
+# --- Rate Limiting ---
+slowapi>=0.1.9

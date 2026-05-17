@@ -90,13 +90,13 @@ def extraer_texto_pdf(contenido: bytes, nombre_archivo: str) -> list[Chunk]:
             continue
 
         fragmentos = _dividir_en_chunks(texto)
-        for orden, fragmento in enumerate(fragmentos):
+        for sort_order, fragmento in enumerate(fragmentos):
             chunks.append(Chunk(
                 contenido=fragmento,
                 fuente_nombre=nombre_archivo,
                 fuente_tipo="pdf",
                 pagina_numero=num_pagina,
-                orden_chunk=orden,
+                orden_chunk=sort_order,
             ))
 
     logger.info(f"PDF '{nombre_archivo}': {len(chunks)} chunks generados")
@@ -216,7 +216,7 @@ async def extraer_texto_url(url: str, profundidad_max: int = 2, max_paginas: int
                     for i, frag in enumerate(fragmentos):
                         chunks.append(Chunk(
                             contenido=frag,
-                            fuente_nombre=url, # Usamos la URL base como nombre de fuente para agrupar
+                            fuente_nombre=url, # Usamos la URL base como name de fuente para agrupar
                             fuente_tipo="url",
                             fuente_url=actual_url,
                             orden_chunk=len(chunks) + i,
@@ -442,7 +442,7 @@ async def buscar_chunks_relevantes(
     Busca los chunks más relevantes para una consulta usando similitud coseno.
 
     Flujo:
-      1. Vectoriza la consulta del usuario con el mismo modelo de embedding
+      1. Vectoriza la consulta del usuario con el mismo model de embedding
       2. Calcula la similitud coseno contra todos los chunks del tenant
       3. Retorna los top_k más similares
 
@@ -512,19 +512,19 @@ class ServicioIngesta:
         self,
         sesion:    AsyncSession,
         contenido: bytes,
-        nombre:    str,
+        name:    str,
         tenant_id: UUID,
         agent_id:  Optional[UUID] = None,
     ) -> int:
         """Procesa un PDF y persiste sus chunks vectorizados."""
-        chunks = extraer_texto_pdf(contenido, nombre)
+        chunks = extraer_texto_pdf(contenido, name)
         return await guardar_chunks(sesion, chunks, tenant_id, agent_id)
 
     async def procesar_excel(
         self,
         sesion:    AsyncSession,
         contenido: bytes,
-        nombre:    str,
+        name:    str,
         tenant_id: UUID,
         agent_id:  Optional[UUID] = None,
     ) -> int:
@@ -541,8 +541,8 @@ class ServicioIngesta:
                 encabezados = [str(c).strip().lower() if c else f"columna_{i}" for i, c in enumerate(filas[0])]
                 
                 # Buscar indices
-                idx_nombre = next((i for i, h in enumerate(encabezados) if "nombre" in h or "producto" in h or "name" in h or "articulo" in h), -1)
-                idx_precio = next((i for i, h in enumerate(encabezados) if "precio" in h or "price" in h or "valor" in h), -1)
+                idx_nombre = next((i for i, h in enumerate(encabezados) if "name" in h or "producto" in h or "name" in h or "articulo" in h), -1)
+                idx_precio = next((i for i, h in enumerate(encabezados) if "price" in h or "price" in h or "valor" in h), -1)
                 idx_stock = next((i for i, h in enumerate(encabezados) if "stock" in h or "cantidad" in h or "qty" in h), -1)
                 
                 if idx_nombre >= 0:
@@ -557,32 +557,32 @@ class ServicioIngesta:
                         except: stk_val = 0
                         
                         await sesion.execute(text("""
-                            INSERT INTO productos (tenant_id, nombre, precio, stock)
+                            INSERT INTO productos (tenant_id, name, price, stock)
                             VALUES (:tid, :nom, :pre, :stk)
                         """), {"tid": str(tenant_id), "nom": nom[:250], "pre": pre_val, "stk": stk_val})
         except Exception as e:
             logger.warning(f"No se pudieron extraer productos estructurados del Excel: {e}")
 
-        chunks = extraer_texto_excel(contenido, nombre)
+        chunks = extraer_texto_excel(contenido, name)
         return await guardar_chunks(sesion, chunks, tenant_id, agent_id)
 
     async def procesar_txt(
         self,
         sesion:    AsyncSession,
         contenido: bytes,
-        nombre:    str,
+        name:    str,
         tenant_id: UUID,
         agent_id:  Optional[UUID] = None,
     ) -> int:
         """Procesa un TXT y persiste sus chunks vectorizados."""
-        chunks = extraer_texto_txt(contenido, nombre)
+        chunks = extraer_texto_txt(contenido, name)
         return await guardar_chunks(sesion, chunks, tenant_id, agent_id)
 
     async def procesar_csv(
         self,
         sesion:    AsyncSession,
         contenido: bytes,
-        nombre:    str,
+        name:    str,
         tenant_id: UUID,
         agent_id:  Optional[UUID] = None,
     ) -> int:
@@ -595,8 +595,8 @@ class ServicioIngesta:
             lector = csv.DictReader(StringIO(texto))
             for fila in lector:
                 # buscar heuristicamente
-                nombres = [v for k, v in fila.items() if k and ("nombre" in k.lower() or "producto" in k.lower() or "name" in k.lower() or "articulo" in k.lower())]
-                precios = [v for k, v in fila.items() if k and ("precio" in k.lower() or "price" in k.lower() or "valor" in k.lower())]
+                nombres = [v for k, v in fila.items() if k and ("name" in k.lower() or "producto" in k.lower() or "name" in k.lower() or "articulo" in k.lower())]
+                precios = [v for k, v in fila.items() if k and ("price" in k.lower() or "price" in k.lower() or "valor" in k.lower())]
                 stocks = [v for k, v in fila.items() if k and ("stock" in k.lower() or "cantidad" in k.lower() or "qty" in k.lower())]
                 
                 nom = nombres[0] if nombres else "Desconocido"
@@ -609,13 +609,13 @@ class ServicioIngesta:
                 except: stk_val = 0
                 
                 await sesion.execute(text("""
-                    INSERT INTO productos (tenant_id, nombre, precio, stock)
+                    INSERT INTO productos (tenant_id, name, price, stock)
                     VALUES (:tid, :nom, :pre, :stk)
                 """), {"tid": str(tenant_id), "nom": str(nom)[:250], "pre": pre_val, "stk": stk_val})
         except Exception as e:
             logger.warning(f"No se pudieron extraer productos estructurados del CSV: {e}")
 
-        chunks = extraer_texto_csv(contenido, nombre)
+        chunks = extraer_texto_csv(contenido, name)
         return await guardar_chunks(sesion, chunks, tenant_id, agent_id)
 
     async def procesar_url(

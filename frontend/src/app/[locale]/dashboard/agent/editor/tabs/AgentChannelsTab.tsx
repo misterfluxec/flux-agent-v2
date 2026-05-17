@@ -12,7 +12,7 @@ interface AgentChannelsTabProps {
 }
 
 export function AgentChannelsTab({ agentId }: AgentChannelsTabProps) {
-  // TODO: Conectar a GET /channels para mostrar estado real
+  // TODO: Conectar a GET /channels para mostrar status real
   const channels = [
     { id: "web_chat", name: "Web Chat", icon: Globe, enabled: true, status: "active" },
     { id: "whatsapp", name: "WhatsApp Cloud", icon: Smartphone, enabled: false, status: "pending" },
@@ -28,7 +28,7 @@ export function AgentChannelsTab({ agentId }: AgentChannelsTabProps) {
             Canales de Comunicación
           </CardTitle>
           <CardDescription>
-            Activa los canales por los que tu agente puede interactuar con clientes
+            Activa los channels por los que tu agente puede interactuar con clientes
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -60,7 +60,7 @@ export function AgentChannelsTab({ agentId }: AgentChannelsTabProps) {
               <div className="flex items-center gap-3">
                 <Switch 
                   checked={channel.enabled}
-                  // TODO: Conectar a API para guardar estado
+                  // TODO: Conectar a API para guardar status
                   onCheckedChange={(checked) => {
                     console.log(`Toggle ${channel.id}: ${checked}`);
                   }}

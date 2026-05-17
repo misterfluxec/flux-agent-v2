@@ -20,7 +20,7 @@ class CommerceLifecycleEngine:
     def convert_quote_to_order(self, quote_id: str, actor_id: str, actor_type: str = 'system') -> str:
         """
         Transición Crítica: Convierte una Cotización (Quote) en Pedido (Order).
-        - Valida estado del Quote.
+        - Valida status del Quote.
         - Crea Order (pending).
         - Reserva Inventario (optimistic lock).
         - Emite Eventos.

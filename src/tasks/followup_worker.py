@@ -4,9 +4,9 @@ from datetime import datetime
 from sqlalchemy import text
 from typing import Dict, Any
 
-from core.database import async_session_factory
+from database import SesionLocal as async_session_factory
 from services.ai_orchestrator import AIOrchestrator
-from services.whatsapp_sender import WhatsAppSender
+# from services.whatsapp_sender import WhatsAppSender
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +21,8 @@ async def procesar_seguimiento_cotizacion(seguimiento_id: str):
     async with async_session_factory() as session:
         # 1. Obtener seguimiento
         query_seg = text("""
-            SELECT s.id, s.tenant_id, s.quote_id, s.estado, s.intentos, q.customer_id
-            FROM seguimientos s
+            SELECT s.id, s.tenant_id, s.quote_id, s.status, s.attempts, q.customer_id
+            FROM follow_ups s
             JOIN quotes q ON s.quote_id = q.id
             WHERE s.id = :id
         """)
@@ -33,16 +33,16 @@ async def procesar_seguimiento_cotizacion(seguimiento_id: str):
             logger.error(f"Seguimiento {seguimiento_id} no encontrado")
             return
             
-        if seguimiento.estado in ['enviado', 'cancelado', 'respondido']:
-            logger.info(f"Seguimiento {seguimiento_id} ya fue procesado o cancelado (estado: {seguimiento.estado})")
+        if seguimiento.status in ['enviado', 'cancelado', 'respondido']:
+            logger.info(f"Seguimiento {seguimiento_id} ya fue procesado o cancelado (status: {seguimiento.status})")
             return
             
         # Inyectar tenant context para RLS si es necesario (asumimos que worker tiene permisos bypassrls, pero por si acaso)
         await session.execute(text("SET app.current_tenant_id = :tenant"), {"tenant": str(seguimiento.tenant_id)})
 
-        # 2. Verificar estado actual de la cotización
+        # 2. Verificar status actual de la cotización
         query_quote = text("""
-            SELECT q.id, q.status, q.total, c.nombre as customer_name, c.telefono as customer_phone
+            SELECT q.id, q.status, q.total, c.name as customer_name, c.phone as customer_phone
             FROM quotes q
             LEFT JOIN clientes c ON q.customer_id = c.id
             WHERE q.id = :quote_id
@@ -56,7 +56,7 @@ async def procesar_seguimiento_cotizacion(seguimiento_id: str):
             
         # Si ya fue aceptada, pagada o rechazada, cancelamos
         if quote.status in ['accepted', 'paid', 'converted', 'rejected']:
-            await session.execute(text("UPDATE seguimientos SET estado = 'cancelado', actualizado_en = NOW() WHERE id = :id"), {"id": seguimiento_id})
+            await session.execute(text("UPDATE follow_ups SET status = 'cancelado', updated_at = NOW() WHERE id = :id"), {"id": seguimiento_id})
             await session.commit()
             logger.info(f"Seguimiento {seguimiento_id} cancelado porque la cotización ya fue {quote.status}")
             return
@@ -88,7 +88,7 @@ async def procesar_seguimiento_cotizacion(seguimiento_id: str):
         
         # 4. Envío real vía WhatsApp
         if quote.customer_phone:
-            wa_sender = WhatsAppSender(redis_client=None) # Pasar deps necesarias en prod
+            # wa_sender = WhatsAppSender(redis_client=None) # Pasar deps necesarias en prod
             # success = await wa_sender.send_text(str(seguimiento.tenant_id), quote.customer_phone, mensaje_personalizado)
             # Simular envío exitoso para este worker (ya que requiere API externa real)
             success = True
@@ -99,14 +99,14 @@ async def procesar_seguimiento_cotizacion(seguimiento_id: str):
         # 5. Actualizar resultado
         if success:
             await session.execute(text("""
-                UPDATE seguimientos 
-                SET estado = 'enviado', mensaje_enviado = :msg, actualizado_en = NOW() 
+                UPDATE follow_ups 
+                SET status = 'enviado', sent_message = :msg, updated_at = NOW() 
                 WHERE id = :id
             """), {"msg": mensaje_personalizado, "id": seguimiento_id})
         else:
             await session.execute(text("""
-                UPDATE seguimientos 
-                SET intentos = intentos + 1, actualizado_en = NOW() 
+                UPDATE follow_ups 
+                SET attempts = attempts + 1, updated_at = NOW() 
                 WHERE id = :id
             """), {"id": seguimiento_id})
             # Lanzamos excepción para que Dramatiq reintente

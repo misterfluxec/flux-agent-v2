@@ -1,0 +1,24 @@
+{
+  "how_it_works": {
+    "badge": "Cómo funciona",
+    "title_1": "Simple en 3",
+    "title_2": "Pasos",
+    "items": [
+      {
+        "step": "1",
+        "title": "Conecta",
+        "description": "Conecta tu canal de WhatsApp"
+      },
+      {
+        "step": "2",
+        "title": "Entrena",
+        "description": "Sube tu catálogo de productos"
+      },
+      {
+        "step": "3",
+        "title": "Vende",
+        "description": "Recibe clientes en piloto automático"
+      }
+    ]
+  }
+}

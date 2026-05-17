@@ -5,7 +5,8 @@ import logging
 
 from database import obtener_sesion
 from auth import PayloadToken, get_usuario_actual
-from core.plan_manager import PlanManager, redis_client
+from core.plan_manager import PlanManager
+from fastapi import Request
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +15,7 @@ router = APIRouter(prefix="/api/v1/capabilities", tags=["capabilities"])
 @router.get("/check")
 async def check_capability_endpoint(
     quota_type: str,
+    request: Request,
     requested: int = 1,
     usuario: PayloadToken = Depends(get_usuario_actual),
     db: AsyncSession = Depends(obtener_sesion)
@@ -38,7 +40,7 @@ async def check_capability_endpoint(
             mes = datetime.now(tz=timezone.utc).strftime("%Y-%m")
             
         redis_key = f"usage:{usuario.tenant_id}:{mes}:{quota_type}"
-        current = int(await redis_client.get(redis_key) or 0)
+        current = int(await request.app.state.redis.get(redis_key) or 0)
         remaining = max(0, limit - current)
         
         return {

@@ -43,7 +43,7 @@ async def parse_file_upload(
         with open(local_path, "wb") as f:
             f.write(content)
 
-        # 2. Extracción según tipo
+        # 2. Extracción según type
         if ext in ["csv", "xlsx", "xls"]:
             if ext == "csv":
                 # Intentar detectar separador si falla el default

@@ -9,11 +9,11 @@ import { toast } from "sonner";
 
 interface StaffMember {
   id: string;
-  nombre: string;
+  name: string;
   email: string;
-  rol: string;
-  estado: string;
-  ultimo_login: string;
+  role: string;
+  status: string;
+  last_login: string;
 }
 
 const ROLES = [
@@ -24,13 +24,13 @@ const ROLES = [
 ];
 
 const INITIAL_MEMBERS: StaffMember[] = [
-  { id: "1", nombre: "Admin Principal", email: "admin@fluxagent.com",   rol: "super_admin", estado: "activo", ultimo_login: "2026-04-30T10:30:00Z" },
-  { id: "2", nombre: "Soporte Técnico", email: "soporte@fluxagent.com", rol: "soporte",     estado: "activo", ultimo_login: "2026-04-29T15:45:00Z" },
-  { id: "3", nombre: "Contabilidad",    email: "contable@fluxagent.com",rol: "facturacion", estado: "activo", ultimo_login: "2026-04-28T09:00:00Z" },
+  { id: "1", name: "Admin Principal", email: "admin@fluxagent.com",   role: "super_admin", status: "is_active", last_login: "2026-04-30T10:30:00Z" },
+  { id: "2", name: "Soporte Técnico", email: "soporte@fluxagent.com", role: "soporte",     status: "is_active", last_login: "2026-04-29T15:45:00Z" },
+  { id: "3", name: "Contabilidad",    email: "contable@fluxagent.com",role: "facturacion", status: "is_active", last_login: "2026-04-28T09:00:00Z" },
 ];
 
-function RoleBadge({ rol }: { rol: string }) {
-  const cfg = ROLES.find(r => r.id === rol) || ROLES[3];
+function RoleBadge({ role }: { role: string }) {
+  const cfg = ROLES.find(r => r.id === role) || ROLES[3];
   const Icon = cfg.icon;
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border ${cfg.color}`}>
@@ -49,15 +49,15 @@ export default function StaffPage() {
   const [formRol,    setFormRol]    = useState("viewer");
 
   const filtered = members.filter(m =>
-    m.nombre.toLowerCase().includes(search.toLowerCase()) ||
+    m.name.toLowerCase().includes(search.toLowerCase()) ||
     m.email.toLowerCase().includes(search.toLowerCase())
   );
 
   const handleCreate = () => {
     if (!formNombre || !formEmail) { toast.error("Completa todos los campos"); return; }
     setMembers(prev => [...prev, {
-      id: Date.now().toString(), nombre: formNombre, email: formEmail,
-      rol: formRol, estado: "activo", ultimo_login: new Date().toISOString(),
+      id: Date.now().toString(), name: formNombre, email: formEmail,
+      role: formRol, status: "is_active", last_login: new Date().toISOString(),
     }]);
     toast.success(`Usuario ${formNombre} creado`);
     setModalOpen(false); setFormNombre(""); setFormEmail(""); setFormRol("viewer");
@@ -69,7 +69,7 @@ export default function StaffPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-100">Staff del Sistema</h1>
-          <p className="text-slate-500 text-sm mt-1">Gestión de usuarios internos del NOC y sus permisos</p>
+          <p className="text-slate-500 text-sm mt-1">Gestión de users internos del NOC y sus permisos</p>
         </div>
         <button
           onClick={() => setModalOpen(true)}
@@ -82,16 +82,16 @@ export default function StaffPage() {
 
       {/* Contadores por Rol */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {ROLES.map(rol => {
-          const count = members.filter(m => m.rol === rol.id).length;
-          const Icon  = rol.icon;
+        {ROLES.map(role => {
+          const count = members.filter(m => m.role === role.id).length;
+          const Icon  = role.icon;
           return (
-            <div key={rol.id} className="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center border mb-3 ${rol.color}`}>
+            <div key={role.id} className="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center border mb-3 ${role.color}`}>
                 <Icon size={16} />
               </div>
               <div className="text-2xl font-bold text-slate-100">{count}</div>
-              <div className="text-xs text-slate-500 mt-0.5">{rol.label}</div>
+              <div className="text-xs text-slate-500 mt-0.5">{role.label}</div>
             </div>
           );
         })}
@@ -125,17 +125,17 @@ export default function StaffPage() {
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-sm font-bold text-emerald-400">
-                      {m.nombre.charAt(0).toUpperCase()}
+                      {m.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <div className="text-sm font-semibold text-slate-200">{m.nombre}</div>
+                      <div className="text-sm font-semibold text-slate-200">{m.name}</div>
                       <div className="text-xs text-slate-500">{m.email}</div>
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4"><RoleBadge rol={m.rol} /></td>
+                <td className="px-6 py-4"><RoleBadge role={m.role} /></td>
                 <td className="px-6 py-4">
-                  {m.estado === "activo" ? (
+                  {m.status === "is_active" ? (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-400">
                       <CheckCircle size={11} /> Activo
                     </span>
@@ -146,16 +146,16 @@ export default function StaffPage() {
                   )}
                 </td>
                 <td className="px-6 py-4 text-xs text-slate-400">
-                  {new Date(m.ultimo_login).toLocaleString("es-EC", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                  {new Date(m.last_login).toLocaleString("es-EC", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex justify-end gap-1">
-                    <button onClick={() => toast.info("Editar: " + m.nombre)}
+                    <button onClick={() => toast.info("Editar: " + m.name)}
                       className="p-2 hover:bg-slate-700 rounded-lg text-slate-400 transition-colors" title="Editar">
                       <Edit3 size={14} />
                     </button>
-                    <button onClick={() => toast.info("Cambiar rol: " + m.nombre)}
-                      className="p-2 hover:bg-slate-700 rounded-lg text-slate-400 transition-colors" title="Cambiar rol">
+                    <button onClick={() => toast.info("Cambiar role: " + m.name)}
+                      className="p-2 hover:bg-slate-700 rounded-lg text-slate-400 transition-colors" title="Cambiar role">
                       <Key size={14} />
                     </button>
                     <button onClick={() => { setMembers(prev => prev.filter(x => x.id !== m.id)); toast.success("Usuario eliminado"); }}
@@ -196,29 +196,29 @@ export default function StaffPage() {
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-400 block mb-1.5">Email corporativo</label>
-                <input value={formEmail} onChange={e => setFormEmail(e.target.value)} placeholder="nombre@fluxagent.com" type="email"
+                <input value={formEmail} onChange={e => setFormEmail(e.target.value)} placeholder="name@fluxagent.com" type="email"
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2.5 px-3 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
                 />
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-400 block mb-2">Nivel de acceso</label>
                 <div className="space-y-2">
-                  {ROLES.map(rol => {
-                    const Icon = rol.icon;
+                  {ROLES.map(role => {
+                    const Icon = role.icon;
                     return (
-                      <button key={rol.id} onClick={() => setFormRol(rol.id)} type="button"
+                      <button key={role.id} onClick={() => setFormRol(role.id)} type="button"
                         className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
-                          formRol === rol.id
+                          formRol === role.id
                             ? "border-emerald-500/40 bg-emerald-500/5"
                             : "border-slate-800 hover:border-slate-700"
                         }`}
                       >
-                        <Icon size={16} className={formRol === rol.id ? "text-emerald-400" : "text-slate-500"} />
+                        <Icon size={16} className={formRol === role.id ? "text-emerald-400" : "text-slate-500"} />
                         <div>
-                          <p className="text-sm font-semibold text-slate-200">{rol.label}</p>
-                          <p className="text-xs text-slate-500">{rol.desc}</p>
+                          <p className="text-sm font-semibold text-slate-200">{role.label}</p>
+                          <p className="text-xs text-slate-500">{role.desc}</p>
                         </div>
-                        {formRol === rol.id && <CheckCircle size={14} className="text-emerald-400 ml-auto" />}
+                        {formRol === role.id && <CheckCircle size={14} className="text-emerald-400 ml-auto" />}
                       </button>
                     );
                   })}

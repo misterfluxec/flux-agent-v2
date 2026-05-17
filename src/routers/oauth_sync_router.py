@@ -66,7 +66,7 @@ async def oauth_callback(provider: str, code: str, state: str):
                     DO UPDATE SET 
                         access_token_encrypted = EXCLUDED.access_token_encrypted,
                         refresh_token_encrypted = EXCLUDED.refresh_token_encrypted,
-                        actualizado_en = NOW()
+                        updated_at = NOW()
                 """), {
                     "tenant_id": tenant_id,
                     "provider": provider,

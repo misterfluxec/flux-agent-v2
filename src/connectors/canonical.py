@@ -69,7 +69,7 @@ class CanonicalCustomer(BaseModel):
 
 
 class CanonicalOrderItem(BaseModel):
-    """Línea individual de una orden importada."""
+    """Línea individual de una sort_order importada."""
     external_product_id: str
     sku: Optional[str] = None
     product_name: str
@@ -79,7 +79,7 @@ class CanonicalOrderItem(BaseModel):
 
 
 class CanonicalOrder(BaseModel):
-    """Representación universal de una orden/pedido importado."""
+    """Representación universal de una sort_order/pedido importado."""
     external_id: str
     external_customer_id: Optional[str] = None
     status: str = "pending"

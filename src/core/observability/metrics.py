@@ -524,7 +524,7 @@ def track_database_queries(table: str = "unknown"):
             try:
                 result = await func(*args, **kwargs)
                 
-                # Intentar determinar operación desde el nombre de la función
+                # Intentar determinar operación desde el name de la función
                 func_name = func.__name__.lower()
                 if 'select' in func_name or 'get' in func_name:
                     operation = "select"

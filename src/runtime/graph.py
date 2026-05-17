@@ -1,8 +1,8 @@
 import logging
 from typing import Dict, Any, Callable, Awaitable, List
-from src.runtime.graph_node import GraphNode
-from src.runtime.graph_edge import GraphEdge
-from src.runtime.state_machine import AgentExecutionState
+from runtime.graph_node import GraphNode
+from runtime.graph_edge import GraphEdge
+from runtime.state_machine import AgentExecutionState
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ class ExecutionGraph:
     async def execute(self, start_node_id: str, context: Dict[str, Any]) -> str:
         """
         Ejecuta el grafo desde el start_node_id.
-        El contexto debe inyectarse externamente (estado de Redis, por ejemplo).
+        El contexto debe inyectarse externamente (status de Redis, por ejemplo).
         """
         current_node_id = start_node_id
         path_taken = []

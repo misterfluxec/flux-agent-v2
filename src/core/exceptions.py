@@ -76,7 +76,7 @@ class PlanLimitExceededError(BusinessRuleError):
 
 class InvalidStateTransitionError(BusinessRuleError):
     error_code = "INVALID_STATE_TRANSITION"
-    default_message = "Transición de estado inválida"
+    default_message = "Transición de status inválida"
 
 
 class ResourceNotFoundError(BusinessRuleError):
@@ -122,7 +122,7 @@ class ChannelUnavailableError(IntegrationError):
 
 class LLMError(IntegrationError):
     error_code = "LLM_ERROR"
-    default_message = "Error en el modelo de lenguaje"
+    default_message = "Error en el model de lenguaje"
 
 
 class WebhookValidationError(IntegrationError):

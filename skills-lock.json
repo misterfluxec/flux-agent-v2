@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "skills": {
+    "make-interfaces-feel-better": {
+      "source": "jakubkrehel/make-interfaces-feel-better",
+      "sourceType": "github",
+      "skillPath": "skills/make-interfaces-feel-better/SKILL.md",
+      "computedHash": "54b6e221bbe4e2d1a8461c3f9ecabe69daf891f964e9ee5e699c323daa018f2e"
+    },
+    "mermaid-diagrams": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "skillPath": "skills/mermaid-diagrams/SKILL.md",
+      "computedHash": "6d36e69adad781f106a2fb4b19ebc22bf0c211babdc0d1ae5822fa65abb48bd8"
+    },
+    "nextjs-react-typescript": {
+      "source": "mindrally/skills",
+      "sourceType": "github",
+      "skillPath": "nextjs-react-typescript/SKILL.md",
+      "computedHash": "eb995cc826bf48498e0e90969fc7dadfa2ec634002c26cfcfde565134cefa738"
+    },
+    "parallel-deep-research": {
+      "source": "parallel-web/parallel-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/parallel-deep-research/SKILL.md",
+      "computedHash": "df9a69f85eee6e53d35a33403245456dfdd55630a362adb36898c2b10f53e559"
+    },
+    "ui-ux-pro-max": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/ui-ux-pro-max/SKILL.md",
+      "computedHash": "0a413bf988d06481f69bb81df2070741c3ba12dd9f1be2706d57f259c905992d"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-design-guidelines/SKILL.md",
+      "computedHash": "f3bc47f890f42a44db1007ab390709ec368e4b8c089baee6b0007182236ac474"
+    }
+  }
+}

@@ -27,7 +27,7 @@ class CatalogItemUpdate(BaseModel):
     description: Optional[str] = None
     base_price: Optional[float] = None
     stock_quantity: Optional[int] = None
-    estado: Optional[str] = None
+    status: Optional[str] = None
 
 @router.get("")
 async def listar_catalogo(
@@ -41,7 +41,7 @@ async def listar_catalogo(
     await configurar_rls(db, UUID(current_tenant.tenant_id))
     
     result = await db.execute(text("""
-        SELECT id, type, name, description, base_price, currency, stock_quantity, estado, metadata
+        SELECT id, type, name, description, base_price, currency, stock_quantity, status, metadata
         FROM catalog_items
         ORDER BY created_at DESC
     """))
@@ -56,7 +56,7 @@ async def listar_catalogo(
             "base_price": float(row.base_price) if row.base_price else 0,
             "currency": row.currency,
             "stock_quantity": row.stock_quantity,
-            "estado": row.estado,
+            "status": row.status,
             "metadata": row.metadata
         })
         
@@ -95,9 +95,9 @@ async def actualizar_item(
         updates.append("stock_quantity = :stock")
         params["stock"] = datos.stock_quantity
         
-    if datos.estado is not None:
-        updates.append("estado = :estado")
-        params["estado"] = datos.estado
+    if datos.status is not None:
+        updates.append("status = :status")
+        params["status"] = datos.status
         
     if not updates:
         return {"mensaje": "No hay cambios"}
@@ -147,7 +147,7 @@ async def importar_catalogo_bulk(
                     
                 item_type = item.get("type", "physical_product")
                 desc = item.get("description", "")
-                price = float(item.get("base_price", item.get("precio", 0)))
+                price = float(item.get("base_price", item.get("price", 0)))
                 stock = int(item.get("stock_quantity", item.get("stock", 0)))
                 
                 query = text("""

@@ -73,7 +73,7 @@ class EncryptionService:
 
         Args:
             encryption_key: Clave maestra (mínimo 32 chars). Si None, lee ENCRYPTION_KEY.
-            enabled: Forzar estado. Si None, lee ENCRYPT_SENSITIVE_DATA.
+            enabled: Forzar status. Si None, lee ENCRYPT_SENSITIVE_DATA.
         """
         cls._enabled = enabled if enabled is not None else (
             os.getenv("ENCRYPT_SENSITIVE_DATA", "false").lower() == "true"
@@ -91,7 +91,7 @@ class EncryptionService:
             )
 
         cls._fernet = cls._derive_fernet(key)
-        logger.info("🔐 EncryptionService: Fernet activo (PBKDF2-SHA256, 100k iteraciones)")
+        logger.info("🔐 EncryptionService: Fernet is_active (PBKDF2-SHA256, 100k iteraciones)")
 
     @classmethod
     def _derive_fernet(cls, password: str) -> Fernet:
@@ -187,7 +187,7 @@ class EncryptionService:
 
     @classmethod
     def is_enabled(cls) -> bool:
-        """Retorna True si el cifrado real está activo."""
+        """Retorna True si el cifrado real está is_active."""
         return cls._enabled
 
 

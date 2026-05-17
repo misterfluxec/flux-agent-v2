@@ -2,7 +2,7 @@
 # FLUXAGENT V2 — ROUTER DE GESTIÓN DE USUARIOS DEL TENANT
 # =============================================================================
 # Endpoints para gestionar el equipo de un tenant (invitar, editar, eliminar)
-# Solo accesible para usuarios con rol 'admin'
+# Solo accesible para users con role 'admin'
 # =============================================================================
 
 import logging
@@ -34,65 +34,65 @@ router = APIRouter(prefix="/api/v1/users", tags=["Usuarios del Tenant"])
 
 class CreateUserRequest(BaseModel):
     email: EmailStr
-    nombre: str
-    rol: str  # admin, viewer, agente
+    name: str
+    role: str  # admin, viewer, agente
     password: Optional[str] = None  # Si no se envía, se genera una invitación
 
 
 class UpdateUserRequest(BaseModel):
-    nombre: Optional[str] = None
-    rol: Optional[str] = None
-    estado: Optional[str] = None  # activo, inactivo, suspendido
+    name: Optional[str] = None
+    role: Optional[str] = None
+    status: Optional[str] = None  # is_active, inactivo, suspendido
 
 
 class UserResponse(BaseModel):
     id: str
     email: str
-    nombre: str
-    rol: str
-    estado: str
-    ultimo_login: Optional[str] = None
-    creado_en: str
+    name: str
+    role: str
+    status: str
+    last_login: Optional[str] = None
+    created_at: str
 
 
 # =============================================================================
-# GET /api/v1/users — Lista usuarios del tenant
+# GET /api/v1/users — Lista users del tenant
 # =============================================================================
 
-@router.get("", summary="Lista todos los usuarios del tenant")
+@router.get("", summary="Lista todos los users del tenant")
 async def list_users(
     usuario: PayloadToken = Depends(solo_admin),
     db: AsyncSession = Depends(obtener_sesion),
 ) -> list[UserResponse]:
     """
-    Retorna la lista de usuarios del tenant actual.
+    Retorna la lista de users del tenant actual.
     Solo admins pueden ver esta información.
     """
     await configurar_rls(db, UUID(usuario.tenant_id))
     
     result = await db.execute(
         text("""
-            SELECT id, email, nombre, rol, estado, ultimo_login, creado_en
-            FROM usuarios
+            SELECT id, email, name, role, status, last_login, created_at
+            FROM users
             WHERE tenant_id = :tenant_id
-            ORDER BY creado_en DESC
+            ORDER BY created_at DESC
         """),
         {"tenant_id": usuario.tenant_id}
     )
     
-    usuarios = []
+    users = []
     for row in result.fetchall():
-        usuarios.append(UserResponse(
+        users.append(UserResponse(
             id=str(row.id),
             email=row.email,
-            nombre=row.nombre or "",
-            rol=row.rol,
-            estado=row.estado,
-            ultimo_login=str(row.ultimo_login) if row.ultimo_login else None,
-            creado_en=str(row.creado_en),
+            name=row.name or "",
+            role=row.role,
+            status=row.status,
+            last_login=str(row.last_login) if row.last_login else None,
+            created_at=str(row.created_at),
         ))
     
-    return usuarios
+    return users
 
 
 # =============================================================================
@@ -107,14 +107,14 @@ async def create_user(
 ):
     """
     Crea un nuevo usuario dentro del tenant.
-    El rol debe ser: admin, viewer, o agente.
+    El role debe ser: admin, viewer, o agente.
     Si no se proporciona contraseña, se genera una invitación.
     """
     await configurar_rls(db, UUID(usuario.tenant_id))
     
     # Verificar que el email no exista en el tenant
     result_check = await db.execute(
-        text("SELECT id FROM usuarios WHERE tenant_id = :tid AND email = :email"),
+        text("SELECT id FROM users WHERE tenant_id = :tid AND email = :email"),
         {"tid": usuario.tenant_id, "email": datos.email.lower()}
     )
     if result_check.fetchone():
@@ -123,7 +123,7 @@ async def create_user(
             detail="El email ya está en uso dentro de este tenant."
         )
     
-    # Verificar límite de usuarios según el plan
+    # Verificar límite de users según el plan
     result_plan = await db.execute(
         text("SELECT plan, max_usuarios FROM tenants WHERE id = :tid"),
         {"tid": usuario.tenant_id}
@@ -132,9 +132,9 @@ async def create_user(
     if not plan_row:
         raise HTTPException(status_code=500, detail="Tenant no encontrado")
     
-    # Contar usuarios actuales
+    # Contar users actuales
     result_count = await db.execute(
-        text("SELECT COUNT(*) FROM usuarios WHERE tenant_id = :tid"),
+        text("SELECT COUNT(*) FROM users WHERE tenant_id = :tid"),
         {"tid": usuario.tenant_id}
     )
     current_count = result_count.scalar() or 0
@@ -145,7 +145,7 @@ async def create_user(
     if current_count >= max_usuarios:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Has alcanzado el límite de usuarios ({max_usuarios}) de tu plan. Haz upgrade para más usuarios."
+            detail=f"Has alcanzado el límite de users ({max_usuarios}) de tu plan. Haz upgrade para más users."
         )
     
     # Crear usuario
@@ -154,29 +154,29 @@ async def create_user(
     
     await db.execute(
         text("""
-            INSERT INTO usuarios (id, tenant_id, email, password_hash, nombre, rol, estado)
-            VALUES (:id, :tid, :email, :pwd, :nombre, :rol, 'activo')
+            INSERT INTO users (id, tenant_id, email, password_hash, name, role, status)
+            VALUES (:id, :tid, :email, :pwd, :name, :role, 'is_active')
         """),
         {
             "id": str(nuevo_usuario_id),
             "tid": usuario.tenant_id,
             "email": datos.email.lower(),
             "pwd": password_hash,
-            "nombre": datos.nombre.strip(),
-            "rol": datos.rol if datos.rol in ("admin", "viewer", "agente") else "viewer",
+            "name": datos.name.strip(),
+            "role": datos.role if datos.role in ("admin", "viewer", "agente") else "viewer",
         }
     )
     await db.commit()
     
-    logger.info(f"Usuario creado: {datos.email} | tenant={usuario.tenant_id} | rol={datos.rol}")
+    logger.info(f"Usuario creado: {datos.email} | tenant={usuario.tenant_id} | role={datos.role}")
     
     return {
         "mensaje": "Usuario creado correctamente",
         "usuario": {
             "id": str(nuevo_usuario_id),
             "email": datos.email.lower(),
-            "nombre": datos.nombre.strip(),
-            "rol": datos.rol,
+            "name": datos.name.strip(),
+            "role": datos.role,
         }
     }
 
@@ -195,8 +195,8 @@ async def get_user(
     
     result = await db.execute(
         text("""
-            SELECT id, email, nombre, rol, estado, ultimo_login, creado_en
-            FROM usuarios
+            SELECT id, email, name, role, status, last_login, created_at
+            FROM users
             WHERE id = :uid AND tenant_id = :tid
         """),
         {"uid": str(user_id), "tid": usuario.tenant_id}
@@ -209,11 +209,11 @@ async def get_user(
     return UserResponse(
         id=str(row.id),
         email=row.email,
-        nombre=row.nombre or "",
-        rol=row.rol,
-        estado=row.estado,
-        ultimo_login=str(row.ultimo_login) if row.ultimo_login else None,
-        creado_en=str(row.creado_en),
+        name=row.name or "",
+        role=row.role,
+        status=row.status,
+        last_login=str(row.last_login) if row.last_login else None,
+        created_at=str(row.created_at),
     )
 
 
@@ -229,14 +229,14 @@ async def update_user(
     db: AsyncSession = Depends(obtener_sesion),
 ):
     """
-    Actualiza nombre, rol o estado de un usuario.
+    Actualiza name, role o status de un usuario.
     No se puede actualizar a uno mismo.
     """
     await configurar_rls(db, UUID(usuario.tenant_id))
     
     # Verificar que el usuario pertenezca al tenant
     result_check = await db.execute(
-        text("SELECT rol FROM usuarios WHERE id = :uid AND tenant_id = :tid"),
+        text("SELECT role FROM users WHERE id = :uid AND tenant_id = :tid"),
         {"uid": str(user_id), "tid": usuario.tenant_id}
     )
     target_user = result_check.fetchone()
@@ -244,32 +244,32 @@ async def update_user(
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
     # No permitir que un admin se degrade a sí mismo
-    if str(user_id) == usuario.sub and datos.rol and datos.rol != "admin":
+    if str(user_id) == usuario.sub and datos.role and datos.role != "admin":
         raise HTTPException(
             status_code=400,
-            detail="No puedes degradar tu propio rol de administrador."
+            detail="No puedes degradar tu propio role de administrador."
         )
     
     # Construir query dinámico
     updates = []
     params = {"uid": str(user_id), "tid": usuario.tenant_id}
     
-    if datos.nombre is not None:
-        updates.append("nombre = :nombre")
-        params["nombre"] = datos.nombre.strip()
+    if datos.name is not None:
+        updates.append("name = :name")
+        params["name"] = datos.name.strip()
     
-    if datos.rol is not None and datos.rol in ("admin", "viewer", "agente"):
-        updates.append("rol = :rol")
-        params["rol"] = datos.rol
+    if datos.role is not None and datos.role in ("admin", "viewer", "agente"):
+        updates.append("role = :role")
+        params["role"] = datos.role
     
-    if datos.estado is not None and datos.estado in ("activo", "inactivo", "suspendido"):
-        updates.append("estado = :estado")
-        params["estado"] = datos.estado
+    if datos.status is not None and datos.status in ("is_active", "inactivo", "suspendido"):
+        updates.append("status = :status")
+        params["status"] = datos.status
     
     if not updates:
         return {"mensaje": "No hay cambios para aplicar"}
     
-    query = f"UPDATE usuarios SET {', '.join(updates)} WHERE id = :uid AND tenant_id = :tid"
+    query = f"UPDATE users SET {', '.join(updates)} WHERE id = :uid AND tenant_id = :tid"
     await db.execute(text(query), params)
     await db.commit()
     
@@ -303,7 +303,7 @@ async def delete_user(
     
     # Verificar que el usuario pertenezca al tenant
     result_check = await db.execute(
-        text("SELECT nombre FROM usuarios WHERE id = :uid AND tenant_id = :tid"),
+        text("SELECT name FROM users WHERE id = :uid AND tenant_id = :tid"),
         {"uid": str(user_id), "tid": usuario.tenant_id}
     )
     if not result_check.fetchone():
@@ -312,8 +312,8 @@ async def delete_user(
     # Verificar que no sea el último admin
     result_admin_count = await db.execute(
         text("""
-            SELECT COUNT(*) FROM usuarios 
-            WHERE tenant_id = :tid AND rol = 'admin' AND estado = 'activo'
+            SELECT COUNT(*) FROM users 
+            WHERE tenant_id = :tid AND role = 'admin' AND status = 'is_active'
         """),
         {"tid": usuario.tenant_id}
     )
@@ -322,18 +322,18 @@ async def delete_user(
     if admin_count <= 1:
         # Si el usuario a eliminar es admin y es el único, verificar
         result_target_rol = await db.execute(
-            text("SELECT rol FROM usuarios WHERE id = :uid"),
+            text("SELECT role FROM users WHERE id = :uid"),
             {"uid": str(user_id)}
         )
         target_rol = result_target_rol.fetchone()
-        if target_rol and target_rol.rol == "admin":
+        if target_rol and target_rol.role == "admin":
             raise HTTPException(
                 status_code=400,
                 detail="No puedes eliminar el último administrador del tenant."
             )
     
     await db.execute(
-        text("DELETE FROM usuarios WHERE id = :uid AND tenant_id = :tid"),
+        text("DELETE FROM users WHERE id = :uid AND tenant_id = :tid"),
         {"uid": str(user_id), "tid": usuario.tenant_id}
     )
     await db.commit()
@@ -360,7 +360,7 @@ async def reset_password(
     
     # Verificar que el usuario pertenezca al tenant
     result_check = await db.execute(
-        text("SELECT email FROM usuarios WHERE id = :uid AND tenant_id = :tid"),
+        text("SELECT email FROM users WHERE id = :uid AND tenant_id = :tid"),
         {"uid": str(user_id), "tid": usuario.tenant_id}
     )
     if not result_check.fetchone():
@@ -371,7 +371,7 @@ async def reset_password(
     password_hash = hash_password(temp_password)
     
     await db.execute(
-        text("UPDATE usuarios SET password_hash = :pwd WHERE id = :uid AND tenant_id = :tid"),
+        text("UPDATE users SET password_hash = :pwd WHERE id = :uid AND tenant_id = :tid"),
         {"pwd": password_hash, "uid": str(user_id), "tid": usuario.tenant_id}
     )
     await db.commit()

@@ -1,0 +1,13 @@
+{
+  "faq": {
+    "badge": "Preguntas Frecuentes",
+    "title_1": "Resolvemos tus",
+    "title_2": "Dudas",
+    "items": [
+      {
+        "q": "¿Qué es FluxAgent?",
+        "a": "Es una plataforma empresarial."
+      }
+    ]
+  }
+}

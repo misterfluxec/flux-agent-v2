@@ -58,7 +58,7 @@ export default function NOCDashboard() {
     const messages = [
       "[SYSTEM] Protocolo NOC iniciado — Conexión segura establecida.",
       "[DATABASE] Heartbeat Postgres: OK (Latencia 1.2ms)",
-      "[LLM] Ollama Engine detectado: qwen2.5:3b activo.",
+      "[LLM] Ollama Engine detectado: qwen2.5:3b is_active.",
       "[AUTH] Validando tokens JWT de sesiones activas...",
       "[INGRESS] Tráfico entrante vía Cloudflare Tunnel (Port 4000)",
       "[DEBUG] Memoria swap en niveles óptimos.",

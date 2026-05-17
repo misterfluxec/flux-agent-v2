@@ -119,7 +119,7 @@ export function AgentEditProvider({ children, agentId, initialData, onSave }: Ag
 
       await onSave(changesToSave);
       
-      // Resetear estado después de guardar exitosamente
+      // Resetear status después de guardar exitosamente
       setState(prev => ({
         ...prev,
         originalData: { ...prev.originalData, ...changesToSave },

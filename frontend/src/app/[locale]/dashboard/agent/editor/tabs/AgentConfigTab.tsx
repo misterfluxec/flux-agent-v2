@@ -57,11 +57,11 @@ export function AgentConfigTab({ agentId }: AgentConfigTabProps) {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="nombre">Nombre *</Label>
+              <Label htmlFor="name">Nombre *</Label>
               <Input
-                id="nombre"
-                defaultValue={agent.nombre}
-                onChange={(e) => registerField("nombre", e.target.value)}
+                id="name"
+                defaultValue={agent.name}
+                onChange={(e) => registerField("name", e.target.value)}
                 placeholder="Ej: Asistente de Ventas Premium"
               />
             </div>
@@ -73,7 +73,7 @@ export function AgentConfigTab({ agentId }: AgentConfigTabProps) {
                 onValueChange={(value) => registerField("agent_type", value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar tipo" />
+                  <SelectValue placeholder="Seleccionar type" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="sales">🛒 Ventas</SelectItem>
@@ -86,11 +86,11 @@ export function AgentConfigTab({ agentId }: AgentConfigTabProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="descripcion">Descripción Pública</Label>
+            <Label htmlFor="description">Descripción Pública</Label>
             <Textarea
-              id="descripcion"
-              defaultValue={agent.descripcion || ""}
-              onChange={(e) => registerField("descripcion", e.target.value)}
+              id="description"
+              defaultValue={agent.description || ""}
+              onChange={(e) => registerField("description", e.target.value)}
               placeholder="Breve descripción que verán tus clientes"
               rows={2}
             />
@@ -98,10 +98,10 @@ export function AgentConfigTab({ agentId }: AgentConfigTabProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="idioma">Idioma Principal</Label>
+              <Label htmlFor="language">Idioma Principal</Label>
               <Select
-                defaultValue={agent.idioma}
-                onValueChange={(value) => registerField("idioma", value)}
+                defaultValue={agent.language}
+                onValueChange={(value) => registerField("language", value)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -116,10 +116,10 @@ export function AgentConfigTab({ agentId }: AgentConfigTabProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tono">Tono de Comunicación</Label>
+              <Label htmlFor="tone">Tono de Comunicación</Label>
               <Select
-                defaultValue={agent.tono}
-                onValueChange={(value) => registerField("tono", value)}
+                defaultValue={agent.tone}
+                onValueChange={(value) => registerField("tone", value)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -134,10 +134,10 @@ export function AgentConfigTab({ agentId }: AgentConfigTabProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="genero">Género de Voz</Label>
+              <Label htmlFor="gender">Género de Voz</Label>
               <Select
-                defaultValue={agent.genero}
-                onValueChange={(value) => registerField("genero", value)}
+                defaultValue={agent.gender}
+                onValueChange={(value) => registerField("gender", value)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -163,36 +163,36 @@ export function AgentConfigTab({ agentId }: AgentConfigTabProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="personalidad">Personalidad (descripción corta)</Label>
+            <Label htmlFor="personality">Personalidad (descripción corta)</Label>
             <Textarea
-              id="personalidad"
-              defaultValue={agent.personalidad || ""}
-              onChange={(e) => registerField("personalidad", e.target.value)}
+              id="personality"
+              defaultValue={agent.personality || ""}
+              onChange={(e) => registerField("personality", e.target.value)}
               placeholder="Ej: Paciente, empático, orientado a soluciones..."
               rows={3}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="instrucciones">Instrucciones Específicas</Label>
+            <Label htmlFor="instructions">Instrucciones Específicas</Label>
             <Textarea
-              id="instrucciones"
-              defaultValue={agent.instrucciones || ""}
-              onChange={(e) => registerField("instrucciones", e.target.value)}
+              id="instructions"
+              defaultValue={agent.instructions || ""}
+              onChange={(e) => registerField("instructions", e.target.value)}
               placeholder="Reglas de comportamiento, límites, protocolos de escalación..."
               rows={4}
             />
             <p className="text-xs text-muted-foreground">
-              Estas instrucciones se inyectan en el prompt del sistema. Sé específico.
+              Estas instructions se inyectan en el prompt del sistema. Sé específico.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="modelo">Modelo LLM</Label>
+              <Label htmlFor="model">Modelo LLM</Label>
               <Select
-                defaultValue={agent.modelo}
-                onValueChange={(value) => registerField("modelo", value)}
+                defaultValue={agent.model}
+                onValueChange={(value) => registerField("model", value)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -206,17 +206,17 @@ export function AgentConfigTab({ agentId }: AgentConfigTabProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="temperatura">
-                Creatividad: {agent.temperatura?.toFixed(2)}
+              <Label htmlFor="temperature">
+                Creatividad: {agent.temperature?.toFixed(2)}
               </Label>
               <Input
-                id="temperatura"
+                id="temperature"
                 type="range"
                 min="0"
                 max="1"
                 step="0.1"
-                defaultValue={agent.temperatura}
-                onChange={(e) => registerField("temperatura", parseFloat(e.target.value))}
+                defaultValue={agent.temperature}
+                onChange={(e) => registerField("temperature", parseFloat(e.target.value))}
                 className="w-full"
               />
               <p className="text-xs text-muted-foreground">

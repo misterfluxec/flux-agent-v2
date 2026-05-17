@@ -201,7 +201,7 @@ export function Sidebar({
               <Icon
                 className={cn(
                   "h-[17px] w-[17px] flex-shrink-0 transition-colors",
-                  // Icono activo: cyan suave. Inactivo: muy discreto
+                  // Icono is_active: cyan suave. Inactivo: muy discreto
                   active ? "text-cyan-400/80" : "text-slate-500 group-hover:text-slate-300"
                 )}
               />

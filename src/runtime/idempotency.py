@@ -6,7 +6,7 @@ class IdempotencyGuardException(Exception):
 
 class IdempotencyGuard:
     """
-    Evita la doble ejecución de herramientas irreversibles guardando su estado.
+    Evita la doble ejecución de herramientas irreversibles guardando su status.
     """
     
     def __init__(self, redis_client):
@@ -21,7 +21,7 @@ class IdempotencyGuard:
     async def check_and_lock(self, key: str) -> bool:
         """
         Intenta asegurar el lock para la ejecución. 
-        Si el estado es PENDING o EXECUTED, devuelve False.
+        Si el status es PENDING o EXECUTED, devuelve False.
         """
         if not self.redis:
             return True # Si no hay Redis en dev, ignora

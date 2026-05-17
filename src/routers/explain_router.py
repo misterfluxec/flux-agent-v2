@@ -40,7 +40,7 @@ async def explain_decision(
     elif context == "handoff":
         signals.append("Confianza IA < 60% en última interacción")
         signals.append("Frustración detectada por palabras clave")
-        signals.append("Múltiples intentos de acción fallidos")
+        signals.append("Múltiples attempts de acción fallidos")
         policy, confidence = "human_takeover_frustration_rule", 65.0
         
     elif context == "response":

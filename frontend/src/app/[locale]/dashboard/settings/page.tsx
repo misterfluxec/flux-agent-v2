@@ -187,15 +187,15 @@ function TabTeam() {
             <div key={i} className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-xl hover:border-white/10 transition-colors">
               <div className="flex items-center gap-3">
                 <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-xs font-bold text-emerald-400">
-                  {(m.nombre || m.email || "U")[0].toUpperCase()}
+                  {(m.name || m.email || "U")[0].toUpperCase()}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-white/70">{m.nombre || m.email}</p>
+                  <p className="text-sm font-bold text-white/70">{m.name || m.email}</p>
                   <p className="text-[11px] text-white/30">{m.email}</p>
                 </div>
               </div>
               <span className="text-[10px] px-2.5 py-1 rounded-lg bg-white/5 text-white/30 font-bold uppercase tracking-wider">
-                {m.rol || m.role || "member"}
+                {m.role || m.role || "member"}
               </span>
             </div>
           ))}

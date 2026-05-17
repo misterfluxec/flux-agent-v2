@@ -87,9 +87,9 @@ async def list_models():
 
 @router.post("/models/pull")
 async def pull_model(model_name: str):
-    """Ordena a Ollama descargar un nuevo modelo."""
+    """Ordena a Ollama descargar un nuevo model."""
     try:
-        # Esto es asíncrono en Ollama, pero el backend solo envía la orden
+        # Esto es asíncrono en Ollama, pero el backend solo envía la sort_order
         async with httpx.AsyncClient(timeout=None) as client:
             # Usamos streaming falso para capturar solo el inicio
             resp = await client.post(f"{config.ollama_base_url}/api/pull", json={"name": model_name, "stream": False})
@@ -105,11 +105,11 @@ async def pull_model(model_name: str):
 async def list_tenants(db: AsyncSession = Depends(obtener_sesion)):
     """Lista detallada de tenants con métricas de consumo y planes."""
     query = """
-        SELECT id, nombre, plan, estado, 
-               max_mensajes_mes, mensajes_usados_mes,
-               contrato_inicio, contrato_fin
+        SELECT id, name, plan, status, 
+               max_messages_month, messages_used_month,
+               contract_start, contract_end
         FROM tenants
-        ORDER BY creado_en DESC
+        ORDER BY created_at DESC
     """
     result = await db.execute(text(query))
     rows = result.fetchall()
@@ -117,17 +117,17 @@ async def list_tenants(db: AsyncSession = Depends(obtener_sesion)):
     return [
         {
             "id": str(r.id),
-            "nombre": r.nombre,
+            "name": r.name,
             "plan": r.plan,
-            "estado": r.estado,
+            "status": r.status,
             "usage": {
-                "used": r.mensajes_usados_mes,
-                "limit": r.max_mensajes_mes,
-                "percent": round((r.mensajes_usados_mes / r.max_mensajes_mes * 100), 1) if r.max_mensajes_mes > 0 else 0
+                "used": r.messages_used_month,
+                "limit": r.max_messages_month,
+                "percent": round((r.messages_used_month / r.max_messages_month * 100), 1) if r.max_messages_month > 0 else 0
             },
             "contrato": {
-                "inicio": r.contrato_inicio.isoformat() if r.contrato_inicio else None,
-                "fin": r.contrato_fin.isoformat() if r.contrato_fin else "Vitalicio"
+                "inicio": r.contract_start.isoformat() if r.contract_start else None,
+                "fin": r.contract_end.isoformat() if r.contract_end else "Vitalicio"
             }
         }
         for r in rows
@@ -144,7 +144,7 @@ async def update_tenant_plan(tenant_id: UUID, payload: Dict[str, Any], db: Async
 
     query = text("""
         UPDATE tenants 
-        SET plan = :plan, max_mensajes_mes = :max 
+        SET plan = :plan, max_messages_month = :max 
         WHERE id = :id 
         RETURNING id
     """)
@@ -163,19 +163,19 @@ async def update_tenant_plan(tenant_id: UUID, payload: Dict[str, Any], db: Async
 async def list_all_agents(db: AsyncSession = Depends(obtener_sesion)):
     """Vista de ingeniería de todos los agentes desplegados en la plataforma."""
     query = """
-        SELECT a.id, a.nombre, a.tipo, a.estado, t.nombre as tenant_nombre
+        SELECT a.id, a.name, a.type, a.status, t.name as tenant_nombre
         FROM agents a
         JOIN tenants t ON a.tenant_id = t.id
-        ORDER BY a.creado_en DESC
+        ORDER BY a.created_at DESC
     """
     result = await db.execute(text(query))
     rows = result.fetchall()
     return [
         {
             "id": str(r.id),
-            "nombre": r.nombre,
-            "tipo": r.tipo,
-            "estado": r.estado,
+            "name": r.name,
+            "type": r.type,
+            "status": r.status,
             "tenant": r.tenant_nombre
         }
         for r in rows
@@ -188,10 +188,10 @@ async def list_all_agents(db: AsyncSession = Depends(obtener_sesion)):
 @router.get("/tickets")
 async def get_tickets(db: AsyncSession = Depends(obtener_sesion)):
     query = """
-        SELECT t.id, t.asunto, t.estado, t.prioridad, ten.nombre as tenant_nombre, t.creado_en
+        SELECT t.id, t.subject, t.status, t.priority, ten.name as tenant_nombre, t.created_at
         FROM tickets t
         LEFT JOIN tenants ten ON t.tenant_id = ten.id
-        ORDER BY t.creado_en DESC
+        ORDER BY t.created_at DESC
     """
     result = await db.execute(text(query))
     rows = result.fetchall()
@@ -199,10 +199,10 @@ async def get_tickets(db: AsyncSession = Depends(obtener_sesion)):
         {
             "id": str(r.id),
             "tenant": r.tenant_nombre or "Global",
-            "asunto": r.asunto,
-            "estado": r.estado,
-            "prioridad": r.prioridad,
-            "fecha": r.creado_en.isoformat()
+            "subject": r.subject,
+            "status": r.status,
+            "priority": r.priority,
+            "fecha": r.created_at.isoformat()
         }
         for r in rows
     ]

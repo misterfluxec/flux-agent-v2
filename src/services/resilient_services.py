@@ -157,7 +157,7 @@ def apply_to_voice_services():
 
 # Endpoint de monitoreo de resiliencia
 async def get_resilience_status() -> Dict[str, Any]:
-    """Retorna estado de todos los componentes de resiliencia"""
+    """Retorna status de todos los componentes de resiliencia"""
     
     from core.resilience.circuit_breaker import get_all_circuit_breakers_status
     from core.resilience.bulkhead import get_all_bulkheads_status

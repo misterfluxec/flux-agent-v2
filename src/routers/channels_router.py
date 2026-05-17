@@ -29,7 +29,7 @@ class WebchatMessageRequest(BaseModel):
 
 @router.get("/health")
 async def channels_health():
-    """Verifica el estado de los canales."""
+    """Verifica el status de los channels."""
     return {
         "supported_channels": ChannelRouter.list_supported_channels(),
         "status": "ok"
@@ -56,7 +56,7 @@ async def webchat_webhook(
             res = await db.execute(text("""
                 SELECT agent_id 
                 FROM canales_config 
-                WHERE tenant_id = :tid AND canal = 'webchat' AND estado = 'activo' 
+                WHERE tenant_id = :tid AND canal = 'webchat' AND status = 'is_active' 
                 LIMIT 1
             """), {"tid": tenant_id})
             config_row = res.fetchone()
@@ -134,7 +134,7 @@ async def telegram_webhook(
             res = await db.execute(text("""
                 SELECT tenant_id, agent_id 
                 FROM canales_config 
-                WHERE canal = 'telegram' AND estado = 'activo' 
+                WHERE canal = 'telegram' AND status = 'is_active' 
                 LIMIT 1
             """))
             config = res.fetchone()
@@ -166,7 +166,7 @@ async def telegram_webhook(
 
 @router.get("/supported")
 async def list_supported_channels():
-    """Lista todos los canales soportados."""
+    """Lista todos los channels soportados."""
     return {
         "channels": ChannelRouter.list_supported_channels()
     }

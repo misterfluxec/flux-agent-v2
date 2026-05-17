@@ -1,7 +1,7 @@
 from typing import Dict, Any, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from src.models import BusinessPolicy, PolicyLog
+from models import BusinessPolicy, PolicyLog
 import json
 
 class BusinessPolicyEngine:

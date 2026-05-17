@@ -31,7 +31,7 @@ const MODELS = [
 ];
 
 const STATUS_CONFIG: Record<string, { dot: string; bg: string; label: string }> = {
-  activo: { dot: "bg-emerald-500", bg: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", label: "Activo" },
+  is_active: { dot: "bg-emerald-500", bg: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", label: "Activo" },
   pausado: { dot: "bg-amber-500", bg: "bg-amber-500/10 text-amber-400 border-amber-500/20", label: "Pausado" },
   entrenando: { dot: "bg-blue-500", bg: "bg-blue-500/10 text-blue-400 border-blue-500/20", label: "Entrenando" },
   archivado: { dot: "bg-white/20", bg: "bg-white/5 text-white/40 border-white/10", label: "Archivado" },
@@ -65,18 +65,18 @@ export default function AgentsPage() {
   useEffect(() => { loadAgents(); }, []);
 
   const handleToggleStatus = async (agent: AgentResponse) => {
-    const newStatus = agent.estado === "activo" ? "pausado" : "activo";
+    const newStatus = agent.status === "is_active" ? "pausado" : "is_active";
     try {
-      await updateAgent(agent.id, { estado: newStatus } as any);
-      setAgents(prev => prev.map(a => a.id === agent.id ? { ...a, estado: newStatus } : a));
-      toast.success(`${agent.nombre} ${newStatus === "activo" ? "activado" : "pausado"}`);
+      await updateAgent(agent.id, { status: newStatus } as any);
+      setAgents(prev => prev.map(a => a.id === agent.id ? { ...a, status: newStatus } : a));
+      toast.success(`${agent.name} ${newStatus === "is_active" ? "activado" : "pausado"}`);
     } catch {
-      toast.error("Error al cambiar estado");
+      toast.error("Error al cambiar status");
     }
   };
 
   const handleDelete = async (agent: AgentResponse) => {
-    if (!confirm(`¿Eliminar "${agent.nombre}"? Esta acción no se puede deshacer.`)) return;
+    if (!confirm(`¿Eliminar "${agent.name}"? Esta acción no se puede deshacer.`)) return;
     try {
       await deleteAgent(agent.id);
       setAgents(prev => prev.filter(a => a.id !== agent.id));
@@ -122,8 +122,8 @@ export default function AgentsPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: "Total", value: agents.length, color: "text-white" },
-          { label: "Activos", value: agents.filter(a => a.estado === "activo").length, color: "text-emerald-400" },
-          { label: "Pausados", value: agents.filter(a => a.estado === "pausado").length, color: "text-amber-400" },
+          { label: "Activos", value: agents.filter(a => a.status === "is_active").length, color: "text-emerald-400" },
+          { label: "Pausados", value: agents.filter(a => a.status === "pausado").length, color: "text-amber-400" },
           { label: "Conocimiento", value: agents.reduce((s, a) => s + (a.knowledge_base_size || 0), 0) + " chunks", color: "text-cyan-400" },
         ].map(s => (
           <div key={s.label} className="bg-white/[0.03] border border-white/5 rounded-xl px-4 py-3">
@@ -156,7 +156,7 @@ export default function AgentsPage() {
           {agents.map(agent => {
             const tc = typeConfig(agent.agent_type);
             const TypeIcon = tc.icon;
-            const sc = STATUS_CONFIG[agent.estado] || STATUS_CONFIG.activo;
+            const sc = STATUS_CONFIG[agent.status] || STATUS_CONFIG.is_active;
             const isTesting = testingId === agent.id;
 
             return (
@@ -170,8 +170,8 @@ export default function AgentsPage() {
                         <TypeIcon className="h-5 w-5 text-cyan-400" />
                       </div>
                       <div>
-                        <h3 className="text-sm font-bold text-white">{agent.nombre}</h3>
-                        <p className="text-[11px] text-white/40">{tc.label} · {agent.modelo}</p>
+                        <h3 className="text-sm font-bold text-white">{agent.name}</h3>
+                        <p className="text-[11px] text-white/40">{tc.label} · {agent.model}</p>
                       </div>
                     </div>
                     <span className={`text-[10px] font-bold px-2 py-1 rounded-lg border ${sc.bg} flex items-center gap-1.5`}>
@@ -182,12 +182,12 @@ export default function AgentsPage() {
 
                   {/* Description */}
                   <p className="text-xs text-white/30 line-clamp-2 min-h-[2rem]">
-                    {agent.descripcion || agent.specialty || tc.desc}
+                    {agent.description || agent.specialty || tc.desc}
                   </p>
 
                   {/* Meta chips */}
                   <div className="flex flex-wrap gap-1.5 mt-3">
-                    {agent.canales?.map(ch => (
+                    {agent.channels?.map(ch => (
                       <span key={ch} className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-white/40 font-medium">
                         {ch === "web_chat" ? "Web" : ch === "whatsapp" ? "WhatsApp" : ch}
                       </span>
@@ -229,8 +229,8 @@ export default function AgentsPage() {
                     onClick={() => handleToggleStatus(agent)}
                     className="flex-1 flex items-center justify-center gap-1.5 py-3 text-[11px] font-bold text-white/40 hover:text-white/80 hover:bg-white/[0.03] transition-colors"
                   >
-                    {agent.estado === "activo" ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
-                    {agent.estado === "activo" ? "Pausar" : "Activar"}
+                    {agent.status === "is_active" ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                    {agent.status === "is_active" ? "Pausar" : "Activar"}
                   </button>
                   <button
                     onClick={() => { setTestingId(isTesting ? null : agent.id); setTestResult(null); setTestInput(""); }}
@@ -270,14 +270,14 @@ function CreateAgentModal({ onClose, onCreated }: { onClose: () => void; onCreat
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    nombre: "",
+    name: "",
     agent_type: "sales",
     specialty: "",
-    tono: "profesional",
-    idioma: "Español (Ecuador)",
-    modelo: "qwen2.5:3b",
-    canales: ["web_chat"],
-    instrucciones: "",
+    tone: "profesional",
+    language: "Español (Ecuador)",
+    model: "qwen2.5:3b",
+    channels: ["web_chat"],
+    instructions: "",
   });
 
   const [showForge, setShowForge] = useState(false);
@@ -291,9 +291,9 @@ function CreateAgentModal({ onClose, onCreated }: { onClose: () => void; onCreat
       const res = await generateAgentIdentity({
         descripcion_negocio: forgeDesc,
         agent_type: form.agent_type,
-        tono: form.tono
+        tone: form.tone
       });
-      setForm(f => ({ ...f, instrucciones: res.instructions }));
+      setForm(f => ({ ...f, instructions: res.instructions }));
       setShowForge(false);
       toast.success("¡Identidad forjada exitosamente! ✨");
     } catch {
@@ -304,22 +304,22 @@ function CreateAgentModal({ onClose, onCreated }: { onClose: () => void; onCreat
   };
 
   const handleCreate = async () => {
-    if (!form.nombre.trim()) { toast.error("Nombre es requerido"); return; }
+    if (!form.name.trim()) { toast.error("Nombre es requerido"); return; }
     setSaving(true);
     try {
       const payload: AgentCreate = {
-        nombre: form.nombre,
+        name: form.name,
         agent_type: form.agent_type,
         specialty: form.specialty || undefined,
-        tono: form.tono,
-        idioma: form.idioma,
-        modelo: form.modelo,
-        canales: form.canales,
-        instrucciones: form.instrucciones || undefined,
-        humor: form.tono,
+        tone: form.tone,
+        language: form.language,
+        model: form.model,
+        channels: form.channels,
+        instructions: form.instructions || undefined,
+        mood: form.tone,
       };
       await createAgent(payload);
-      toast.success(`Agente "${form.nombre}" creado exitosamente`);
+      toast.success(`Agente "${form.name}" creado exitosamente`);
       onCreated();
     } catch (e: any) {
       toast.error(e?.response?.data?.detail || "Error al crear agente");
@@ -356,7 +356,7 @@ function CreateAgentModal({ onClose, onCreated }: { onClose: () => void; onCreat
           {step === 1 && (
             <div className="space-y-4 animate-in fade-in slide-in-from-right-2 duration-300">
               <div>
-                <label className="text-sm font-bold text-white/60 mb-3 block">¿Qué tipo de agente necesitas?</label>
+                <label className="text-sm font-bold text-white/60 mb-3 block">¿Qué type de agente necesitas?</label>
                 <div className="grid grid-cols-2 gap-3">
                   {AGENT_TYPES.map(t => {
                     const Icon = t.icon;
@@ -387,7 +387,7 @@ function CreateAgentModal({ onClose, onCreated }: { onClose: () => void; onCreat
             <div className="space-y-4 animate-in fade-in slide-in-from-right-2 duration-300">
               <div>
                 <label className="text-xs font-bold text-white/40 mb-1.5 block">Nombre del agente</label>
-                <input value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
+                <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                   placeholder="Ej: Sofia, Max, Luna..."
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-cyan-500/40" />
               </div>
@@ -401,9 +401,9 @@ function CreateAgentModal({ onClose, onCreated }: { onClose: () => void; onCreat
                 <label className="text-xs font-bold text-white/40 mb-1.5 block">Tono de comunicación</label>
                 <div className="flex gap-2 flex-wrap">
                   {["profesional", "amigable", "casual", "energético"].map(t => (
-                    <button key={t} onClick={() => setForm(f => ({ ...f, tono: t }))}
+                    <button key={t} onClick={() => setForm(f => ({ ...f, tone: t }))}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
-                        form.tono === t ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-400" : "bg-white/[0.02] border-white/5 text-white/40 hover:text-white/60"
+                        form.tone === t ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-400" : "bg-white/[0.02] border-white/5 text-white/40 hover:text-white/60"
                       }`}>
                       {t.charAt(0).toUpperCase() + t.slice(1)}
                     </button>
@@ -414,9 +414,9 @@ function CreateAgentModal({ onClose, onCreated }: { onClose: () => void; onCreat
                 <label className="text-xs font-bold text-white/40 mb-1.5 block">Modelo IA</label>
                 <div className="flex gap-2 flex-wrap">
                   {MODELS.map(m => (
-                    <button key={m.value} onClick={() => setForm(f => ({ ...f, modelo: m.value }))}
+                    <button key={m.value} onClick={() => setForm(f => ({ ...f, model: m.value }))}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
-                        form.modelo === m.value ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-400" : "bg-white/[0.02] border-white/5 text-white/40 hover:text-white/60"
+                        form.model === m.value ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-400" : "bg-white/[0.02] border-white/5 text-white/40 hover:text-white/60"
                       }`}>
                       {m.label} <span className="text-white/20 ml-1">· {m.speed}</span>
                     </button>
@@ -439,12 +439,12 @@ function CreateAgentModal({ onClose, onCreated }: { onClose: () => void; onCreat
                     { id: "voice", label: "Voz", icon: Mic },
                   ].map(ch => {
                     const Icon = ch.icon;
-                    const selected = form.canales.includes(ch.id);
+                    const selected = form.channels.includes(ch.id);
                     return (
                       <button key={ch.id}
                         onClick={() => setForm(f => ({
                           ...f,
-                          canales: selected ? f.canales.filter(c => c !== ch.id) : [...f.canales, ch.id],
+                          channels: selected ? f.channels.filter(c => c !== ch.id) : [...f.channels, ch.id],
                         }))}
                         className={`flex items-center gap-2.5 p-3 rounded-xl border transition-all ${
                           selected ? "bg-cyan-500/10 border-cyan-500/30" : "bg-white/[0.02] border-white/5 hover:border-white/10"
@@ -491,7 +491,7 @@ function CreateAgentModal({ onClose, onCreated }: { onClose: () => void; onCreat
                   </div>
                 )}
                 
-                <textarea value={form.instrucciones} onChange={e => setForm(f => ({ ...f, instrucciones: e.target.value }))}
+                <textarea value={form.instructions} onChange={e => setForm(f => ({ ...f, instructions: e.target.value }))}
                   rows={4} placeholder="Ej: Siempre ofrece el producto premium primero..."
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-cyan-500/40 resize-none" />
               </div>
@@ -511,7 +511,7 @@ function CreateAgentModal({ onClose, onCreated }: { onClose: () => void; onCreat
               Siguiente <ChevronRight className="h-4 w-4" />
             </Button>
           ) : (
-            <Button onClick={handleCreate} disabled={saving || !form.nombre.trim()}
+            <Button onClick={handleCreate} disabled={saving || !form.name.trim()}
               className="bg-cyan-500 hover:bg-cyan-600 text-black font-bold rounded-xl px-6 gap-2">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               Crear Agente

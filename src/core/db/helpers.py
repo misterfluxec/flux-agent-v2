@@ -31,18 +31,18 @@ def interval_minutes(minutes: int) -> str:
 
 def json_extract_path(path: str) -> str:
     """Genera extractor de path JSONB para PostgreSQL"""
-    return f"script_ventas#>'{{{path}}}'"
+    return f"sales_script#>'{{{path}}}'"
 
 def json_query_path(path: str) -> str:
     """Genera query de path JSONB para PostgreSQL"""
-    return f"script_ventas#>'{{{path}}}'"
+    return f"sales_script#>'{{{path}}}'"
 
 # =============================================================================
 # FUNCIONES DE FORMATEO
 # =============================================================================
 
 def format_timestamp(column_name: str, format_type: str = 'default') -> str:
-    """Formatea timestamp según tipo especificado"""
+    """Formatea timestamp según type especificado"""
     formats = {
         'default': f"TO_CHAR({column_name}, 'DD/MM/YYYY HH24:MI')",
         'date_only': f"TO_CHAR({column_name}, 'DD/MM/YYYY')",

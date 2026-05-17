@@ -49,7 +49,7 @@ export function useActivationMoments() {
   const { tenantId } = useTenant();
   const [shown, setShown] = useState<Partial<Record<MomentKey, boolean>>>({});
 
-  // ─── Cargar estado desde localStorage ────────────────────────────────────
+  // ─── Cargar status desde localStorage ────────────────────────────────────
   useEffect(() => {
     if (!tenantId) return;
     try {

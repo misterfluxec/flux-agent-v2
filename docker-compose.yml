@@ -76,7 +76,7 @@ services:
     ports:
       - "11434:11434"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      test: ["CMD-SHELL", "ollama list || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -117,7 +117,7 @@ services:
       ollama:
         condition: service_started
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/live', timeout=5)"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -265,6 +265,21 @@ services:
     depends_on:
       - loki
       - prometheus
+
+  # --- KOKORO TTS (Local CPU Voice) ---
+  kokoro-tts:
+    image: ghcr.io/remsky/kokoro-fastapi-cpu:latest
+    container_name: fluxagent-kokoro
+    restart: always
+    ports:
+      - "8880:8880"
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+          cpus: '4.0'
+    networks:
+      - fluxagent-net
 
 volumes:
   postgres_data:

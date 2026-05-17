@@ -11,9 +11,9 @@ from services.tool_executor import ToolExecutor
 from services.ai_memory import AIMemoryManager
 
 from services.professional_actor_loop import ProfessionalActorLoop, ActorLoopContext
-from src.runtime.graph import ExecutionGraph
-from src.runtime.graph_node import GraphNode
-from src.runtime.state_machine import AgentExecutionState
+from runtime.graph import ExecutionGraph
+from runtime.graph_node import GraphNode
+from runtime.state_machine import AgentExecutionState
 
 logger = logging.getLogger("flux.ai_orchestrator")
 
@@ -45,7 +45,7 @@ class AIOrchestrator:
         graph.add_node(node_emit, handler=self._handle_event_emit)
 
         # Transiciones explícitas usando GraphEdge
-        from src.runtime.graph_edge import GraphEdge
+        from runtime.graph_edge import GraphEdge
         graph.add_edge(GraphEdge(source="step_memory", target="step_intent"))
         graph.add_edge(GraphEdge(source="step_intent", target="step_policy"))
         graph.add_edge(GraphEdge(source="step_policy", target="step_memory_persist"))
@@ -81,7 +81,7 @@ class AIOrchestrator:
             "Eres un clasificador de intenciones para un agente "
             "de ventas LATAM. Analiza el mensaje y responde "
             "ÚNICAMENTE con JSON válido, sin texto adicional:\n"
-            '{"intent": "<tipo>", "confidence": <0.0-1.0>}\n\n'
+            '{"intent": "<type>", "confidence": <0.0-1.0>}\n\n'
             "Tipos: purchase, inquiry, complaint, booking, "
             "greeting, farewell, support, price_check, out_of_scope"
         )
@@ -146,7 +146,7 @@ class AIOrchestrator:
         system_content = (
             memory.get("instructions")
             or "Eres un agente de ventas profesional. "
-               "Responde en el idioma del cliente, "
+               "Responde en el language del cliente, "
                "de forma concisa, amable y útil."
         )
 
@@ -275,13 +275,13 @@ class AIOrchestrator:
             import json
             state_key = f"orchestrator:state:{ctx.correlation_id}"
             
-            # Recuperar estado si existe (Graph Runner Checkpointing)
+            # Recuperar status si existe (Graph Runner Checkpointing)
             saved_state_json = await self.redis.get(state_key) if hasattr(self.redis, "get") else None
             start_node_id = "step_memory"
             if saved_state_json:
                 saved_state = json.loads(saved_state_json)
                 start_node_id = saved_state.get("next_node_id", "step_memory")
-                print(f"[GraphRunner] Recuperando estado: retomando desde {start_node_id}.")
+                print(f"[GraphRunner] Recuperando status: retomando desde {start_node_id}.")
 
             # 3. Ejecutar grafo
             try:

@@ -218,10 +218,10 @@ function TabProcess() {
 
   useEffect(() => { load(); }, []);
 
-  const handleDelete = async (nombre: string) => {
-    if (!confirm(`¿Eliminar la fuente "${nombre}" y todos sus chunks?`)) return;
+  const handleDelete = async (name: string) => {
+    if (!confirm(`¿Eliminar la fuente "${name}" y todos sus chunks?`)) return;
     try {
-      await deleteKnowledgeSource(nombre);
+      await deleteKnowledgeSource(name);
       toast.success("Fuente eliminada");
       load();
     } catch {
@@ -309,17 +309,17 @@ function TabValidate() {
   }, []);
 
   const filtered = products.filter(p =>
-    p.nombre.toLowerCase().includes(search.toLowerCase()) ||
+    p.name.toLowerCase().includes(search.toLowerCase()) ||
     (p.codigo && p.codigo.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const startEdit = (p: ProductData) => { setEditingId(p.id); setEditPrecio(p.precio); setEditStock(p.stock); };
+  const startEdit = (p: ProductData) => { setEditingId(p.id); setEditPrecio(p.price); setEditStock(p.stock); };
   const cancelEdit = () => setEditingId(null);
   const saveEdit = async (id: string) => {
     setSaving(true);
     try {
-      await updateProduct(id, { precio: editPrecio, stock: editStock });
-      setProducts(prev => prev.map(p => p.id === id ? { ...p, precio: editPrecio, stock: editStock } : p));
+      await updateProduct(id, { price: editPrecio, stock: editStock });
+      setProducts(prev => prev.map(p => p.id === id ? { ...p, price: editPrecio, stock: editStock } : p));
       toast.success("Producto actualizado");
       setEditingId(null);
     } catch { toast.error("Error al actualizar"); } finally { setSaving(false); }
@@ -343,7 +343,7 @@ function TabValidate() {
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre o código..."
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por name o código..."
           className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-cyan-500/40" />
       </div>
 
@@ -372,18 +372,18 @@ function TabValidate() {
             return (
               <div key={p.id} className="grid grid-cols-12 gap-3 items-center px-4 py-3 bg-white/[0.02] border border-white/5 rounded-xl hover:border-white/10 transition-colors">
                 <div className="col-span-5">
-                  <p className="text-sm font-bold text-white/70 truncate">{p.nombre}</p>
+                  <p className="text-sm font-bold text-white/70 truncate">{p.name}</p>
                   {p.codigo && <p className="text-[10px] text-white/20 font-mono">{p.codigo}</p>}
                 </div>
                 <div className="col-span-2">
-                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400/70 border border-emerald-500/20 font-bold">{p.estado}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400/70 border border-emerald-500/20 font-bold">{p.status}</span>
                 </div>
                 <div className="col-span-2 text-right">
                   {isEditing ? (
                     <input type="number" step="0.01" value={editPrecio} onChange={e => setEditPrecio(Number(e.target.value))}
                       className="w-20 ml-auto bg-white/5 border border-cyan-500/30 rounded-lg px-2 py-1 text-xs text-white text-right focus:outline-none" />
                   ) : (
-                    <span className="text-sm font-bold text-white/60">${p.precio.toFixed(2)}</span>
+                    <span className="text-sm font-bold text-white/60">${p.price.toFixed(2)}</span>
                   )}
                 </div>
                 <div className="col-span-2 text-right">
@@ -471,8 +471,8 @@ function TabAssign() {
                     <Users2 className="h-4 w-4 text-cyan-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-white/70">{agent.nombre}</p>
-                    <p className="text-[11px] text-white/30">{agent.agent_type} · {agent.modelo}</p>
+                    <p className="text-sm font-bold text-white/70">{agent.name}</p>
+                    <p className="text-[11px] text-white/30">{agent.agent_type} · {agent.model}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -480,20 +480,20 @@ function TabAssign() {
                     {agent.knowledge_base_size || 0} chunks
                   </span>
                   <span className={`text-[10px] px-2 py-1 rounded-lg font-bold ${
-                    agent.estado === "activo" 
+                    agent.status === "is_active" 
                       ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" 
                       : "bg-white/5 text-white/30"
                   }`}>
-                    {agent.estado}
+                    {agent.status}
                   </span>
                 </div>
               </div>
 
               {/* Knowledge sources assigned */}
               <div className="flex flex-wrap gap-2">
-                {agent.coleccion_rag ? (
+                {agent.rag_collection ? (
                   <span className="text-[11px] px-3 py-1.5 rounded-lg bg-purple-500/10 text-purple-400/70 border border-purple-500/20 font-medium flex items-center gap-1.5">
-                    <Brain className="h-3 w-3" /> {agent.coleccion_rag}
+                    <Brain className="h-3 w-3" /> {agent.rag_collection}
                   </span>
                 ) : sources.length > 0 ? (
                   <p className="text-[11px] text-white/20 italic">
@@ -514,7 +514,7 @@ function TabAssign() {
         <p className="text-xs text-white/30 leading-relaxed">
           Por defecto, todos los agentes acceden al conocimiento global del tenant.
           Para asignar colecciones RAG específicas, edita el agente desde la sección "Agentes IA" 
-          y configura el campo <code className="bg-black/30 px-1 rounded text-[10px]">coleccion_rag</code>.
+          y configura el campo <code className="bg-black/30 px-1 rounded text-[10px]">rag_collection</code>.
         </p>
       </div>
     </div>

@@ -20,7 +20,7 @@ class StoredEvent(BaseModel):
 class EventStore:
     """
     Event Sourcing Append-Only Store.
-    Persiste eventos de dominio en PostgreSQL para reconstrucción del estado.
+    Persiste eventos de dominio en PostgreSQL para reconstrucción del status.
     """
     
     def __init__(self, db_session_maker):
