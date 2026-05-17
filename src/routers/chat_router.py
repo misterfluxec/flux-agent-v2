@@ -134,7 +134,10 @@ async def procesar_mensaje_entrante(
             # Segunda llamada al LLM con los resultados
             respuesta_llm = await llamar_ollama(mensajes_llm, agente.model, agente.temperature, tools=commerce_schemas)
             
-        respuesta_texto = respuesta_llm if isinstance(respuesta_llm, str) else respuesta_llm.get("content", "")
+        respuesta_texto_crudo = respuesta_llm if isinstance(respuesta_llm, str) else respuesta_llm.get("content", "")
+        
+        from services.text_cleaner import clean_for_whatsapp
+        respuesta_texto = clean_for_whatsapp(respuesta_texto_crudo)
         
         # 7. Guardar la respuesta del asistente
         await db.execute(text("""
