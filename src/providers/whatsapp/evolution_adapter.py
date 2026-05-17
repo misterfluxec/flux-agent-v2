@@ -4,6 +4,7 @@ from typing import Any
 
 import httpx
 
+from services.channels.whatsapp_throttle import WhatsAppThrottle
 from providers.base import ChannelProvider
 from core.exceptions import ChannelUnavailableError
 
@@ -14,13 +15,14 @@ TIMEOUT = httpx.Timeout(connect=5.0, read=15.0,
 
 class EvolutionProviderAdapter(ChannelProvider):
 
-    def __init__(self, base_url: str, api_key: str):
+    def __init__(self, base_url: str, api_key: str, throttle: WhatsAppThrottle | None = None):
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self._headers = {
             "apikey": api_key,
             "Content-Type": "application/json",
         }
+        self.throttle = throttle
 
     def _client(self) -> httpx.AsyncClient:
         return httpx.AsyncClient(
@@ -101,12 +103,23 @@ class EvolutionProviderAdapter(ChannelProvider):
                         "error": str(exc)}
 
     async def send_message(
-        self, session_id: str, payload: dict[str, Any]
+        self, session_id: str, payload: dict[str, Any], tenant_id: str = "", is_bulk: bool = False
     ) -> dict[str, Any]:
         to = payload.get("to", "")
         text = payload.get("text") or payload.get("body", "")
         media_url = payload.get("media_url")
         media_type = payload.get("media_type", "image")
+
+        if self.throttle and tenant_id:
+            allowed = await self.throttle.wait_before_send(
+                tenant_id=tenant_id,
+                to_number=to,
+                is_bulk=is_bulk,
+            )
+            if not allowed:
+                return {"success": False,
+                        "reason": "throttle_blocked",
+                        "to": to}
 
         async with self._client() as client:
             try:
