@@ -146,7 +146,41 @@ async def procesar_mensaje_entrante(
         """), {"cid": str(conversation_id), "tid": str(tenant_id), "contenido": respuesta_texto})
         
         await db.commit()
+
+        # ── Auto-detectar y guardar cita ──────────────────────────────────────
+        try:
+            from services.booking_extractor import BookingExtractor
+
+            extractor = BookingExtractor()
+            async with sesion_db(tenant_id) as db_booking:
+                # Recuperar historia reciente para el extractor
+                hist = await db_booking.execute(text("""
+                    SELECT rol, contenido FROM mensajes
+                    WHERE conversacion_id = :cid
+                    ORDER BY creado_en DESC LIMIT 10
+                """), {"cid": str(conversation_id)})
+                historia = [
+                    {"rol": r.rol, "contenido": r.contenido}
+                    for r in hist.fetchall()
+                ]
+                booking = await extractor.extract(
+                    historia=historia,
+                    telefono=lead_externo_id,
+                    tenant_id=str(tenant_id),
+                    db=db_booking,
+                )
+                if booking:
+                    logger.info(
+                        "cita_auto_registrada",
+                        extra={"booking": booking}
+                    )
+        except Exception as exc:
+            logger.warning("booking_extractor_skip",
+                          extra={"error": str(exc)})
+        # ── fin extractor ─────────────────────────────────────────────────────
+
         return respuesta_texto
+
 
 
 async def buscar_contexto_rag(db: AsyncSession, tenant_id: UUID, agent_id: UUID, pregunta: str) -> str:
