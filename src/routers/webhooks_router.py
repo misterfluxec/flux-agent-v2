@@ -14,7 +14,7 @@ router = APIRouter(
     tags=["Webhooks Públicos"],
 )
 
-EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "http://flux-evolution:8080")
+EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "http://172.19.0.6:8080")
 EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "fluxkey123")
 
 
@@ -73,7 +73,7 @@ async def evolution_webhook(
         async with sesion_db() as db:
             res_inst = await db.execute(text("""
                 SELECT tenant_id, agent_id FROM canales_config
-                WHERE canal = 'whatsapp' AND instancia_nombre = :instancia AND status = 'is_active'
+                WHERE canal = 'whatsapp' AND instancia_nombre = :instancia AND estado = 'activo'
             """), {"instancia": instancia_nombre})
             instancia_config = res_inst.fetchone()
 
@@ -229,9 +229,7 @@ async def enviar_mensaje_whatsapp(instancia_nombre: str, numero: str, texto: str
     }
     payload = {
         "number": numero,
-        "textMessage": {
-            "text": texto
-        }
+        "text": texto
     }
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:

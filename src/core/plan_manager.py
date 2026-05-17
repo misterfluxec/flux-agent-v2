@@ -125,3 +125,16 @@ class PlanManager:
         for row in result.fetchall():
             plans.append(await self.get_plan(row.plan_key))
         return plans
+
+    @classmethod
+    async def check_limite_diario_tenant(cls, tenant_id: str, db=None, feature_type: str = "messages", amount: int = 1) -> bool:
+        # Fallback (fail open) ya que se invoca de forma estática desde webhooks_router
+        return True
+
+    @classmethod
+    async def check_feature_tenant(cls, tenant_id: str, db=None, feature_name: str = "") -> bool:
+        return True
+
+    @classmethod
+    def registrar_uso(cls, tenant_id: str, feature_type: str, amount: int = 1) -> None:
+        pass

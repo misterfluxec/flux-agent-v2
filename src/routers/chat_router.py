@@ -32,7 +32,7 @@ async def procesar_mensaje_entrante(
     async with sesion_db(tenant_id) as db:
         # 1. Obtener información del agente
         res_agent = await db.execute(text("""
-            SELECT nombre, instrucciones, modelo, temperatura, max_tokens, personalidad, genero, humor, script_ventas
+            SELECT name, instructions, model, temperature, max_tokens, personality, gender, mood, sales_script
             FROM agents WHERE id = :agent_id AND tenant_id = :tenant_id
         """), {"agent_id": str(agent_id), "tenant_id": str(tenant_id)})
         
@@ -55,15 +55,15 @@ async def procesar_mensaje_entrante(
                 VALUES (:tid, :aid, :lead, :canal, 'activa')
                 RETURNING id
             """), {"tid": str(tenant_id), "aid": str(agent_id), "lead": lead_externo_id, "canal": canal})
-            conversacion_id = res_new_conv.scalar()
+            conversation_id = res_new_conv.scalar()
         else:
-            conversacion_id = conv.id
+            conversation_id = conv.id
 
         # 3. Guardar el mensaje del usuario
         await db.execute(text("""
             INSERT INTO mensajes (conversacion_id, tenant_id, rol, contenido)
             VALUES (:cid, :tid, 'usuario', :contenido)
-        """), {"cid": str(conversacion_id), "tid": str(tenant_id), "contenido": mensaje_texto})
+        """), {"cid": str(conversation_id), "tid": str(tenant_id), "contenido": mensaje_texto})
         
         # 4. Recuperar contexto RAG (Búsqueda vectorial simulada o real)
         contexto_rag = await buscar_contexto_rag(db, tenant_id, agent_id, mensaje_texto)
@@ -73,16 +73,16 @@ async def procesar_mensaje_entrante(
             SELECT rol, contenido FROM mensajes 
             WHERE conversacion_id = :cid
             ORDER BY creado_en DESC LIMIT 10
-        """), {"cid": str(conversacion_id)})
+        """), {"cid": str(conversation_id)})
         historial_inverso = res_hist.fetchall()
         
-        # Invertir para que estén en orden cronológico
+        # Invertir para que estén en sort_order cronológico
         mensajes_llm = []
         
         # System prompt
-        prompt_sistema = f"Eres {agente.nombre}, un asistente {agente.genero} con tono {agente.humor}.\n"
-        if agente.personalidad: prompt_sistema += f"Personalidad: {agente.personalidad}\n"
-        if agente.instrucciones: prompt_sistema += f"Instrucciones: {agente.instrucciones}\n"
+        prompt_sistema = f"Eres {agente.name}, un asistente {agente.gender} con tone {agente.mood}.\n"
+        if agente.personality: prompt_sistema += f"Personalidad: {agente.personality}\n"
+        if agente.instructions: prompt_sistema += f"Instrucciones: {agente.instructions}\n"
         
         if contexto_rag:
             prompt_sistema += f"\n\nContexto de la empresa (Usa esta información para responder):\n{contexto_rag}\n"
@@ -104,7 +104,7 @@ async def procesar_mensaje_entrante(
             
         commerce_schemas = executor.get_all_tools_schema()
         
-        respuesta_llm = await llamar_ollama(mensajes_llm, agente.modelo, agente.temperatura, tools=commerce_schemas)
+        respuesta_llm = await llamar_ollama(mensajes_llm, agente.model, agente.temperature, tools=commerce_schemas)
         
         while isinstance(respuesta_llm, dict) and "tool_calls" in respuesta_llm:
             tool_calls = respuesta_llm["tool_calls"]
@@ -132,7 +132,7 @@ async def procesar_mensaje_entrante(
                 })
             
             # Segunda llamada al LLM con los resultados
-            respuesta_llm = await llamar_ollama(mensajes_llm, agente.modelo, agente.temperatura, tools=commerce_schemas)
+            respuesta_llm = await llamar_ollama(mensajes_llm, agente.model, agente.temperature, tools=commerce_schemas)
             
         respuesta_texto = respuesta_llm if isinstance(respuesta_llm, str) else respuesta_llm.get("content", "")
         
@@ -140,7 +140,7 @@ async def procesar_mensaje_entrante(
         await db.execute(text("""
             INSERT INTO mensajes (conversacion_id, tenant_id, rol, contenido)
             VALUES (:cid, :tid, 'asistente', :contenido)
-        """), {"cid": str(conversacion_id), "tid": str(tenant_id), "contenido": respuesta_texto})
+        """), {"cid": str(conversation_id), "tid": str(tenant_id), "contenido": respuesta_texto})
         
         await db.commit()
         return respuesta_texto
@@ -179,7 +179,7 @@ COMMERCE_TOOLS_SCHEMA = [
         "type": "function",
         "function": {
             "name": "check_availability",
-            "description": "Verifica si un producto está disponible en inventario y obtiene su precio.",
+            "description": "Verifica si un producto está disponible en inventario y obtiene su price.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -221,7 +221,7 @@ COMMERCE_TOOLS_SCHEMA = [
         "type": "function",
         "function": {
             "name": "create_order",
-            "description": "Crea un pedido u orden de compra.",
+            "description": "Crea un pedido u sort_order de compra.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -248,13 +248,13 @@ COMMERCE_TOOLS_SCHEMA = [
     }
 ]
 
-async def llamar_ollama(mensajes: list, modelo: str, temperatura: float, tools: list = None):
+async def llamar_ollama(mensajes: list, model: str, temperature: float, tools: list = None):
     """Llama al LLM (Ollama local o cloud) y obtiene la respuesta."""
     try:
         return await llm_router.generate(
             messages=mensajes,
-            model=modelo,
-            temperature=temperatura,
+            model=model,
+            temperature=temperature,
             max_tokens=2048,
             tools=tools
         )

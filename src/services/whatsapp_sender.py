@@ -105,7 +105,7 @@ async def send_text_message(
     
     payload = {
         "number": clean_number,
-        "text": {"text": text}
+        "text": text
     }
     
     try:

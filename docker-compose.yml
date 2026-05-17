@@ -102,9 +102,9 @@ services:
       - "${BACKEND_PORT:-9000}:8000"
     environment:
       DATABASE_URL: postgresql://${DB_USER:-fluxadmin}:${DB_PASSWORD:-fluxsecure2026}@fluxagent-postgres:5432/${DB_NAME:-fluxagent_v2}
-      REDIS_URL: redis://:${REDIS_PASSWORD:-redisflux2026}@redis:6379/0
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redisflux2026}@fluxagent-redis:6379/0
       JWT_SECRET: ${JWT_SECRET:-cambiar_en_produccion_jwt_secret}
-      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_BASE_URL: http://fluxagent-ollama:11434
       APP_ENV: ${APP_ENV:-production}
       TZ: America/Guayaquil
     depends_on:
@@ -139,18 +139,21 @@ services:
       dockerfile: Dockerfile
     container_name: fluxagent-worker
     restart: always
-    command: dramatiq tasks.async_tasks tasks.followup_worker
+    command: python -m dramatiq tasks.async_tasks tasks.followup_worker
     environment:
       - APP_ENV=${APP_ENV:-production}
+      - DATABASE_URL=postgresql+asyncpg://fluxadmin:fluxsecure2026@fluxagent-postgres:5432/fluxagent_v2
+      - REDIS_URL=redis://:redisflux2026@fluxagent-redis:6379/0
+      - JWT_SECRET=${JWT_SECRET:-12315838b8aaae13b3118409c46f0d5e34de20536ae7039abb83817034edc5b9}
       - DB_NAME=${DB_NAME:-fluxagent_v2}
       - DB_USER=${DB_USER:-fluxadmin}
       - DB_PASSWORD=${DB_PASSWORD:-fluxsecure2026}
-      - DB_HOST=postgres
+      - DB_HOST=fluxagent-postgres
       - DB_PORT=5432
-      - REDIS_HOST=redis
+      - REDIS_HOST=fluxagent-redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-redisflux2026}
-      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_URL=http://fluxagent-ollama:11434
       - EVOLUTION_API_URL=${EVOLUTION_API_URL:-http://flux-evolution:8080}
       - EVOLUTION_API_KEY=${EVOLUTION_API_KEY:-fluxkey123}
     depends_on:
