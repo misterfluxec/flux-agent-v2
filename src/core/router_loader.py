@@ -106,6 +106,7 @@ def setup_routers(app: FastAPI):
     app.include_router(knowledge_router)
     app.include_router(leads_router)
     app.include_router(analytics_router)
+    app.include_router(stats_router)
     app.include_router(insights_router, prefix="/api/v1")
     app.include_router(explain_router, prefix="/api/v1")
     app.include_router(yanua_router, prefix="/api/v1")
