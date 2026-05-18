@@ -359,3 +359,12 @@ def get_task_status(message_id: str) -> Dict[str, Any]:
             "status": "unknown",
             "error": str(e)
         }
+
+
+# =============================================================================
+# TAREAS DE RECORDATORIOS AUTOMÁTICOS
+# =============================================================================
+from tasks.reminder_scheduler import (
+    check_and_schedule_reminders,
+    enviar_recordatorio_task,
+)
