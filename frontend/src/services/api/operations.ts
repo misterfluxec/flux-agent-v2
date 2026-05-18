@@ -43,12 +43,29 @@ export const getEntityTimeline = async (aggregateType: AggregateType, aggregateI
 };
 
 export const getGlobalTimeline = async (eventTypes?: string, severity?: string, limit: number = 50, cursor: number = 0) => {
-  let url = `/api/v1/operations/timeline?limit=${limit}`;
-  if (eventTypes) url += `&event_types=${eventTypes}`;
-  if (severity) url += `&severity=${severity}`;
-  const data = await api.get<TimelineEvent[]>(url);
+  let url = `/api/v1/stats/activity?limit=${limit}`;
+  const data = await api.get<any[]>(url);
+  
+  // Map the new stats/activity response to the TimelineEvent shape expected by the frontend
+  const mappedEvents: TimelineEvent[] = (data || []).map(item => ({
+    id: item.id,
+    type: item.type === 'cita' ? 'appointment' : 'message',
+    aggregate_id: item.id,
+    aggregate_type: 'system',
+    category: item.type === 'conversacion' ? 'interaction' : 'ops',
+    event_type: item.type,
+    severity: item.urgency === 'high' ? 'high' : item.urgency === 'medium' ? 'medium' : 'low',
+    summary: item.title,
+    details: { description: item.description },
+    actor: { type: 'system', id: 'sys', name: 'FluxAgent' },
+    timestamp: item.timestamp,
+    status: 'completed',
+    requires_ack: false,
+    tags: []
+  }));
+  
   return {
-    events: data || [],
+    events: mappedEvents,
     has_more: false // backend no soporta paginación aún
   } as TimelinePage;
 };
