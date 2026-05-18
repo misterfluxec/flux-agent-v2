@@ -94,7 +94,10 @@ def propagate_from_event(parent_event_id: UUID, parent_correlation_id: Optional[
 # Inyecta/extrae correlation_id en cada request HTTP.
 # =============================================================================
 
-class CorrelationMiddleware(BaseHTTPMiddleware):
+from starlette.types import ASGIApp, Receive, Scope, Send
+from starlette.datastructures import MutableHeaders
+
+class CorrelationMiddleware:
     """
     Middleware que:
       1. Lee X-Correlation-ID del request (si viene del cliente/gateway)
@@ -106,9 +109,16 @@ class CorrelationMiddleware(BaseHTTPMiddleware):
     automáticamente el mismo correlation_id sin pasarlo manualmente.
     """
 
-    async def dispatch(self, request: Request, call_next):
-        # Leer correlation_id entrante (e.g., del API gateway o cliente)
-        incoming = request.headers.get(CORRELATION_HEADER)
+    def __init__(self, app: ASGIApp):
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        headers = MutableHeaders(scope=scope)
+        incoming = headers.get(CORRELATION_HEADER.lower())
         if incoming:
             try:
                 cid = str(UUID(incoming))  # Validar que es UUID válido
@@ -121,11 +131,13 @@ class CorrelationMiddleware(BaseHTTPMiddleware):
         # Establecer en ContextVar para este contexto async
         token = _correlation_id_var.set(cid)
 
+        async def send_wrapper(message):
+            if message["type"] == "http.response.start":
+                res_headers = MutableHeaders(scope=message)
+                res_headers[CORRELATION_HEADER] = cid
+            await send(message)
+
         try:
-            response: Response = await call_next(request)
+            await self.app(scope, receive, send_wrapper)
         finally:
             _correlation_id_var.reset(token)
-
-        # Propagar en response header (útil para debugging y frontend)
-        response.headers[CORRELATION_HEADER] = cid
-        return response

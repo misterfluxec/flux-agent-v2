@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from typing import Dict, Any
 
@@ -8,7 +8,7 @@ class OperationalConfidenceEngine:
     Score multidimensional que agrega la salud real de todos los dominios del sistema.
     Cada dimensión es independiente y ponderada estratégicamente.
     """
-    def __init__(self, db: Session, tenant_id: str):
+    def __init__(self, db: AsyncSession, tenant_id: str):
         self.db = db
         self.tenant_id = tenant_id
 

@@ -1,5 +1,5 @@
 import json
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from datetime import datetime, timedelta, timezone
 from typing import Dict, Any
@@ -21,7 +21,7 @@ class MemoryAggregator:
         "weekly": timedelta(days=7),
     }
 
-    def __init__(self, db: Session, tenant_id: str):
+    def __init__(self, db: AsyncSession, tenant_id: str):
         self.db = db
         self.tenant_id = tenant_id
 

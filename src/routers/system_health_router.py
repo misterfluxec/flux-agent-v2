@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
 from services.system_health.operational_confidence_engine import OperationalConfidenceEngine
@@ -15,7 +15,7 @@ def get_tenant_id_header() -> str:
 
 @router.get("/health")
 def get_system_health(
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     tenant_id: str = Depends(get_tenant_id_header),
 ):
     """
@@ -30,7 +30,7 @@ def get_system_health(
 @router.get("/dlq")
 def get_dlq_events(
     limit: int = 50,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     tenant_id: str = Depends(get_tenant_id_header),
 ):
     """
@@ -43,7 +43,7 @@ def get_dlq_events(
 @router.post("/dlq/{event_id}/replay")
 def replay_dlq_event(
     event_id: str,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     tenant_id: str = Depends(get_tenant_id_header),
 ):
     """
@@ -62,7 +62,7 @@ def replay_dlq_event(
 @router.post("/dlq/{event_id}/archive")
 def archive_dlq_event(
     event_id: str,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     tenant_id: str = Depends(get_tenant_id_header),
 ):
     """

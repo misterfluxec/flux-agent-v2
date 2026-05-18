@@ -226,6 +226,12 @@ class PaymentFailedPayload(BaseModel):
     order_id: str
     reason: str
 
+class HumanApprovalResponsePayload(BaseModel):
+    correlation_id: str
+    decision: str
+    reason: str
+    reviewed_by: str
+
 # Union de todos los payloads para tipado seguro
 EventPayload = Union[
     MessageReceivedPayload,
@@ -241,7 +247,8 @@ EventPayload = Union[
     ResponseGeneratedPayload,
     BillingAlertPayload,
     PaymentCompletedPayload,
-    PaymentFailedPayload
+    PaymentFailedPayload,
+    HumanApprovalResponsePayload
 ]
 
 

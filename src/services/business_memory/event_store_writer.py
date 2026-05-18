@@ -1,5 +1,5 @@
 import logging
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from domain.events.registry import EventRegistry, PiiClassification
 
@@ -14,7 +14,7 @@ class EventStoreWriter:
     Aplica metadata de retención y redacta PII según el EventRegistry.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
 
     def sync_processed_events(self, batch_size: int = 1000):

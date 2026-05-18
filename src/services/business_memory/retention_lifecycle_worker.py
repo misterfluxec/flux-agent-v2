@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from domain.events.registry import EventRegistry, RetentionTier
 import logging
@@ -15,7 +15,7 @@ class RetentionLifecycleWorker:
     - COLD -> Archivar en S3/Cold Storage y borrar de BDD (>365d).
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
 
     def execute_lifecycle_policies(self):

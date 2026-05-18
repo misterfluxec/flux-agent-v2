@@ -1,8 +1,8 @@
 import uuid
 from typing import Dict, Any, List
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-from database import SessionLocal
+from database import SesionLocal
 
 class CustomerTimelineAggregator:
     """
@@ -11,7 +11,7 @@ class CustomerTimelineAggregator:
     eventos semánticos unificados para la memoria operacional (AI + Humanos).
     """
 
-    def ingest_domain_event(self, event_type: str, payload: Dict[str, Any], tenant_id: str):
+    async def ingest_domain_event(self, event_type: str, payload: Dict[str, Any], tenant_id: str):
         """
         Recibe un evento del EventBus o del Outbox y lo convierte 
         en una entrada de la línea de tiempo si es relevante.
@@ -31,13 +31,13 @@ class CustomerTimelineAggregator:
         # 1. ÓRDENES Y COTIZACIONES
         if event_type == 'order.created.v1':
             order_id = payload.get('order_id')
-            customer_id = self._get_customer_from_order(tenant_id, order_id)
+            customer_id = await self._get_customer_from_order(tenant_id, order_id)
             title = f"Nueva Orden Creada"
             desc = f"Orden {order_id[:8]} generada por ${payload.get('total', 0)}."
             
         elif event_type == 'quote.converted.v1':
             order_id = payload.get('order_id')
-            customer_id = self._get_customer_from_order(tenant_id, order_id)
+            customer_id = await self._get_customer_from_order(tenant_id, order_id)
             title = "Cotización Aceptada"
             desc = "El cliente convirtió la cotización en una sort_order firme."
             severity = 'success'
@@ -45,7 +45,7 @@ class CustomerTimelineAggregator:
         # 2. PAGOS
         elif event_type == 'payment.paid.v1':
             order_id = payload.get('order_id')
-            customer_id = self._get_customer_from_order(tenant_id, order_id)
+            customer_id = await self._get_customer_from_order(tenant_id, order_id)
             category = 'payment'
             title = "Pago Exitoso"
             desc = f"Pago confirmado vía {payload.get('provider')}. Monto: ${payload.get('amount')}"
@@ -53,7 +53,7 @@ class CustomerTimelineAggregator:
 
         elif event_type == 'payment.failed.v1':
             order_id = payload.get('order_id')
-            customer_id = self._get_customer_from_order(tenant_id, order_id)
+            customer_id = await self._get_customer_from_order(tenant_id, order_id)
             category = 'payment'
             title = "Fallo en el Pago"
             desc = f"Intento de pago rechazado por {payload.get('provider')}."
@@ -72,8 +72,8 @@ class CustomerTimelineAggregator:
             return # El evento no es relevante para el timeline del cliente
 
         # Inserción del evento semántico
-        with SessionLocal() as db:
-            db.execute(text("""
+        async with SesionLocal() as db:
+            await db.execute(text("""
                 INSERT INTO customer_timeline_events 
                 (tenant_id, customer_id, event_category, event_type, order_id, title, description, severity, metadata)
                 VALUES (:tenant_id, :customer_id, :category, :type, :order_id, :title, :desc, :severity, :meta)
@@ -88,28 +88,30 @@ class CustomerTimelineAggregator:
                 "severity": severity,
                 "meta": "{}"
             })
-            db.commit()
+            await db.commit()
 
-    def _get_customer_from_order(self, tenant_id: str, order_id: str) -> str:
+    async def _get_customer_from_order(self, tenant_id: str, order_id: str) -> str:
         """Helper para resolver a qué cliente pertenece un evento atado a una sort_order."""
         if not order_id:
             return None
-        with SessionLocal() as db:
-            res = db.execute(text("SELECT customer_id FROM orders WHERE id = :id AND tenant_id = :t"), 
-                             {"id": order_id, "t": tenant_id}).fetchone()
+        async with SesionLocal() as db:
+            res_exec = await db.execute(text("SELECT customer_id FROM orders WHERE id = :id AND tenant_id = :t"), 
+                             {"id": order_id, "t": tenant_id})
+            res = res_exec.fetchone()
             return str(res.customer_id) if res else None
 
-    def get_customer_timeline(self, tenant_id: str, customer_id: str, limit: int = 50) -> List[Dict[str, Any]]:
+    async def get_customer_timeline(self, tenant_id: str, customer_id: str, limit: int = 50) -> List[Dict[str, Any]]:
         """
         Retorna la vista unificada para el dashboard operacional o el AI Copilot.
         """
-        with SessionLocal() as db:
-            events = db.execute(text("""
+        async with SesionLocal() as db:
+            events_res = await db.execute(text("""
                 SELECT id, event_category, event_type, title, description, severity, occurred_at 
                 FROM customer_timeline_events 
                 WHERE tenant_id = :t AND customer_id = :c
                 ORDER BY occurred_at DESC
                 LIMIT :limit
-            """), {"t": tenant_id, "c": customer_id, "limit": limit}).fetchall()
+            """), {"t": tenant_id, "c": customer_id, "limit": limit})
+            events = events_res.fetchall()
             
             return [dict(e._mapping) for e in events]

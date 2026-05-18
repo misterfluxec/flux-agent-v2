@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Request, HTTPException, BackgroundTasks, Header
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Dict, Any
 import os
 
@@ -23,7 +23,7 @@ def get_tenant_id(request: Request) -> str:
 @router.post("/quotes/{quote_id}/convert")
 def convert_quote(
     quote_id: str,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     tenant_id: str = Depends(get_tenant_id)
 ):
     """
@@ -51,7 +51,7 @@ def convert_quote(
 def generate_payment_link(
     order_id: str,
     request: Request,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     tenant_id: str = Depends(get_tenant_id)
 ):
     """
@@ -87,7 +87,7 @@ def mp_webhook(
     background_tasks: BackgroundTasks,
     x_signature: str = Header(None),
     x_request_id: str = Header(None),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Endpoint para recibir webhooks de MercadoPago. 

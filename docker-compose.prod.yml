@@ -1,16 +1,18 @@
 # =============================================================================
-# FLUXAGENT V2 — DOCKER COMPOSE MAESTRO (v2.2 Production-Ready)
+# FLUXAGENT V2 — DOCKER COMPOSE PRODUCCIÓN HARDENED (v2.2 Enterprise)
 # =============================================================================
-# Mejoras: Healthchecks encadenados, límites de recursos i7, Ollama integrado.
+# Stack empresarial completo para producción.
+# Incluye: Postgres (pgvector), Redis, Ollama, Backend, Dramatiq Worker,
+# Kokoro TTS, Observability Stack (Loki, Promtail, Prometheus, Grafana).
 # =============================================================================
 
 version: '3.9'
 
 services:
-  # --- DATABASE (PostgreSQL + pgvector) ---
+  # --- DB DE GRADO ENTERPRISE (PostgreSQL + pgvector) ---
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: fluxagent-postgres
+    container_name: fluxagent-postgres-prod
     restart: always
     environment:
       POSTGRES_DB: ${DB_NAME:-fluxagent_v2}
@@ -18,10 +20,10 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-fluxsecure2026}
       TZ: America/Guayaquil
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - pgdata_prod:/var/lib/postgresql/data
       - ./init-db.sql:/docker-entrypoint-initdb.d/01-init-db.sql:ro
     ports:
-      - "${DB_PORT:-5434}:5432"
+      - "5434:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-fluxadmin} -d ${DB_NAME:-fluxagent_v2}"]
       interval: 10s
@@ -30,25 +32,28 @@ services:
     deploy:
       resources:
         limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
           memory: 1G
     networks:
-      - fluxagent-net
+      - fluxagent-net-prod
 
-  # --- CACHE & QUEUES (Redis) ---
+  # --- CACHE & EVENT BUS DE GRADO ENTERPRISE (Redis) ---
   redis:
     image: redis:7-alpine
-    container_name: fluxagent-redis
+    container_name: fluxagent-redis-prod
     restart: always
     command: >
       redis-server
         --appendonly yes
-        --maxmemory 512mb
+        --maxmemory 1gb
         --maxmemory-policy allkeys-lru
         --requirepass ${REDIS_PASSWORD:-redisflux2026}
     volumes:
-      - redis_data:/data
+      - redisdata_prod:/data
     ports:
-      - "${REDIS_PORT:-6381}:6379"
+      - "6381:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redisflux2026}", "ping"]
       interval: 10s
@@ -57,22 +62,25 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          memory: 256M
     networks:
-      - fluxagent-net
+      - fluxagent-net-prod
 
-  # --- AI ENGINE (Ollama) ---
+  # --- PROCESADOR DE INFERENCIA IA (Ollama) ---
   ollama:
     image: ollama/ollama:latest
-    container_name: fluxagent-ollama
+    container_name: fluxagent-ollama-prod
     restart: always
     environment:
       - OLLAMA_HOST=0.0.0.0
       - OLLAMA_KEEP_ALIVE=24h
-      - OLLAMA_NUM_THREADS=6 # Optimizado para i7
-      - OLLAMA_MAX_LOADED_MODELS=3 # Límite de modelos cargados simultáneamente
+      - OLLAMA_NUM_THREADS=6
+      - OLLAMA_MAX_LOADED_MODELS=3
     volumes:
-      - ollama_data:/root/.ollama
+      - ollamadata_prod:/root/.ollama
     ports:
       - "11434:11434"
     healthcheck:
@@ -80,35 +88,55 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s # Esperar 60s antes de primer healthcheck
+      start_period: 60s
     deploy:
       resources:
         limits:
-          memory: 12G # Límite para modelos grandes (qwen2.5)
-          cpus: '6' # Límite de CPU para i7 7th gen
+          memory: 12G
+          cpus: '6.0'
         reservations:
-          memory: 4G # Memoria mínima garantizada
+          memory: 4G
     networks:
-      - fluxagent-net
+      - fluxagent-net-prod
 
-  # --- BACKEND (FastAPI) ---
+  # --- GENERACIÓN DE VOZ DE ALTA CALIDAD (Kokoro TTS) ---
+  kokoro-tts:
+    image: ghcr.io/remsky/kokoro-fastapi-cpu:latest
+    container_name: fluxagent-kokoro-prod
+    restart: always
+    ports:
+      - "8880:8880"
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+          cpus: '4.0'
+        reservations:
+          memory: 2G
+    networks:
+      - fluxagent-net-prod
+
+  # --- BACKEND CORE API (FastAPI) ---
   backend:
     build:
       context: ./src
       dockerfile: Dockerfile
-    container_name: fluxagent-backend
+    image: fluxagent-backend:production
+    container_name: fluxagent-backend-prod
     restart: always
     ports:
-      - "${BACKEND_PORT:-9000}:8000"
+      - "9000:8000"
+      - "8001:8001"
     environment:
-      DATABASE_URL: postgresql://${DB_USER:-fluxadmin}:${DB_PASSWORD:-fluxsecure2026}@fluxagent-postgres:5432/${DB_NAME:-fluxagent_v2}
-      REDIS_URL: redis://:${REDIS_PASSWORD:-redisflux2026}@fluxagent-redis:6379/0
+      DATABASE_URL: postgresql://${DB_USER:-fluxadmin}:${DB_PASSWORD:-fluxsecure2026}@fluxagent-postgres-prod:5432/${DB_NAME:-fluxagent_v2}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redisflux2026}@fluxagent-redis-prod:6379/0
       JWT_SECRET: ${JWT_SECRET:-e16ec48e51ffc44f7beb365cc0356d720e1ea63c839540e3f873d7a5677afc5c}
-      OLLAMA_BASE_URL: http://fluxagent-ollama:11434
+      OLLAMA_BASE_URL: http://fluxagent-ollama-prod:11434
       EVOLUTION_API_URL: ${EVOLUTION_API_URL:-http://flux-evolution:8080}
       EVOLUTION_API_KEY: ${EVOLUTION_API_KEY:-fluxkey123}
       EVOLUTION_WEBHOOK_SECRET: ${EVOLUTION_WEBHOOK_SECRET}
-      APP_ENV: ${APP_ENV:-production}
+      APP_ENV: production
+      LOG_LEVEL: WARNING
       TZ: America/Guayaquil
     depends_on:
       postgres:
@@ -118,48 +146,51 @@ services:
       ollama:
         condition: service_started
     healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/live', timeout=5)"]
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
     volumes:
-      - ./src:/app
       - ./data/media:/app/data/media
       - ./data/logs:/app/logs
     deploy:
       resources:
         limits:
-          memory: 4G
           cpus: '3.0'
+          memory: 4G
+        reservations:
+          memory: 1G
     networks:
-      - fluxagent-net
+      - fluxagent-net-prod
       - fluxagent_network
 
-  # --- ASYNC WORKER (Dramatiq) ---
+  # --- COLA DE TAREAS ASÍNCRONAS (Dramatiq Worker) ---
   worker:
     build:
       context: ./src
       dockerfile: Dockerfile
-    container_name: fluxagent-worker
+    image: fluxagent-backend:production
+    container_name: fluxagent-worker-prod
     restart: always
     command: python -m dramatiq tasks.async_tasks tasks.followup_worker
     environment:
-      - APP_ENV=${APP_ENV:-production}
-      - DATABASE_URL=postgresql+asyncpg://fluxadmin:fluxsecure2026@fluxagent-postgres:5432/fluxagent_v2
-      - REDIS_URL=redis://:redisflux2026@fluxagent-redis:6379/0
+      - APP_ENV=production
+      - DATABASE_URL=postgresql+asyncpg://fluxadmin:fluxsecure2026@fluxagent-postgres-prod:5432/fluxagent_v2
+      - REDIS_URL=redis://:redisflux2026@fluxagent-redis-prod:6379/0
       - JWT_SECRET=${JWT_SECRET:-12315838b8aaae13b3118409c46f0d5e34de20536ae7039abb83817034edc5b9}
       - DB_NAME=${DB_NAME:-fluxagent_v2}
       - DB_USER=${DB_USER:-fluxadmin}
       - DB_PASSWORD=${DB_PASSWORD:-fluxsecure2026}
-      - DB_HOST=fluxagent-postgres
+      - DB_HOST=fluxagent-postgres-prod
       - DB_PORT=5432
-      - REDIS_HOST=fluxagent-redis
+      - REDIS_HOST=fluxagent-redis-prod
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-redisflux2026}
-      - OLLAMA_URL=http://fluxagent-ollama:11434
+      - OLLAMA_URL=http://fluxagent-ollama-prod:11434
       - EVOLUTION_API_URL=${EVOLUTION_API_URL:-http://flux-evolution:8080}
       - EVOLUTION_API_KEY=${EVOLUTION_API_KEY:-fluxkey123}
+      - TZ=America/Guayaquil
     depends_on:
       postgres:
         condition: service_healthy
@@ -173,35 +204,25 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    networks:
-      - fluxagent-net
-      - fluxagent_network
-
-  # --- FRONTEND (Next.js) ---
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: fluxagent-web
-    restart: always
-    command: npm run dev -- -p 4000
-    network_mode: host
-    user: "0:0"
     volumes:
-      - ./frontend:/app
-    environment:
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:9000/api/v1}
-      - NODE_ENV=development
-    depends_on:
-      backend:
-        condition: service_healthy
+      - ./data/media:/app/data/media
+      - ./data/logs:/app/logs
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          memory: 1G
+    networks:
+      - fluxagent-net-prod
 
-  # --- TTS CLEANUP (Cron) ---
+  # --- CRON DE LIMPIEZA AUDIO/TTS ---
   tts-cleanup:
     build:
       context: .
       dockerfile: Dockerfile.cleanup
-    container_name: fluxagent-tts-cleanup
+    container_name: fluxagent-tts-cleanup-prod
     volumes:
       - ./data/media/tts_cache:/app/data/media/tts_cache
       - ./data/logs:/app/logs
@@ -213,89 +234,107 @@ services:
           memory: 128M
     restart: always
     networks:
-      - fluxagent-net
+      - fluxagent-net-prod
 
-  # --- OBSERVABILITY (Loki, Promtail, Prometheus, Grafana) ---
+  # --- MONITOREO Y AGREGACIÓN DE LOGS (Grafana Loki) ---
   loki:
     image: grafana/loki:latest
-    container_name: fluxagent-loki
+    container_name: fluxagent-loki-prod
+    restart: always
     ports:
       - "3100:3100"
+    volumes:
+      - ./loki-config.yaml:/etc/loki/local-config.yaml
+      - lokidata_prod:/loki
     command: -config.file=/etc/loki/local-config.yaml
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
     networks:
-      - fluxagent-net
+      - fluxagent-net-prod
 
+  # --- SHIPPER DE LOGS ESTRUCTURADOS (Grafana Promtail) ---
   promtail:
     image: grafana/promtail:latest
-    container_name: fluxagent-promtail
+    container_name: fluxagent-promtail-prod
+    restart: always
     volumes:
-      - ./data/logs:/var/log/fluxagent
+      - ./data/logs:/var/log/fluxagent:ro
       - ./promtail-config.yaml:/etc/promtail/config.yml
     command: -config.file=/etc/promtail/config.yml
-    networks:
-      - fluxagent-net
     depends_on:
       - loki
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 256M
+    networks:
+      - fluxagent-net-prod
 
+  # --- COLECTOR DE MÉTRICAS (Prometheus) ---
   prometheus:
     image: prom/prometheus:latest
-    container_name: fluxagent-prometheus
+    container_name: fluxagent-prometheus-prod
+    restart: always
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
+      - prometheusdata_prod:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
     ports:
       - "9090:9090"
-    networks:
-      - fluxagent-net
-
-  grafana:
-    image: grafana/grafana:latest
-    container_name: fluxagent-grafana
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=adminflux2026
-    ports:
-      - "3000:3000"
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning
-      - ./grafana/dashboards:/var/lib/grafana/dashboards
-    networks:
-      - fluxagent-net
-    depends_on:
-      - loki
-      - prometheus
-
-  # --- KOKORO TTS (Local CPU Voice) ---
-  kokoro-tts:
-    image: ghcr.io/remsky/kokoro-fastapi-cpu:latest
-    container_name: fluxagent-kokoro
-    restart: always
-    ports:
-      - "8880:8880"
     deploy:
       resources:
         limits:
-          memory: 6G
-          cpus: '4.0'
+          cpus: '0.5'
+          memory: 512M
     networks:
-      - fluxagent-net
+      - fluxagent-net-prod
+
+  # --- VISUALIZADOR DE MÉTRICAS Y LOGS (Grafana) ---
+  grafana:
+    image: grafana/grafana:latest
+    container_name: fluxagent-grafana-prod
+    restart: always
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=adminflux2026
+      - GF_USERS_ALLOW_SIGN_UP=false
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafanadata_prod:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - loki
+      - prometheus
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    networks:
+      - fluxagent-net-prod
 
 volumes:
-  postgres_data:
-    name: fluxagent_postgres_data
-  redis_data:
-    name: fluxagent_redis_data
-  ollama_data:
-    name: fluxagent_ollama_data
-  prometheus_data:
-    name: fluxagent_prometheus_data
-  grafana_data:
-    name: fluxagent_grafana_data
+  pgdata_prod:
+    name: fluxagent_pgdata_prod
+  redisdata_prod:
+    name: fluxagent_redisdata_prod
+  ollamadata_prod:
+    name: fluxagent_ollamadata_prod
+  prometheusdata_prod:
+    name: fluxagent_prometheusdata_prod
+  grafanadata_prod:
+    name: fluxagent_grafanadata_prod
+  lokidata_prod:
+    name: fluxagent_lokidata_prod
 
 networks:
-  fluxagent-net:
+  fluxagent-net-prod:
     driver: bridge
   fluxagent_network:
     external: true

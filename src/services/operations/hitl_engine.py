@@ -4,10 +4,12 @@ import uuid
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
+from core.observability.logging import get_logger, LogCategory
 
 from domain.events.action_governance import ActionGovernanceRegistry
 
-logger = logging.getLogger("flux.hitl_engine")
+logger = get_logger("services.operations.hitl")
 
 
 class HITLEngine:
@@ -69,6 +71,14 @@ class HITLEngine:
 
         policy = ActionGovernanceRegistry.get_policy(action_name)
         if policy and policy.requires_approval:
+            # 1. Emitir log estructurado de telemetría (Grafana)
+            logger.business_event(
+                "hitl_task_created",
+                correlation_id=correlation_id,
+                action=action_name,
+                tenant_id=self.tenant_id
+            )
+
             await self._publish_state_event(
                 "action.pending_approval",
                 correlation_id,
@@ -78,6 +88,25 @@ class HITLEngine:
                     "requested_by": self.user_id,
                 },
             )
+            
+            # 2. Persistir en la tabla human_tasks para el router
+            insert_query = text("""
+                INSERT INTO human_tasks (tenant_id, status, context_payload)
+                VALUES (:tenant_id, 'pending', :context_payload)
+                RETURNING id
+            """)
+            import json
+            await self.db.execute(insert_query, {
+                "tenant_id": self.tenant_id,
+                "context_payload": json.dumps({
+                    "correlation_id": correlation_id,
+                    "action": action_name,
+                    "payload": payload,
+                    "requested_by": self.user_id
+                })
+            })
+            await self.db.commit()
+
             return {
                 "status": "pending_approval",
                 "message": (
@@ -211,8 +240,9 @@ class HITLEngine:
         payload: dict[str, Any],
     ) -> None:
         logger.info(
-            "hitl_journal",
-            extra={
+            LogCategory.BUSINESS,
+            "HITL state published",
+            metadata={
                 "event": event_type,
                 "correlation_id": correlation_id,
                 "tenant_id": self.tenant_id,

@@ -12,7 +12,7 @@ import traceback
 from typing import Dict, Any, Optional, Union
 from datetime import datetime
 from enum import Enum
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, fields
 from contextvars import ContextVar
 
 # Context variables para tracing
@@ -105,13 +105,28 @@ class StructuredLogger:
     ) -> StructuredLogEntry:
         """Crea entrada de log estructurado"""
         
-        # Obtener contexto de las variables de contexto
+        # Obtener los campos válidos de LogContext para evitar errores de firma
+        context_fields = {f.name for f in fields(LogContext)}
+        context_kwargs = {}
+        extra_kwargs = {}
+        for k, v in kwargs.items():
+            if k in context_fields:
+                context_kwargs[k] = v
+            else:
+                extra_kwargs[k] = v
+
         context = LogContext(
-            request_id=request_id_var.get(),
-            tenant_id=tenant_id_var.get(),
-            user_id=user_id_var.get(),
-            **kwargs
+            request_id=context_kwargs.pop("request_id", request_id_var.get()),
+            tenant_id=context_kwargs.pop("tenant_id", tenant_id_var.get()),
+            user_id=context_kwargs.pop("user_id", user_id_var.get()),
+            **context_kwargs
         )
+        
+        # Mezclar cualquier kwarg extra en metadata
+        if extra_kwargs:
+            if metadata is None:
+                metadata = {}
+            metadata.update(extra_kwargs)
         
         # Agregar información de error si existe
         error_data = None

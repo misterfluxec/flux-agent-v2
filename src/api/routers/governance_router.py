@@ -7,6 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth import get_usuario_actual, PayloadToken
 from database import get_db
+from sqlalchemy import text
+from uuid import uuid4
 from services.quota_manager import QuotaManager
 from core.exceptions import FluxError
 
@@ -76,7 +78,8 @@ async def respond_to_approval(
     Publica HumanApprovalResponse al EventBus.
     """
     from core.event_bus import EventBus
-    from domain.events import EventType
+    from domain.events import EventType, DomainEvent, EventMetadata
+    from domain.events import HumanApprovalResponsePayload
 
     correlation_id = payload.get("correlation_id")
     decision = payload.get("decision")
@@ -90,18 +93,80 @@ async def respond_to_approval(
             detail="Faltan correlation_id o decision válida.",
         )
 
-    event_bus: EventBus = request.app.state.event_bus
     tenant_id = str(usuario.tenant_id)
+    
+    # HITL Validation (Fix for 2.2 Vulnerabilidad de Estado en HITL)
+    # Validar que el correlation_id exista en estado 'pending' en la base de datos
+    is_uuid = True
+    try:
+        UUID(correlation_id)
+    except ValueError:
+        is_uuid = False
 
-    await event_bus.publish(
-        event_type=EventType.HUMAN_APPROVAL_RESPONSE,
-        tenant_id=tenant_id,
-        payload={
-            "correlation_id": correlation_id,
-            "decision": decision,
-            "reason": reason,
-            "reviewed_by": str(usuario.user_id),
-        },
+    query_str = """
+        SELECT id FROM human_tasks 
+        WHERE tenant_id = :tenant_id 
+          AND status = 'pending'
+          AND (context_payload->>'correlation_id' = :corr_id 
+               OR (CASE WHEN :is_uuid THEN id::text = :corr_id ELSE false END))
+        LIMIT 1
+    """
+    result = await db.execute(text(query_str), {
+        "tenant_id": tenant_id, 
+        "corr_id": correlation_id,
+        "is_uuid": is_uuid
+    })
+    
+    row = result.fetchone()
+    if not row:
+        raise HTTPException(
+            status_code=400,
+            detail=f"No se encontró una solicitud HITL pendiente para el correlation_id: {correlation_id}"
+        )
+    
+    task_id = row[0]
+
+    # Actualizar estado para evitar re-procesamiento
+    update_query = text("""
+        UPDATE human_tasks
+        SET status = :decision,
+            updated_at = NOW()
+        WHERE id = :task_id
+    """)
+    await db.execute(update_query, {
+        "decision": decision,
+        "task_id": task_id
+    })
+    await db.commit()
+
+    event_bus: EventBus = request.app.state.event_bus
+
+    event = DomainEvent(
+        metadata=EventMetadata(
+            event_type=EventType.HUMAN_APPROVAL_RESPONSE,
+            tenant_id=UUID(tenant_id),
+            actor_id=str(usuario.user_id),
+            request_origin="api"
+        ),
+        payload=HumanApprovalResponsePayload(
+            correlation_id=correlation_id,
+            decision=decision,
+            reason=reason,
+            reviewed_by=str(usuario.user_id),
+        )
+    )
+
+    await event_bus.publish(event)
+    
+    # Telemetría Estructurada para Grafana/Loki
+    from core.observability.logging import get_logger, LogCategory
+    logger = get_logger("routers.governance")
+    logger.business_event(
+        "hitl_response_processed",
+        correlation_id=correlation_id,
+        decision=decision,
+        reason=reason,
+        tenant_id=tenant_id
     )
 
     return {

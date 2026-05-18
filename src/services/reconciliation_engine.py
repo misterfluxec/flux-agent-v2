@@ -1,9 +1,9 @@
 import uuid
 from typing import Optional, Dict, Any
 from datetime import datetime
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-from database import SessionLocal
+from database import SesionLocal
 from services.commerce_transaction_manager import CommerceTransactionManager
 from services.inventory_engine import InventoryEngineV2
 from domain.events.inventory_events import InventorySnapshotRebuiltEventV1, InventoryDriftDetectedEventV1
@@ -14,12 +14,12 @@ class ReconciliationEngine:
     Garantiza que la verdad absoluta (Ledger) y la caché operacional (Snapshot)
     se mantengan matemáticamente perfectas, y maneja colisiones con ERPs externos.
     """
-    def __init__(self, db: Session, tenant_id: str):
+    def __init__(self, db: AsyncSession, tenant_id: str):
         self.db = db
         self.tenant_id = tenant_id
         self.tx_manager = CommerceTransactionManager(db, tenant_id)
 
-    def rebuild_snapshot_from_ledger(self, catalog_item_id: str, reason: str, actor_id: str = 'system'):
+    async def rebuild_snapshot_from_ledger(self, catalog_item_id: str, reason: str, actor_id: str = 'system'):
         """
         Snapshot Rebuild Strategy.
         Regenera la caché de inventario (Snapshot) sumando desde CERO todos los 
@@ -43,7 +43,8 @@ class ReconciliationEngine:
             FROM inventory_ledger
             WHERE tenant_id = :tenant_id AND catalog_item_id = :item_id
         """)
-        ledger_sum = self.db.execute(query, {"tenant_id": self.tenant_id, "item_id": catalog_item_id}).fetchone()
+        ledger_sum_res = await self.db.execute(query, {"tenant_id": self.tenant_id, "item_id": catalog_item_id})
+        ledger_sum = ledger_sum_res.fetchone()
 
         calc_current = ledger_sum.calculated_current or 0
         calc_reserved = ledger_sum.calculated_reserved or 0
@@ -51,7 +52,7 @@ class ReconciliationEngine:
         last_ledger = ledger_sum.last_ledger_id
 
         # 2. Bloquear y reemplazar el snapshot actual en una transacción
-        with self.tx_manager.atomic_transaction(
+        async with self.tx_manager.atomic_transaction(
             action_name="inventory.snapshot_rebuilt",
             actor_type="system",
             actor_id=actor_id,
@@ -65,13 +66,14 @@ class ReconciliationEngine:
                 FROM inventory_snapshots 
                 WHERE tenant_id = :tenant_id AND catalog_item_id = :item_id FOR UPDATE
             """)
-            snap_before = self.db.execute(snap_q, {"tenant_id": self.tenant_id, "item_id": catalog_item_id}).fetchone()
+            snap_before_res = await self.db.execute(snap_q, {"tenant_id": self.tenant_id, "item_id": catalog_item_id})
+            snap_before = snap_before_res.fetchone()
             
             old_available = snap_before.available_stock if snap_before else 0
             new_version = (snap_before.version_number + 1) if snap_before else 1
 
             # UPSERT del nuevo snapshot calculado
-            self.db.execute(text("""
+            await self.db.execute(text("""
                 INSERT INTO inventory_snapshots (tenant_id, catalog_item_id, current_stock, reserved_stock, last_ledger_id, version_number, updated_at)
                 VALUES (:tenant_id, :item_id, :cur, :res, :ledger_id, :ver, NOW())
                 ON CONFLICT ON CONSTRAINT unique_tenant_item_snapshot 
@@ -112,13 +114,14 @@ class ReconciliationEngine:
             
             tx.set_audit_changes({"old_available": old_available, "new_available": calc_available, "reason": reason})
 
-    def reconcile_with_external_system(self, catalog_item_id: str, external_stock: int, correlation_id: str):
+    async def reconcile_with_external_system(self, catalog_item_id: str, external_stock: int, correlation_id: str):
         """
         Aplica las Inventory Policies cuando un ERP o Excel informa un stock diferente.
         """
         # 1. Leer política del Tenant
         pol_q = text("SELECT reconciliation_policy FROM tenant_inventory_policies WHERE tenant_id = :tenant_id")
-        policy_row = self.db.execute(pol_q, {"tenant_id": self.tenant_id}).fetchone()
+        policy_row_res = await self.db.execute(pol_q, {"tenant_id": self.tenant_id})
+        policy_row = policy_row_res.fetchone()
         policy = policy_row.reconciliation_policy if policy_row else 'LOCAL_WINS'
 
         if policy == 'LOCAL_WINS':
@@ -127,7 +130,8 @@ class ReconciliationEngine:
             
         # Si ERP_WINS o MERGE, leemos el snapshot local
         snap_q = text("SELECT current_stock, reserved_stock FROM inventory_snapshots WHERE tenant_id = :t AND catalog_item_id = :i")
-        snap = self.db.execute(snap_q, {"t": self.tenant_id, "i": catalog_item_id}).fetchone()
+        snap_res = await self.db.execute(snap_q, {"t": self.tenant_id, "i": catalog_item_id})
+        snap = snap_res.fetchone()
         local_current = snap.current_stock if snap else 0
 
         if policy == 'ERP_WINS':
@@ -135,7 +139,7 @@ class ReconciliationEngine:
             delta = external_stock - local_current
             if delta != 0:
                 engine = InventoryEngineV2(self.db, self.tenant_id)
-                engine.record_movement(
+                await engine.record_movement(
                     catalog_item_id=catalog_item_id,
                     movement_type='SYNC_CORRECTION',
                     reason_code='erp_sync',
@@ -149,7 +153,7 @@ class InventoryIntegrityValidator:
     """
     Worker en segundo plano que detecta "Drift" (Corrupción) entre Snapshots y Ledgers.
     """
-    def check_drift(self, catalog_item_id: str, db: Session, tenant_id: str):
+    async def check_drift(self, catalog_item_id: str, db: AsyncSession, tenant_id: str):
         # 1. Suma del Ledger
         query = text("""
             SELECT SUM(CASE WHEN movement_type IN ('IMPORT','RETURN','TRANSFER','ADJUSTMENT','SYNC_CORRECTION') THEN quantity
@@ -160,12 +164,14 @@ class InventoryIntegrityValidator:
             FROM inventory_ledger
             WHERE tenant_id = :t AND catalog_item_id = :i
         """)
-        ledger = db.execute(query, {"t": tenant_id, "i": catalog_item_id}).fetchone()
+        ledger_res = await db.execute(query, {"t": tenant_id, "i": catalog_item_id})
+        ledger = ledger_res.fetchone()
         ledger_avail = (ledger.calc_curr or 0) - (ledger.calc_res or 0)
 
         # 2. Suma del Snapshot
         snap_q = text("SELECT available_stock, version_number FROM inventory_snapshots WHERE tenant_id = :t AND catalog_item_id = :i")
-        snap = db.execute(snap_q, {"t": tenant_id, "i": catalog_item_id}).fetchone()
+        snap_res = await db.execute(snap_q, {"t": tenant_id, "i": catalog_item_id})
+        snap = snap_res.fetchone()
         
         if not snap:
             return
@@ -176,7 +182,7 @@ class InventoryIntegrityValidator:
         if drift != 0:
             # 3. Detectado Drift. Emitir Evento Crítico de Alarma vía Outbox (usando TxManager)
             tx_manager = CommerceTransactionManager(db, tenant_id)
-            with tx_manager.atomic_transaction("inventory.drift_detected", "system", "integrity_worker", "catalog_item", catalog_item_id) as tx:
+            async with tx_manager.atomic_transaction("inventory.drift_detected", "system", "integrity_worker", "catalog_item", catalog_item_id) as tx:
                 
                 evt = InventoryDriftDetectedEventV1(
                     event_id=str(uuid.uuid4()),

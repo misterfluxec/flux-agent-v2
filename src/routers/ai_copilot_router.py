@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from typing import Dict, Any
@@ -22,7 +22,7 @@ router = APIRouter(prefix="/api/v1/copilot", tags=["AI Copilot"])
 
 @router.get("/insight")
 def get_tenant_insight(
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     tenant_id: str = Depends(get_current_tenant_id)
 ) -> Dict[str, Any]:
     """

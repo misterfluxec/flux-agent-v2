@@ -30,6 +30,8 @@ def test_result(name: str, passed: bool, details: str = ""):
     else:
         results["failed"] += 1
 
+test_result.__test__ = False
+
 
 async def test_1_tts_piper_import():
     """Test 1: Verificar que Piper TTS se importa correctamente."""

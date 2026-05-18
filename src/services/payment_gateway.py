@@ -3,7 +3,7 @@ import hashlib
 import json
 import uuid
 from typing import Dict, Any, Tuple
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from domain.commerce_states import PaymentStatus
 import mercadopago
@@ -20,7 +20,7 @@ class PaymentGateway:
     Abstracción de Pasarelas de Pago.
     Sprint 3.5: SDK Real de MercadoPago + Ingestión Segura
     """
-    def __init__(self, db: Session, tenant_id: str, access_token: str = ""):
+    def __init__(self, db: AsyncSession, tenant_id: str, access_token: str = ""):
         self.db = db
         self.tenant_id = tenant_id
         # Inicializar el SDK real de MercadoPago

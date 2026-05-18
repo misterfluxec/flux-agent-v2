@@ -1,6 +1,6 @@
 import uuid
 from typing import Dict, Any, List
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from services.commerce_transaction_manager import CommerceTransactionManager
 from domain.commerce_states import CommerceStateValidator
@@ -12,7 +12,7 @@ class CommerceLifecycleEngine:
     Utiliza el Transaction Manager para garantizar la integridad ACID
     y que todos los eventos lleguen a la UI/Analytics.
     """
-    def __init__(self, db: Session, tenant_id: str):
+    def __init__(self, db: AsyncSession, tenant_id: str):
         self.db = db
         self.tenant_id = tenant_id
         self.tx_manager = CommerceTransactionManager(db, tenant_id)

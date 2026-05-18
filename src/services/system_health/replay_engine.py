@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from typing import Dict, Any, List
 from domain.events.registry import EventRegistry
@@ -9,7 +9,7 @@ class ReplayableEventsEngine:
     Proporciona la base para reproducir eventos fallidos de la Dead Letter Queue (DLQ),
     garantizando que ninguna transacción u operación se pierda irremediablemente.
     """
-    def __init__(self, db: Session, tenant_id: str):
+    def __init__(self, db: AsyncSession, tenant_id: str):
         self.db = db
         self.tenant_id = tenant_id
 

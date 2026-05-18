@@ -1,7 +1,7 @@
 import uuid
 from typing import Dict, Any, Optional
 from datetime import datetime
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from services.commerce_transaction_manager import CommerceTransactionManager
 from domain.commerce_states import InventoryMovementType, InventoryReasonCode, ReservationType
@@ -17,12 +17,12 @@ class InventoryEngineV2:
     - Actualiza Snapshot con Optimistic Concurrency (version_number).
     - Respeta las políticas del Tenant (allow_backorders).
     """
-    def __init__(self, db: Session, tenant_id: str):
+    def __init__(self, db: AsyncSession, tenant_id: str):
         self.db = db
         self.tenant_id = tenant_id
         self.tx_manager = CommerceTransactionManager(db, tenant_id)
 
-    def record_movement(
+    async def record_movement(
         self,
         catalog_item_id: str,
         movement_type: InventoryMovementType,
@@ -37,7 +37,8 @@ class InventoryEngineV2:
         
         # 1. Obtener Políticas del Tenant
         policy_q = text("SELECT allow_backorders FROM tenant_inventory_policies WHERE tenant_id = :tenant_id")
-        policy = self.db.execute(policy_q, {"tenant_id": self.tenant_id}).fetchone()
+        policy_res = await self.db.execute(policy_q, {"tenant_id": self.tenant_id})
+        policy = policy_res.fetchone()
         allow_backorders = policy.allow_backorders if policy else False
 
         # 2. Lockear Snapshot for Update
@@ -47,7 +48,8 @@ class InventoryEngineV2:
             WHERE tenant_id = :tenant_id AND catalog_item_id = :item_id
             FOR UPDATE
         """)
-        snapshot = self.db.execute(snapshot_q, {"tenant_id": self.tenant_id, "item_id": catalog_item_id}).fetchone()
+        snapshot_res = await self.db.execute(snapshot_q, {"tenant_id": self.tenant_id, "item_id": catalog_item_id})
+        snapshot = snapshot_res.fetchone()
 
         current_stock = snapshot.current_stock if snapshot else 0
         reserved_stock = snapshot.reserved_stock if snapshot else 0
@@ -84,7 +86,7 @@ class InventoryEngineV2:
         # 5. Atomic DB Transaction
         ledger_id = str(uuid.uuid4())
         
-        with self.tx_manager.atomic_transaction(
+        async with self.tx_manager.atomic_transaction(
             action_name=f"inventory.{movement_type.lower()}",
             actor_type="system",
             actor_id=actor_id,
@@ -93,7 +95,7 @@ class InventoryEngineV2:
         ) as tx:
 
             # A. Escribir Ledger
-            self.db.execute(text("""
+            await self.db.execute(text("""
                 INSERT INTO inventory_ledger 
                 (id, tenant_id, catalog_item_id, correlation_id, source_type, source_id, 
                  movement_type, reservation_type, reason_code, quantity, created_by)
@@ -118,7 +120,7 @@ class InventoryEngineV2:
             new_version = current_version + 1
             if snapshot:
                 # Update existente validando versión
-                result = self.db.execute(text("""
+                result = await self.db.execute(text("""
                     UPDATE inventory_snapshots 
                     SET current_stock = :cur, 
                         reserved_stock = :res, 
@@ -138,7 +140,7 @@ class InventoryEngineV2:
                     raise InventoryConcurrencyError(f"Concurrency error updating snapshot for item {catalog_item_id}")
             else:
                 # Insert nuevo
-                self.db.execute(text("""
+                await self.db.execute(text("""
                     INSERT INTO inventory_snapshots 
                     (tenant_id, catalog_item_id, current_stock, reserved_stock, last_ledger_id, version_number, updated_at)
                     VALUES (:tenant_id, :item_id, :cur, :res, :ledger_id, :new_ver, NOW())

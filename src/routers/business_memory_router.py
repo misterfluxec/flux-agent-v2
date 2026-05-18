@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
 from services.business_memory.memory_aggregator import MemoryAggregator
@@ -22,7 +22,7 @@ def get_tenant_id() -> str:
 def get_tenant_memory(
     tenant_id: str,
     window: str = "24h",
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Retorna el perfil de memoria operacional del tenant para la ventana indicada.
@@ -36,7 +36,7 @@ def get_tenant_memory(
 def trigger_tenant_aggregation(
     tenant_id: str,
     window: str = "1h",
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Fuerza una agregación de memoria del tenant para la ventana indicada.
@@ -50,7 +50,7 @@ def trigger_tenant_aggregation(
 @router.get("/tenant/{tenant_id}/narrative")
 def get_operational_narrative(
     tenant_id: str,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Operational Narrative: La "historia" ejecutiva del status actual del negocio.
@@ -68,7 +68,7 @@ def get_operational_narrative(
 def get_customer_memory(
     customer_id: str,
     tenant_id: str = Depends(get_tenant_id),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Customer Memory Profile: churn risk, health score, payment reliability.
@@ -82,7 +82,7 @@ def get_customer_memory(
 def refresh_customer_profile(
     customer_id: str,
     tenant_id: str = Depends(get_tenant_id),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Re-computa el Customer Memory Profile de forma síncrona.
@@ -102,7 +102,7 @@ def refresh_customer_profile(
 @router.get("/anomalies")
 def get_anomalies(
     tenant_id: str = Depends(get_tenant_id),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Feed de anomalías detectadas en tiempo real para el tenant actual.
@@ -124,7 +124,7 @@ def get_anomalies(
 def get_correlation_summary(
     correlation_id: str,
     tenant_id: str = Depends(get_tenant_id),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Correlation Explorer: Muestra la narrativa semántica de todos los eventos

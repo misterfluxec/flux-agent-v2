@@ -16,20 +16,43 @@
 # =============================================================================
 
 import logging
+import re
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Annotated, Optional
 from uuid import UUID
 
 import bcrypt as _bcrypt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
-from pydantic import BaseModel
+from pydantic import BaseModel, BeforeValidator, Field
 
 from config import obtener_config
 
 logger = logging.getLogger(__name__)
 config = obtener_config()
+
+# =============================================================================
+# VALIDACIÓN DE CONTRASEÑA FUERTE (Pydantic v2)
+# =============================================================================
+# Uso en schemas de registro:
+#   password: StrongPassword
+# Valida: mín 8 chars, 1 mayúscula, 1 número, 1 carácter especial.
+
+def _validate_strong_password(v: str) -> str:
+    """Validador de fortaleza de contraseña para Pydantic v2."""
+    if len(v) < 8:
+        raise ValueError("Mínimo 8 caracteres")
+    if not re.search(r"[A-Z]", v):
+        raise ValueError("Requiere al menos una mayúscula")
+    if not re.search(r"\d", v):
+        raise ValueError("Requiere al menos un número")
+    if not re.search(r'[!@#$%^&*()_+\-={}\[\]|;:\'",.<>?]', v):
+        raise ValueError("Requiere al menos un carácter especial")
+    return v
+
+# Tipo anotado — úsalo como `password: StrongPassword` en cualquier BaseModel
+StrongPassword = Annotated[str, BeforeValidator(_validate_strong_password)]
 
 # =============================================================================
 # HASH DE CONTRASEÑAS (bcrypt puro — sin passlib para evitar conflictos de versión)

@@ -6,9 +6,20 @@
 # =============================================================================
 
 import os
+import sys
+import logging
 from functools import lru_cache
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List
+
+logger = logging.getLogger(__name__)
+
+# Valores que nunca deben usarse en producción
+_WEAK_SECRETS = frozenset({
+    "cambiar_en_produccion_jwt_secret", "change-me", "default",
+    "secret", "password", "", "your-secret-here",
+})
 
 
 class Configuracion(BaseSettings):
@@ -21,7 +32,7 @@ class Configuracion(BaseSettings):
         env_file=[".env", "../.env"],
         env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore",
+        extra="forbid",  # ⛔ Rechaza variables no declaradas (Fase 1 Enterprise)
     )
 
     # -------------------------------------------------------------------------
@@ -31,6 +42,12 @@ class Configuracion(BaseSettings):
     app_version: str = "2.0.0"
     app_env: str = "development"      # development | staging | production
     log_level: str = "INFO"
+
+    # Puertos expuestos en el entorno (Docker / .env)
+    frontend_port: str = "4000"
+    backend_port: str = "9000"
+    db_port: str = "5434"
+    redis_port: str = "6381"
 
     # -------------------------------------------------------------------------
     # Base de Datos
@@ -52,19 +69,14 @@ class Configuracion(BaseSettings):
     # -------------------------------------------------------------------------
     # Ollama (LLM Engine)
     # -------------------------------------------------------------------------
-    @property
-    def ollama_base_url(self) -> str:
-        """URL dinámica de Ollama basada en entorno o configuración."""
-        # Prioridad: variable de entorno > docker network > localhost
-        external_url = os.getenv("OLLAMA_BASE_URL")
-        if external_url:
-            return external_url
-        
-        # Para Docker Compose: usar name del contenedor
+    ollama_base_url: str = "http://localhost:11434"
+
+    @field_validator("ollama_base_url", mode="before")
+    @classmethod
+    def set_ollama_url(cls, v: str, info) -> str:
+        if v: return v
         if os.getenv("APP_ENV") == "production":
             return "http://ollama:11434"
-        
-        # Para desarrollo local
         return "http://localhost:11434"
     
     ollama_modelo_chat: str = os.getenv("OLLAMA_CHAT_MODEL", "qwen2.5:3b")
@@ -78,6 +90,15 @@ class Configuracion(BaseSettings):
     jwt_secret: str = "cambiar_en_produccion_jwt_secret"
     jwt_algoritmo: str = "HS256"
     jwt_expire_minutos: int = 60
+
+    # -------------------------------------------------------------------------
+    # Seguridad de Webhooks (HMAC)
+    # -------------------------------------------------------------------------
+    # Secret compartido con Evolution API para validar firma HMAC-SHA256.
+    # Vacío = validación desactivada (solo desarrollo local).
+    evolution_webhook_secret: str = ""
+    # Secret compartido con MercadoPago para validar firma HMAC-SHA256.
+    mp_webhook_secret: str = ""
 
     # -------------------------------------------------------------------------
     # CORS
@@ -147,6 +168,36 @@ class Configuracion(BaseSettings):
     
     # Telegram Bot
     telegram_bot_token: str = ""
+
+    # -------------------------------------------------------------------------
+    # Validación de Secretos en Startup (Fail-Fast)
+    # -------------------------------------------------------------------------
+
+    @field_validator("jwt_secret", mode="after")
+    @classmethod
+    def validate_jwt_secret(cls, v: str) -> str:
+        if len(v) < 16:
+            raise ValueError("jwt_secret debe tener mínimo 16 caracteres")
+        return v
+
+    @model_validator(mode="after")
+    def validate_production_secrets(self) -> "Configuracion":
+        """Falla rápido si se usan secretos débiles en producción."""
+        if self.app_env != "production":
+            return self
+
+        critical = {
+            "jwt_secret": self.jwt_secret,
+            "evolution_webhook_secret": self.evolution_webhook_secret,
+        }
+        for field_name, value in critical.items():
+            if not value or len(value) < 16 or value in _WEAK_SECRETS:
+                logger.critical(
+                    f"🚨 FATAL: '{field_name}' no puede usar valores por defecto en producción o está vacío."
+                    f" Configura la variable de entorno correspondiente con al menos 16 caracteres."
+                )
+                sys.exit(1)
+        return self
 
     @property
     def es_produccion(self) -> bool:

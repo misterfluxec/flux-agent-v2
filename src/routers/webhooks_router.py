@@ -1,10 +1,11 @@
 import logging
 import os
 from typing import Optional
-from fastapi import APIRouter, Request, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, Request, HTTPException, status, BackgroundTasks
 from sqlalchemy import text
 import httpx
 
+from core.security.webhook_hmac import verificar_hmac_evolution
 from routers.chat_router import procesar_mensaje_entrante
 from database import sesion_db
 
@@ -23,6 +24,7 @@ EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "fluxkey123")
 async def evolution_webhook(
     request: Request,
     background_tasks: BackgroundTasks,
+    _hmac: None = Depends(verificar_hmac_evolution),  # 🔒 HMAC opcional (activo si secret configurado)
 ):
     """
     Recibe eventos de Evolution API.
