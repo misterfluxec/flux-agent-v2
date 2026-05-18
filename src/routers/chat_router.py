@@ -13,6 +13,8 @@ async def get_chat_history(
     usuario: PayloadToken = Depends(get_usuario_actual),
 ):
     """Historial de mensajes de una conversación."""
+    tid = str(usuario.tenant_id)
+    await db.execute(text("SELECT set_config('app.current_tenant_id', :tenant_id, true)"), {"tenant_id": tid})
     r = await db.execute(
         text("""
             SELECT m.rol as role,
@@ -21,12 +23,12 @@ async def get_chat_history(
             FROM mensajes m
             JOIN conversaciones c
               ON m.conversacion_id=c.id
-            WHERE m.conversacion_id=:cid::uuid
-              AND c.tenant_id=:tid::uuid
+            WHERE m.conversacion_id=:cid
+              AND c.tenant_id=:tid
             ORDER BY m.creado_en ASC
         """),
         {"cid": conversation_id,
-         "tid": str(usuario.tenant_id)},
+         "tid": tid},
     )
     return [
         {"role": row.role,
