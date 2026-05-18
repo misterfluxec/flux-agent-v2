@@ -135,6 +135,32 @@ class BookingExtractor:
         except Exception:
             pass
 
+        # Verificar que el slot está disponible (FIX 3: duración real del servicio)
+        try:
+            from services.availability_service import AvailabilityService
+            from datetime import date as _date, time as _time
+
+            avail_svc = AvailabilityService(db=db, tenant_id=tenant_id)
+            duracion_real = await avail_svc.get_duracion_servicio(servicio_nombre)
+
+            fecha_obj = _date.fromisoformat(data["fecha"])
+            hora_parts = data["hora"].split(":")
+            hora_obj = _time(int(hora_parts[0]), int(hora_parts[1]))
+
+            disponible = await avail_svc.is_slot_available(
+                fecha=fecha_obj,
+                hora=hora_obj,
+                duracion=duracion_real,
+            )
+            if not disponible:
+                logger.warning(
+                    "booking_slot_not_available",
+                    extra={"fecha": data["fecha"], "hora": data["hora"]},
+                )
+                return None  # No guardar si está ocupado
+        except Exception as exc:
+            logger.warning("booking_avail_check_failed", extra={"error": str(exc)})
+
         # Guardar la cita
         try:
             result = await db.execute(

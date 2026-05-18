@@ -79,6 +79,37 @@ async def procesar_mensaje_entrante(
         # Invertir para que estén en sort_order cronológico
         mensajes_llm = []
         
+        # ── Obtener slots disponibles para el contexto ─
+        slots_context = ""
+        try:
+            from services.availability_service import AvailabilityService
+
+            # Consultar disponibilidad con duración estimada por defecto de 60 min
+            async with sesion_db(tenant_id) as db_avail:
+                svc = AvailabilityService(
+                    db=db_avail,
+                    tenant_id=str(tenant_id)
+                )
+                slots = await svc.get_available_slots(
+                    days_ahead=7,
+                    servicio_duracion=60,
+                    max_slots=5,
+                )
+                if slots:
+                    lineas = [
+                        f"• {s['dia']} {s['fecha_display']} "
+                        f"a las {s['hora_display']}"
+                        for s in slots
+                    ]
+                    slots_context = (
+                        "\n\nHORARIOS DISPONIBLES REALES "
+                        "(SOLO ofrecer estos, ningún otro):\n"
+                        + "\n".join(lineas)
+                    )
+        except Exception as exc:
+            logger.warning("slots_context_error", extra={"error": str(exc)})
+        # ── fin slots ─────────────────────────────────
+
         # System prompt
         prompt_sistema = f"Eres {agente.name}, un asistente {agente.gender} con tone {agente.mood}.\n"
         if agente.personality: prompt_sistema += f"Personalidad: {agente.personality}\n"
@@ -86,6 +117,8 @@ async def procesar_mensaje_entrante(
         
         if contexto_rag:
             prompt_sistema += f"\n\nContexto de la empresa (Usa esta información para responder):\n{contexto_rag}\n"
+
+        prompt_sistema += slots_context
 
         mensajes_llm.append({"role": "system", "content": prompt_sistema})
         
