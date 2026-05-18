@@ -15,10 +15,12 @@ import { FLUX_LEXICON } from '@/constants/lexicon';
 import { useOperationsTimeline } from '@/hooks/useOperationsTimeline';
 import { useOperationsHealth } from '@/hooks/useOperationsHealth';
 import { TimelineEvent } from '@/types/operations';
+import { dashboardApi, DashboardKPIs } from '@/services/api/dashboard';
 
 export default function DashboardPage() {
   const router = useRouter();
   const [isHydrated, setIsHydrated] = useState(false);
+  const [overview, setOverview] = useState<DashboardKPIs | null>(null);
   
   const { isConnected } = useEventBus();
   
@@ -36,6 +38,9 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setIsHydrated(true);
+    dashboardApi.getOverview()
+      .then(setOverview)
+      .catch((err) => console.error("Error cargando overview:", err));
   }, []);
 
   if (!isHydrated) return null; // Zero-spinner rule (Progressive Hydration)
@@ -75,36 +80,38 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-[#111827] border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden group hover:border-white/10 transition-colors cursor-pointer" onClick={() => router.push('/dashboard/operations')}>
           <p className="text-[12px] font-medium text-slate-400 mb-2">Conversaciones</p>
-          <h2 className="text-2xl font-black text-white/90 tabular-nums">342</h2>
+          <h2 className="text-2xl font-black text-white/90 tabular-nums">{overview?.kpis.total_conversaciones ?? '...'}</h2>
           <span className="text-[12px] font-medium text-emerald-400 mt-1 flex items-center">
-            <ArrowUpRight className="w-3 h-3 mr-1" /> +12% vs ayer
+            <ArrowUpRight className="w-3 h-3 mr-1" /> +0% vs ayer
           </span>
         </div>
         
         <div className="bg-[#111827] border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden group hover:border-white/10 transition-colors cursor-pointer" onClick={() => router.push('/dashboard/crm')}>
-          <p className="text-[12px] font-medium text-slate-400 mb-2">Leads Nuevos</p>
-          <h2 className="text-2xl font-black text-white/90 tabular-nums">45</h2>
+          <p className="text-[12px] font-medium text-slate-400 mb-2">Leads Capturados</p>
+          <h2 className="text-2xl font-black text-white/90 tabular-nums">{overview?.kpis.leads_capturados ?? '...'}</h2>
           <span className="text-[12px] font-medium text-emerald-400 mt-1 flex items-center">
-            <ArrowUpRight className="w-3 h-3 mr-1" /> +8 vs ayer
+            <ArrowUpRight className="w-3 h-3 mr-1" /> +0 vs ayer
           </span>
         </div>
         
         <div className="bg-[#111827] border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden group hover:border-white/10 transition-colors cursor-pointer" onClick={() => router.push('/dashboard/analytics')}>
           <p className="text-[12px] font-medium text-slate-400 mb-2">Satisfacción</p>
-          <h2 className="text-2xl font-black text-white/90 tabular-nums flex items-center gap-2">94% <span className="text-lg">😊</span></h2>
+          <h2 className="text-2xl font-black text-white/90 tabular-nums flex items-center gap-2">
+            {overview ? `${Math.round(overview.kpis.sentimiento_promedio * 100)}%` : '...'} <span className="text-lg">😊</span>
+          </h2>
           <span className="text-[12px] font-medium text-slate-500 mt-1 flex items-center">
-            Promedio de 156 reviews
+            Sentimiento de usuarios
           </span>
         </div>
 
-        <div className="bg-cyan-500/[0.06] border border-cyan-500/[0.12] rounded-2xl p-5 shadow-lg relative overflow-hidden group hover:border-cyan-500/20 transition-colors cursor-pointer" onClick={() => router.push('/dashboard/orders')}>
-          <p className="text-[12px] font-bold text-cyan-400/80 mb-2">Ingresos del Mes</p>
-          <h2 className="text-2xl font-black text-white/90 tabular-nums">$12,450</h2>
+        <div className="bg-[#111827] border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden group hover:border-white/10 transition-colors cursor-pointer" onClick={() => router.push('/dashboard/orders')}>
+          <p className="text-[12px] font-bold text-slate-400 mb-2">Tokens Usados</p>
+          <h2 className="text-2xl font-black text-white/90 tabular-nums">{overview?.kpis.uso_tokens ?? '...'}</h2>
           <span className="text-[12px] font-medium text-slate-400 mt-1 flex items-center">
-            Meta: $15,000 (83%)
+            Este mes
           </span>
           <div className="w-full bg-white/5 h-1.5 rounded-full mt-2">
-            <div className="bg-cyan-500 h-1.5 rounded-full" style={{ width: '83%' }}></div>
+            <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: '15%' }}></div>
           </div>
         </div>
       </div>
