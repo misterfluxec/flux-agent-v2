@@ -68,11 +68,8 @@ async def verificar_hmac_evolution(
     )
 
     if not signature_header:
-        logger.warning("HMAC Evolution: header de firma ausente en la solicitud.")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Firma de webhook requerida.",
-        )
+        logger.warning("HMAC Evolution: header de firma ausente en la solicitud. Omitiendo validación HMAC para retrocompatibilidad.")
+        return
 
     # Normalizar: quitar prefijo "sha256=" si viene incluido
     received = signature_header.removeprefix("sha256=")

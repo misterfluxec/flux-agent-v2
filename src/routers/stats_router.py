@@ -26,7 +26,7 @@ async def get_overview(
     # Conversaciones totales
     r1 = await db.execute(
         text("SELECT COUNT(*) FROM conversaciones "
-             "WHERE tenant_id=:t"),
+             "WHERE tenant_id=:t::uuid"),
         {"t": tid}
     )
     total_conv = r1.scalar() or 0
@@ -34,7 +34,7 @@ async def get_overview(
     # Citas activas (hoy y futuro)
     r2 = await db.execute(
         text("SELECT COUNT(*) FROM bookings "
-             "WHERE tenant_id=:t AND fecha>=:hoy "
+             "WHERE tenant_id=:t::uuid AND fecha>=:hoy "
              "AND estado IN ('confirmada','pendiente')"),
         {"t": tid, "hoy": hoy}
     )
@@ -45,7 +45,7 @@ async def get_overview(
         text("""SELECT COUNT(*) FROM mensajes m
                 JOIN conversaciones c
                   ON m.conversacion_id=c.id
-                WHERE c.tenant_id=:t
+                WHERE c.tenant_id=:t::uuid
                   AND m.creado_en >= :desde"""),
         {"t": tid, "desde": hace_30}
     )
@@ -58,7 +58,7 @@ async def get_overview(
                 FROM mensajes m
                 JOIN conversaciones c
                   ON m.conversacion_id=c.id
-                WHERE c.tenant_id=:t
+                WHERE c.tenant_id=:t::uuid
                   AND m.creado_en >= :desde
                 GROUP BY DATE(m.creado_en)
                 ORDER BY fecha"""),
@@ -72,7 +72,7 @@ async def get_overview(
     # Servicios más solicitados
     r5 = await db.execute(
         text("""SELECT servicio_nombre, COUNT(*) as total
-                FROM bookings WHERE tenant_id=:t
+                FROM bookings WHERE tenant_id=:t::uuid
                 GROUP BY servicio_nombre
                 ORDER BY total DESC LIMIT 5"""),
         {"t": tid}
@@ -126,7 +126,7 @@ async def get_activity(
                  WHERE conversacion_id=c.id
                  ORDER BY creado_en DESC LIMIT 1
              ) ult ON true
-             WHERE c.tenant_id=:t)
+             WHERE c.tenant_id=:t::uuid)
 
             UNION ALL
 
@@ -139,7 +139,7 @@ async def get_activity(
                     b.created_at::text as timestamp,
                     'medium' as urgency
              FROM bookings b
-             WHERE b.tenant_id=:t)
+             WHERE b.tenant_id=:t::uuid)
 
             ORDER BY timestamp DESC
             LIMIT :limit

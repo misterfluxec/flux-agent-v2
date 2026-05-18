@@ -52,12 +52,11 @@ export default function DashboardPage() {
       {/* RECOMMENDATIONS — Decision Center */}
       <RecommendationFeed />
 
-      {/* HEADER + NORTH STAR */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-5 relative">
+      {/* HEADER + KPIs DEL DÍA */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-5 relative mb-6">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            {/* Título: font-bold (no black) para reducir peso visual en lectura continua */}
-            <h1 className="text-2xl font-bold tracking-tight text-white/80">{FLUX_LEXICON.HOME}</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-white/80">Buenos días, Admin · Empresa S.A.</h1>
             <div 
               onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
               className="px-2.5 py-1 rounded-md bg-white/[0.04] border border-white/[0.07] text-[11px] text-slate-500 font-medium flex items-center gap-1.5 cursor-pointer hover:bg-white/[0.07] transition-colors"
@@ -67,17 +66,46 @@ export default function DashboardPage() {
           </div>
           <p className="text-slate-500 text-[13px] leading-relaxed">Pulso del sistema en vivo. Toma decisiones con contexto.</p>
         </div>
+        <Button onClick={() => router.push('/dashboard/operations?action=new_chat')} className="bg-cyan-500 hover:bg-cyan-600 text-white shadow-[0_0_15px_rgba(6,182,212,0.4)] transition-all">
+          + Nuevo Chat
+        </Button>
+      </div>
+
+      {/* 4 KPIs CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-[#111827] border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden group hover:border-white/10 transition-colors cursor-pointer" onClick={() => router.push('/dashboard/operations')}>
+          <p className="text-[12px] font-medium text-slate-400 mb-2">Conversaciones</p>
+          <h2 className="text-2xl font-black text-white/90 tabular-nums">342</h2>
+          <span className="text-[12px] font-medium text-emerald-400 mt-1 flex items-center">
+            <ArrowUpRight className="w-3 h-3 mr-1" /> +12% vs ayer
+          </span>
+        </div>
         
-        {/* NORTH-STAR METRIC — sin blur glow masivo (reduce fatiga) */}
-        <div className="bg-cyan-500/[0.06] border border-cyan-500/[0.12] rounded-2xl p-4 pr-10 relative overflow-hidden">
-          <p className="text-[11px] font-bold text-cyan-400/50 uppercase tracking-widest mb-1">Valor Potencial Hoy</p>
-          <div className="flex items-end gap-3">
-            <h2 className="text-2xl font-black text-white/80 tabular-nums">$2,430</h2>
-            <span className="text-[13px] font-semibold text-emerald-400/80 flex items-center mb-0.5">
-              <ArrowUpRight className="w-3.5 h-3.5 mr-0.5" /> 18%
-            </span>
+        <div className="bg-[#111827] border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden group hover:border-white/10 transition-colors cursor-pointer" onClick={() => router.push('/dashboard/crm')}>
+          <p className="text-[12px] font-medium text-slate-400 mb-2">Leads Nuevos</p>
+          <h2 className="text-2xl font-black text-white/90 tabular-nums">45</h2>
+          <span className="text-[12px] font-medium text-emerald-400 mt-1 flex items-center">
+            <ArrowUpRight className="w-3 h-3 mr-1" /> +8 vs ayer
+          </span>
+        </div>
+        
+        <div className="bg-[#111827] border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden group hover:border-white/10 transition-colors cursor-pointer" onClick={() => router.push('/dashboard/analytics')}>
+          <p className="text-[12px] font-medium text-slate-400 mb-2">Satisfacción</p>
+          <h2 className="text-2xl font-black text-white/90 tabular-nums flex items-center gap-2">94% <span className="text-lg">😊</span></h2>
+          <span className="text-[12px] font-medium text-slate-500 mt-1 flex items-center">
+            Promedio de 156 reviews
+          </span>
+        </div>
+
+        <div className="bg-cyan-500/[0.06] border border-cyan-500/[0.12] rounded-2xl p-5 shadow-lg relative overflow-hidden group hover:border-cyan-500/20 transition-colors cursor-pointer" onClick={() => router.push('/dashboard/orders')}>
+          <p className="text-[12px] font-bold text-cyan-400/80 mb-2">Ingresos del Mes</p>
+          <h2 className="text-2xl font-black text-white/90 tabular-nums">$12,450</h2>
+          <span className="text-[12px] font-medium text-slate-400 mt-1 flex items-center">
+            Meta: $15,000 (83%)
+          </span>
+          <div className="w-full bg-white/5 h-1.5 rounded-full mt-2">
+            <div className="bg-cyan-500 h-1.5 rounded-full" style={{ width: '83%' }}></div>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1.5">Basado en <span className="text-slate-300 font-medium">3 leads calientes</span> en curso.</p>
         </div>
       </div>
 
@@ -85,39 +113,49 @@ export default function DashboardPage() {
         
         {/* MAIN COLUMN (8 cols) */}
         <div className="lg:col-span-8 space-y-6">
-          
-          {/* STATUS CARDS — tamaño y animación calibrados anti-fatiga */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-3.5 flex items-center gap-3">
-              <div className="relative">
-                <div className={`w-2.5 h-2.5 rounded-full ${isConnected ? "bg-emerald-500/80" : "bg-amber-500"}`}></div>
-                {/* Ping solo cuando NO está conectado (status anormal) */}
-                {!isConnected && <div className="w-2.5 h-2.5 rounded-full bg-amber-500 absolute inset-0 animate-ping opacity-40"></div>}
-              </div>
-              <div>
-                <p className="text-[11px] text-slate-600 font-medium">Event Bus WS</p>
-                <p className="text-[13px] text-slate-300 font-semibold">{isConnected ? "Conectado" : "Conectando..."}</p>
-              </div>
+
+          {/* RENDIMIENTO DE AGENTES Y ALERTAS */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className={`bg-${criticalCount > 0 ? 'red' : 'amber'}-500/[0.04] border border-${criticalCount > 0 ? 'red-500/[0.12]' : 'amber-500/[0.12]'} rounded-xl p-4 cursor-pointer`} onClick={() => router.push('/dashboard/operations')}>
+              <h3 className="text-sm font-semibold text-white/80 flex items-center gap-2 mb-3">
+                <AlertCircle className={`w-4 h-4 ${criticalCount > 0 ? 'text-red-400' : 'text-amber-400'}`} />
+                Alertas Prioritarias
+              </h3>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-start gap-2 text-red-300/90">
+                   <span className="mt-0.5">⚠️</span> 3 leads sin atender hace &gt; 30 min
+                </li>
+                <li className="flex items-start gap-2 text-amber-300/90">
+                   <span className="mt-0.5">⚠️</span> Cuota de LLM al 80%
+                </li>
+                <li className="flex items-start gap-2 text-emerald-300/90">
+                   <span className="mt-0.5">💡</span> Oportunidad: 5 cotizaciones vistas hoy
+                </li>
+              </ul>
             </div>
-            
-            <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-3.5 flex items-center gap-3">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/70"></div>
-              <div>
-                <p className="text-[11px] text-slate-600 font-medium">WhatsApp</p>
-                <p className="text-[13px] text-slate-300 font-semibold">Conectado</p>
-              </div>
-            </div>
-            
-            <div className={`bg-${criticalCount > 0 ? 'red' : 'white'}-500/[0.04] border border-${criticalCount > 0 ? 'red-500/[0.12]' : 'white/[0.05]'} rounded-xl p-3.5 flex items-center gap-3 cursor-pointer hover:border-white/10 transition-colors`} onClick={() => router.push('/dashboard/operations?tab=queue')}>
-              <div className="relative">
-                <div className={`w-2.5 h-2.5 rounded-full ${criticalCount > 0 ? 'bg-red-500' : 'bg-emerald-500/80'} z-10 relative`}></div>
-                {criticalCount > 0 && <div className="w-2.5 h-2.5 rounded-full bg-red-500 absolute inset-0 animate-ping opacity-40"></div>}
-              </div>
-              <div>
-                <p className="text-[11px] text-slate-600 font-medium">Ops Críticas</p>
-                <p className={`text-[13px] ${criticalCount > 0 ? 'text-red-400' : 'text-slate-300'} font-bold`}>
-                  {criticalCount > 0 ? `${criticalCount} Pendientes` : 'Todo al día'}
-                </p>
+
+            <div className="bg-white/[0.02] border border-white/5 rounded-xl p-4">
+              <h3 className="text-sm font-semibold text-white/80 flex items-center gap-2 mb-3">
+                <Bot className="w-4 h-4 text-primary" />
+                Rendimiento de Agentes
+              </h3>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-white/5 rounded-lg p-2 flex justify-between items-center cursor-pointer hover:bg-white/10" onClick={() => router.push('/dashboard/agents')}>
+                  <span className="text-xs text-white/80">Sales Bot</span>
+                  <span className="text-xs font-bold text-emerald-400">156 🟢</span>
+                </div>
+                <div className="bg-white/5 rounded-lg p-2 flex justify-between items-center cursor-pointer hover:bg-white/10" onClick={() => router.push('/dashboard/agents')}>
+                  <span className="text-xs text-white/80">Support</span>
+                  <span className="text-xs font-bold text-emerald-400">89 🟢</span>
+                </div>
+                <div className="bg-white/5 rounded-lg p-2 flex justify-between items-center cursor-pointer hover:bg-white/10" onClick={() => router.push('/dashboard/agents')}>
+                  <span className="text-xs text-white/80">Ops Bot</span>
+                  <span className="text-xs font-bold text-amber-400">45 🟡</span>
+                </div>
+                <div className="bg-white/5 rounded-lg p-2 flex justify-between items-center cursor-pointer hover:bg-white/10" onClick={() => router.push('/dashboard/agents')}>
+                  <span className="text-xs text-white/80">Yanua</span>
+                  <span className="text-xs font-bold text-red-400">12 🔴</span>
+                </div>
               </div>
             </div>
           </div>

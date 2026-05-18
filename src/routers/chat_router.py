@@ -21,8 +21,8 @@ async def get_chat_history(
             FROM mensajes m
             JOIN conversaciones c
               ON m.conversacion_id=c.id
-            WHERE m.conversacion_id=:cid
-              AND c.tenant_id=:tid
+            WHERE m.conversacion_id=:cid::uuid
+              AND c.tenant_id=:tid::uuid
             ORDER BY m.creado_en ASC
         """),
         {"cid": conversation_id,

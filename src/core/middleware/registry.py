@@ -6,11 +6,15 @@ from core.security.headers_middleware import SecurityHeadersMiddleware
 from core.middleware.tenant_isolation import TenantIsolationMiddleware, RequestLoggingMiddleware
 from core.correlation import CorrelationMiddleware
 from core.exception_handlers import setup_exception_handlers
+from core.security.rate_limiter import setup_rate_limiting
 
 logger = logging.getLogger(__name__)
 config = obtener_config()
 
 def setup_middlewares(app: FastAPI):
+    # 0. Limite de Tasa (SlowAPI via Redis)
+    setup_rate_limiting(app)
+
     # 1. Excepciones (capturan todo lo que no se maneje)
     setup_exception_handlers(app)
 

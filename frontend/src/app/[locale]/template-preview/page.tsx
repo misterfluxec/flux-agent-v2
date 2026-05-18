@@ -13,7 +13,8 @@ import { CtaSection } from "@/components/landing-template/cta-section";
 import { FooterSection } from "@/components/landing-template/footer-section";
 import { setRequestLocale } from "next-intl/server";
 
-export default function TemplatePreview({ params: { locale } }: { params: { locale: string } }) {
+export default async function TemplatePreview({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   setRequestLocale(locale);
 
   return (

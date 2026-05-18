@@ -6,6 +6,7 @@ import { StepIdentity } from '@/components/onboarding/StepIdentity';
 import { StepIndustry } from '@/components/onboarding/StepIndustry';
 import { StepKnowledge } from '@/components/onboarding/StepKnowledge';
 import { StepConnect } from '@/components/onboarding/StepConnect';
+import { StepMagicPrompt } from '@/components/onboarding/StepMagicPrompt';
 import { StepComplete } from '@/components/onboarding/StepComplete';
 
 export default function OnboardingPage() {
@@ -22,8 +23,9 @@ export default function OnboardingPage() {
         {step === 1 && <StepIdentity data={data} onChange={handleUpdate} onNext={nextStep} />}
         {step === 2 && <StepIndustry data={data} onChange={handleUpdate} onNext={nextStep} onBack={prevStep} />}
         {step === 3 && <StepKnowledge data={data} onChange={handleUpdate} onNext={nextStep} onBack={prevStep} />}
-        {step === 4 && <StepConnect data={data} onChange={handleUpdate} onNext={nextStep} onBack={prevStep} />}
-        {step === 5 && <StepComplete isLoading={isLoading} onSubmit={submitOnboarding} onBack={prevStep} />}
+        {step === 4 && <StepMagicPrompt data={data} onChange={handleUpdate} onNext={nextStep} onBack={prevStep} />}
+        {step === 5 && <StepConnect data={data} onChange={handleUpdate} onNext={nextStep} onBack={prevStep} />}
+        {step === 6 && <StepComplete isLoading={isLoading} onSubmit={submitOnboarding} onBack={prevStep} />}
       </div>
     </div>
   );

@@ -104,7 +104,7 @@ services:
       DATABASE_URL: postgresql://${DB_USER:-fluxadmin}:${DB_PASSWORD:-fluxsecure2026}@fluxagent-postgres:5432/${DB_NAME:-fluxagent_v2}
       REDIS_URL: redis://:${REDIS_PASSWORD:-redisflux2026}@fluxagent-redis:6379/0
       JWT_SECRET: ${JWT_SECRET:-e16ec48e51ffc44f7beb365cc0356d720e1ea63c839540e3f873d7a5677afc5c}
-      OLLAMA_BASE_URL: http://fluxagent-ollama:11434
+      OLLAMA_BASE_URL: http://172.21.0.1:11434
       EVOLUTION_API_URL: ${EVOLUTION_API_URL:-http://flux-evolution:8080}
       EVOLUTION_API_KEY: ${EVOLUTION_API_KEY:-fluxkey123}
       EVOLUTION_WEBHOOK_SECRET: ${EVOLUTION_WEBHOOK_SECRET}

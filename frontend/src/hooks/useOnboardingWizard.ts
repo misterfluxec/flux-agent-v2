@@ -7,6 +7,8 @@ export interface OnboardingData {
   avatar: string | null;
   industria: string;
   conocimiento_cargado: boolean;
+  business_description: string;
+  system_prompt: string;
   whatsapp_conectado: boolean;
   telegram_conectado: boolean;
 }
@@ -16,6 +18,8 @@ const DEFAULT_DATA: OnboardingData = {
   avatar: null,
   industria: '',
   conocimiento_cargado: false,
+  business_description: '',
+  system_prompt: '',
   whatsapp_conectado: false,
   telegram_conectado: false,
 };
@@ -31,7 +35,7 @@ export function useOnboardingWizard() {
   };
 
   const nextStep = () => {
-    setStep((prev) => Math.min(prev + 1, 5));
+    setStep((prev) => Math.min(prev + 1, 6));
   };
 
   const prevStep = () => {

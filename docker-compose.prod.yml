@@ -319,6 +319,31 @@ services:
     networks:
       - fluxagent-net-prod
 
+  # --- FRONTEND (Next.js Enterprise) ---
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: fluxagent-frontend:production
+    container_name: fluxagent-frontend-prod
+    restart: always
+    ports:
+      - "4000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.labodegaec.com/api/v1}
+      - NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL:-wss://api.labodegaec.com/ws/v1}
+      - NODE_ENV=production
+    depends_on:
+      backend:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+    networks:
+      - fluxagent-net-prod
+
 volumes:
   pgdata_prod:
     name: fluxagent_pgdata_prod
