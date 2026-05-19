@@ -4,7 +4,7 @@ from typing import Optional, List
 from sqlalchemy import text
 from datetime import datetime
 from database import sesion_db
-from routers.auth_router import get_usuario_actual
+from auth import get_usuario_actual
 from auth import PayloadToken
 from core.plan_manager import PlanManager
 
@@ -186,8 +186,8 @@ async def get_billing_history(
                 COUNT(*) as conversations,
                 COALESCE(SUM(valor_venta), 0) as revenue
             FROM conversaciones
-            WHERE tenant_id = :tid
-                AND iniciada_en >= NOW() - INTERVAL ':days days'
+            WHERE tenant_id = CAST(:tid AS UUID)
+                AND iniciada_en >= NOW() - CAST(:days || ' days' AS INTERVAL)
             GROUP BY DATE(iniciada_en)
             ORDER BY month DESC
             LIMIT 12
@@ -269,24 +269,29 @@ async def get_usage_stats(
         max_messages = int(tenant_row[1]) if tenant_row[1] else 100
         current_plan = str(tenant_row[2]) if tenant_row[2] else "free"
         
-        # Obtener uso actual
-        usage_result = await db.execute(text("""
-            SELECT 
-                COUNT(DISTINCT a.id) as agents_used,
-                COUNT(m.id) as messages_used,
-                COUNT(DISTINCT c.id) as conversations_used
-            FROM agents a
-            LEFT JOIN conversaciones c ON c.agent_id = a.id
-            LEFT JOIN mensajes m ON m.conversation_id = c.id
-            WHERE a.tenant_id = :tid
-                AND c.iniciada_en >= NOW() - INTERVAL ':days days'
+        # Obtener uso actual de agentes
+        agents_result = await db.execute(text("""
+            SELECT COUNT(*) FROM agents 
+            WHERE tenant_id = CAST(:tid AS UUID)
+        """), {"tid": usuario.tenant_id})
+        agents_used = int(agents_result.scalar() or 0)
+
+        # Obtener uso actual de conversaciones
+        convs_result = await db.execute(text("""
+            SELECT COUNT(*) FROM conversaciones 
+            WHERE tenant_id = CAST(:tid AS UUID)
+              AND iniciada_en >= NOW() - CAST(:days || ' days' AS INTERVAL)
         """), {"tid": usuario.tenant_id, "days": days})
-        
-        usage_row = usage_result.fetchone()
-        
-        agents_used = int(usage_row[0]) if usage_row[0] else 0
-        messages_used = int(usage_row[1]) if usage_row[1] else 0
-        conversations_used = int(usage_row[2]) if usage_row[2] else 0
+        conversations_used = int(convs_result.scalar() or 0)
+
+        # Obtener uso actual de mensajes
+        messages_result = await db.execute(text("""
+            SELECT COUNT(*) FROM mensajes m
+            JOIN conversaciones c ON m.conversacion_id = c.id
+            WHERE c.tenant_id = CAST(:tid AS UUID)
+              AND m.creado_en >= NOW() - CAST(:days || ' days' AS INTERVAL)
+        """), {"tid": usuario.tenant_id, "days": days})
+        messages_used = int(messages_result.scalar() or 0)
         
         return {
             "plan": current_plan,

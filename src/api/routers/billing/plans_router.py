@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy import text
 from database import sesion_db
-from routers.auth_router import get_usuario_actual
+from auth import get_usuario_actual
 from auth import PayloadToken
 
 router = APIRouter(prefix="/api/v1/plans", tags=["plans"])

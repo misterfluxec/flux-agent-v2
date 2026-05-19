@@ -5,7 +5,7 @@ from typing import Dict, Any, List
 from uuid import UUID
 from datetime import datetime
 
-from core.database import get_db_session as obtener_sesion
+from database import obtener_sesion
 from auth import get_tenant_actual_opcional as get_tenant_actual
 from database import configurar_rls
 

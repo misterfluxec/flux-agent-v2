@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from sqlalchemy import text
 
 from database import sesion_db
-from routers.auth_router import get_usuario_actual
+from auth import get_usuario_actual
 from auth import PayloadToken
 from core.cache.decorators import cached, invalidate_cache, rate_limited_cache, cache_monitor
 from core.cache.keys import CacheKeys, CachePatterns

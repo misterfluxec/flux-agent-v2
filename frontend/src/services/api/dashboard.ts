@@ -29,6 +29,12 @@ export const dashboardApi = {
     const response = await apiClient.get<DashboardKPIs>("/stats/overview");
     return response.data;
   },
+  
+  /** Obtiene la información del usuario y tenant actual */
+  getMe: async (): Promise<any> => {
+    const response = await apiClient.get<any>("/stats/me");
+    return response.data;
+  },
 };
 
 export interface RecentActivity {

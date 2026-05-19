@@ -93,7 +93,7 @@ class OperationalHealthEngine:
                     COUNT(*) FILTER (WHERE event_type = 'payment.completed') AS completed,
                     COUNT(*) FILTER (WHERE event_type = 'payment.failed')    AS failed
                 FROM event_log
-                WHERE tenant_id = :tenant_id
+                WHERE tenant_id = CAST(:tenant_id AS UUID)
                   AND occurred_at >= NOW() - INTERVAL '24 hours'
                   AND event_type IN ('payment.completed', 'payment.failed')
             """), {"tenant_id": tenant_id})
@@ -137,13 +137,13 @@ class OperationalHealthEngine:
             result = await db.execute(text("""
                 SELECT COUNT(*) AS overdue
                 FROM event_log
-                WHERE tenant_id = :tenant_id
+                WHERE tenant_id = CAST(:tenant_id AS UUID)
                   AND event_type = 'followup.scheduled'
                   AND occurred_at <= NOW() - INTERVAL '48 hours'
-                  AND event_id NOT IN (
+                  AND event_id::text NOT IN (
                       SELECT payload->>'scheduled_event_id'
                       FROM event_log
-                      WHERE tenant_id = :tenant_id
+                      WHERE tenant_id = CAST(:tenant_id AS UUID)
                         AND event_type = 'followup.sent'
                   )
             """), {"tenant_id": tenant_id})
@@ -173,13 +173,13 @@ class OperationalHealthEngine:
             result = await db.execute(text("""
                 SELECT COUNT(DISTINCT aggregate_id) AS unanswered
                 FROM event_log
-                WHERE tenant_id = :tenant_id
+                WHERE tenant_id = CAST(:tenant_id AS UUID)
                   AND event_type = 'message.received'
                   AND occurred_at <= NOW() - INTERVAL '30 minutes'
                   AND aggregate_id NOT IN (
                       SELECT DISTINCT aggregate_id
                       FROM event_log
-                      WHERE tenant_id = :tenant_id
+                      WHERE tenant_id = CAST(:tenant_id AS UUID)
                         AND event_type = 'message.sent'
                         AND aggregate_type = 'conversation'
                   )
@@ -210,7 +210,7 @@ class OperationalHealthEngine:
             result = await db.execute(text("""
                 SELECT COUNT(*) AS disconnections
                 FROM event_log
-                WHERE tenant_id = :tenant_id
+                WHERE tenant_id = CAST(:tenant_id AS UUID)
                   AND event_type = 'channel.disconnected'
                   AND occurred_at >= NOW() - INTERVAL '1 hour'
             """), {"tenant_id": tenant_id})
@@ -271,12 +271,12 @@ class OperationalHealthEngine:
             result = await db.execute(text("""
                 SELECT COUNT(*) AS pending
                 FROM event_log req
-                WHERE req.tenant_id = :tenant_id
+                WHERE req.tenant_id = CAST(:tenant_id AS UUID)
                   AND req.event_type = 'handoff.requested'
                   AND req.occurred_at <= NOW() - INTERVAL '15 minutes'
                   AND NOT EXISTS (
                       SELECT 1 FROM event_log comp
-                      WHERE comp.tenant_id = :tenant_id
+                      WHERE comp.tenant_id = CAST(:tenant_id AS UUID)
                         AND comp.event_type = 'handoff.completed'
                         AND comp.correlation_id = req.correlation_id
                   )

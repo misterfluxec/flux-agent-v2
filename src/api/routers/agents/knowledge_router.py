@@ -23,7 +23,7 @@ async def listar_conocimiento(
     await configurar_rls(db, tenant_id)
     result = await db.execute(
         text("""
-            SELECT fuente_nombre, fuente_tipo, COUNT(*) as chunks, MAX(created_at) as ultima_ingesta
+            SELECT fuente_nombre, fuente_tipo, COUNT(*) as chunks, MAX(creado_en) as ultima_ingesta
             FROM knowledge_chunks
             WHERE tenant_id = :tid
             GROUP BY fuente_nombre, fuente_tipo

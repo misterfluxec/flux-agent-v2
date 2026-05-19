@@ -49,17 +49,13 @@ export default function DashboardPage() {
       try {
         const token = localStorage.getItem('flux_token');
         if (!token) return;
-        // Intentar desde API primero
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/stats/me`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (res.ok) {
-          const data = await res.json();
+        
+        try {
+          const data = await dashboardApi.getMe();
           setUserName(data.nombre || 'Admin');
           setTenantName(data.tenant_name || 'Mi Empresa');
-        } else {
-          // Fallback: decodificar JWT
+        } catch (apiError) {
+          // Fallback: decodificar JWT si la API falla
           const payload = JSON.parse(atob(token.split('.')[1]));
           setUserName(payload.nombre || payload.email?.split('@')[0] || 'Admin');
           setTenantName(payload.empresa || 'Mi Empresa');

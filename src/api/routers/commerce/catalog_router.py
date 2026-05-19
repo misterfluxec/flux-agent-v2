@@ -35,10 +35,7 @@ async def listar_catalogo(
     db: AsyncSession = Depends(obtener_sesion)
 ):
     """Retorna la lista de ítems del catálogo del tenant autenticado."""
-    if not current_tenant:
-        raise HTTPException(status_code=401, detail="No autenticado")
-    
-    await configurar_rls(db, UUID(current_tenant.tenant_id))
+    await configurar_rls(db, current_tenant)
     
     result = await db.execute(text("""
         SELECT id, type, name, description, base_price, currency, stock_quantity, status, metadata
@@ -70,10 +67,7 @@ async def actualizar_item(
     db: AsyncSession = Depends(obtener_sesion)
 ):
     """Actualiza propiedades de un ítem del catálogo."""
-    if not current_tenant:
-        raise HTTPException(status_code=401, detail="No autenticado")
-        
-    await configurar_rls(db, UUID(current_tenant.tenant_id))
+    await configurar_rls(db, current_tenant)
     
     # Construir query dinámico
     updates = []
@@ -125,10 +119,7 @@ async def importar_catalogo_bulk(
     """
     Importación masiva de ítems al catálogo. Ideal para sync de CSVs locales o integraciones custom.
     """
-    if not current_tenant:
-        raise HTTPException(status_code=401, detail="No autenticado")
-        
-    tenant_id_uuid = UUID(current_tenant.tenant_id)
+    tenant_id_uuid = current_tenant
     await configurar_rls(db, tenant_id_uuid)
     
     if not payload.items:
