@@ -187,7 +187,7 @@ async def get_billing_history(
                 COALESCE(SUM(valor_venta), 0) as revenue
             FROM conversaciones
             WHERE tenant_id = CAST(:tid AS UUID)
-                AND iniciada_en >= NOW() - CAST(:days || ' days' AS INTERVAL)
+                AND iniciada_en >= NOW() - INTERVAL '1 day' * :days
             GROUP BY DATE(iniciada_en)
             ORDER BY month DESC
             LIMIT 12
@@ -280,7 +280,7 @@ async def get_usage_stats(
         convs_result = await db.execute(text("""
             SELECT COUNT(*) FROM conversaciones 
             WHERE tenant_id = CAST(:tid AS UUID)
-              AND iniciada_en >= NOW() - CAST(:days || ' days' AS INTERVAL)
+              AND iniciada_en >= NOW() - INTERVAL '1 day' * :days
         """), {"tid": usuario.tenant_id, "days": days})
         conversations_used = int(convs_result.scalar() or 0)
 
@@ -289,7 +289,7 @@ async def get_usage_stats(
             SELECT COUNT(*) FROM mensajes m
             JOIN conversaciones c ON m.conversacion_id = c.id
             WHERE c.tenant_id = CAST(:tid AS UUID)
-              AND m.creado_en >= NOW() - CAST(:days || ' days' AS INTERVAL)
+              AND m.creado_en >= NOW() - INTERVAL '1 day' * :days
         """), {"tid": usuario.tenant_id, "days": days})
         messages_used = int(messages_result.scalar() or 0)
         
