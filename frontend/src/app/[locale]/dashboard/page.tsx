@@ -45,18 +45,28 @@ export default function DashboardPage() {
       .then(setOverview)
       .catch((err) => console.error("Error cargando overview:", err));
 
-    try {
-      const token = localStorage.getItem('flux_token');
-      if (token) {
-        const payload = JSON.parse(
-          atob(token.split('.')[1])
+    const load = async () => {
+      try {
+        const token = localStorage.getItem('flux_token');
+        if (!token) return;
+        // Intentar desde API primero
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/stats/me`,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-        setUserName(payload.nombre || payload.name || 
-                    payload.email?.split('@')[0] || 'Admin');
-        setTenantName(payload.empresa || 
-                      payload.tenant_name || 'Tu Empresa');
-      }
-    } catch {}
+        if (res.ok) {
+          const data = await res.json();
+          setUserName(data.nombre || 'Admin');
+          setTenantName(data.tenant_name || 'Mi Empresa');
+        } else {
+          // Fallback: decodificar JWT
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          setUserName(payload.nombre || payload.email?.split('@')[0] || 'Admin');
+          setTenantName(payload.empresa || 'Mi Empresa');
+        }
+      } catch {}
+    };
+    load();
   }, []);
 
   if (!isHydrated) return null; // Zero-spinner rule (Progressive Hydration)
