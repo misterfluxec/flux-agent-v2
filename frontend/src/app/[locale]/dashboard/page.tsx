@@ -22,6 +22,9 @@ export default function DashboardPage() {
   const [isHydrated, setIsHydrated] = useState(false);
   const [overview, setOverview] = useState<DashboardKPIs | null>(null);
   
+  const [userName, setUserName] = useState('Admin');
+  const [tenantName, setTenantName] = useState('Tu Empresa');
+  
   const { isConnected } = useEventBus();
   
   // Activar micro-victorias en background (sin render visible)
@@ -41,6 +44,19 @@ export default function DashboardPage() {
     dashboardApi.getOverview()
       .then(setOverview)
       .catch((err) => console.error("Error cargando overview:", err));
+
+    try {
+      const token = localStorage.getItem('flux_token');
+      if (token) {
+        const payload = JSON.parse(
+          atob(token.split('.')[1])
+        );
+        setUserName(payload.nombre || payload.name || 
+                    payload.email?.split('@')[0] || 'Admin');
+        setTenantName(payload.empresa || 
+                      payload.tenant_name || 'Tu Empresa');
+      }
+    } catch {}
   }, []);
 
   if (!isHydrated) return null; // Zero-spinner rule (Progressive Hydration)
@@ -61,7 +77,9 @@ export default function DashboardPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-5 relative mb-6">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-2xl font-bold tracking-tight text-white/80">Buenos días, Admin · Empresa S.A.</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-white/80">
+              Buenos días, {userName} · {tenantName}
+            </h1>
             <div 
               onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
               className="px-2.5 py-1 rounded-md bg-white/[0.04] border border-white/[0.07] text-[11px] text-slate-500 font-medium flex items-center gap-1.5 cursor-pointer hover:bg-white/[0.07] transition-colors"

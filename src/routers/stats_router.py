@@ -44,11 +44,9 @@ async def get_overview(
     # Mensajes últimos 30 días
     r3 = await db.execute(
         text("""SELECT COUNT(*) FROM mensajes m
-                JOIN conversaciones c
-                  ON m.conversacion_id=c.id
-                WHERE c.tenant_id=:t
-                  AND m.creado_en >= :desde"""),
-        {"t": tid, "desde": hace_30}
+                WHERE m.tenant_id=:t
+                  AND m.creado_en >= :desde::timestamptz"""),
+        {"t": tid, "desde": hace_30.isoformat()}
     )
     mensajes_mes = r3.scalar() or 0
 
@@ -57,13 +55,11 @@ async def get_overview(
         text("""SELECT DATE(m.creado_en) as fecha,
                        COUNT(*) as conteo
                 FROM mensajes m
-                JOIN conversaciones c
-                  ON m.conversacion_id=c.id
-                WHERE c.tenant_id=:t
-                  AND m.creado_en >= :desde
+                WHERE m.tenant_id=:t
+                  AND m.creado_en >= :desde::timestamptz
                 GROUP BY DATE(m.creado_en)
                 ORDER BY fecha"""),
-        {"t": tid, "desde": hoy - timedelta(days=7)}
+        {"t": tid, "desde": (hoy - timedelta(days=7)).isoformat()}
     )
     mensajes_por_dia = [
         {"fecha": str(row.fecha), "conteo": row.conteo}
@@ -117,17 +113,18 @@ async def get_activity(
         text("""
             (SELECT 'conversacion' as tipo,
                     c.id::text as id,
-                    'Nueva conversación WhatsApp' as titulo,
-                    COALESCE(ult.contenido, 'Sin mensajes')
-                        as descripcion,
+                    'Conversación WhatsApp' as titulo,
+                    COALESCE(
+                        (SELECT contenido FROM mensajes
+                         WHERE conversacion_id=c.id
+                           AND tenant_id=:t
+                         ORDER BY creado_en DESC
+                         LIMIT 1),
+                        'Sin mensajes'
+                    ) as descripcion,
                     c.iniciada_en::text as timestamp,
                     'low' as urgency
              FROM conversaciones c
-             LEFT JOIN LATERAL (
-                 SELECT contenido FROM mensajes
-                 WHERE conversacion_id=c.id
-                 ORDER BY creado_en DESC LIMIT 1
-             ) ult ON true
              WHERE c.tenant_id=:t)
 
             UNION ALL
