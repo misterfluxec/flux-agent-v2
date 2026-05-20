@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTenant } from '@/context/TenantContext';
 import { X, Check, Database, Loader2, Wand2, ArrowRight, Server, Table } from 'lucide-react';
 
 interface ConnectorWizardProps {
@@ -8,6 +9,7 @@ interface ConnectorWizardProps {
 type WizardStep = 'provider' | 'credentials' | 'discovery' | 'mapping';
 
 export function ConnectorWizard({ onClose }: ConnectorWizardProps) {
+  const { tenantId } = useTenant();
   const [step, setStep] = useState<WizardStep>('provider');
   const [provider, setProvider] = useState<string>('');
   const [sessionId, setSessionId] = useState<string>('');
@@ -28,7 +30,7 @@ export function ConnectorWizard({ onClose }: ConnectorWizardProps) {
       const res = await fetch('/api/v1/integrations/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider: selected, tenant_id: 'demo-tenant' })
+        body: JSON.stringify({ provider: selected, tenant_id: tenantId })
       });
       if (!res.ok) throw new Error('Error al iniciar sesión');
       const data = await res.json();
@@ -51,7 +53,7 @@ export function ConnectorWizard({ onClose }: ConnectorWizardProps) {
       const res = await fetch(`/api/v1/integrations/sessions/${sessionId}/test`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ credentials: { host, user, pass }, tenant_id: 'demo-tenant' })
+        body: JSON.stringify({ credentials: { host, user, pass }, tenant_id: tenantId })
       });
       if (!res.ok) throw new Error('Fallo en conexión');
       

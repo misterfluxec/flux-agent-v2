@@ -13,7 +13,7 @@ import { CriticalEventToaster } from "@/components/operations/CriticalEventToast
 function EventBusWrapper({ children }: { children: React.ReactNode }) {
   const { tenantId } = useTenant();
   return (
-    <EventBusProvider tenantId={tenantId || "demo-tenant-1"}>
+    <EventBusProvider tenantId={tenantId || "00000000-0000-0000-0000-000000000000"}>
       {children}
       <CriticalEventToaster />
     </EventBusProvider>

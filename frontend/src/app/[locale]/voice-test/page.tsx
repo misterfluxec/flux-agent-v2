@@ -1,17 +1,10 @@
+"use client";
+
 import { VoiceTestClient } from '@/components/voice/VoiceTestClient';
-import { getTranslations } from 'next-intl/server';
+import { useTenant } from '@/context/TenantContext';
 
-export async function generateMetadata({ params: { locale } }: { params: { locale: string } }) {
-  const t = await getTranslations({ locale, namespace: 'voice' });
-  return {
-    title: t('page_title'),
-    description: t('page_description')
-  };
-}
-
-export default function VoiceTestPage({ params: { locale } }: { params: { locale: string } }) {
-  // En producción, obtener tenant_id desde sesión/auth
-  const tenantId = 'demo-tenant-id'; // Reemplazar con lógica real
+export default function VoiceTestPage() {
+  const { tenantId } = useTenant();
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center p-4 relative">
@@ -19,7 +12,8 @@ export default function VoiceTestPage({ params: { locale } }: { params: { locale
         <span className="bg-yellow-500 text-black px-2 py-0.5 rounded text-xs uppercase tracking-wider font-bold">Dev / Debug Only</span>
         Esta herramienta es exclusiva para diagnóstico de WebRTC/STT/TTS. Para producción, usa el Playground integrado en el Editor de Agentes.
       </div>
-      <VoiceTestClient tenantId={tenantId} />
+      <VoiceTestClient tenantId={tenantId || "00000000-0000-0000-0000-000000000000"} />
     </div>
   );
 }
+

@@ -160,23 +160,31 @@ async def get_activity(
 
 @router.get("/me")
 async def get_me(
+    request: Request,
     db: AsyncSession = Depends(get_db),
     usuario: PayloadToken = Depends(get_usuario_actual),
 ):
     tid = str(usuario.tenant_id)
-    await db.execute(
-        text("SELECT set_config('app.current_tenant_id',:t,true)"),
-        {"t": tid}
-    )
-    r = await db.execute(
-        text("SELECT name FROM tenants WHERE id=:t"),
-        {"t": tid}
-    )
-    row = r.fetchone()
+    try:
+        await db.execute(
+            text("SELECT set_config('app.current_tenant_id',:t,true)"),
+            {"t": tid},
+        )
+        r = await db.execute(
+            text("SELECT company_name FROM tenants WHERE id=:t::uuid"),
+            {"t": tid},
+        )
+        row = r.fetchone()
+        tenant_name = row.company_name if row else "Mi Empresa"
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).warning("get_me db error: %s", exc)
+        tenant_name = "Mi Empresa"
+
     return {
-        "nombre": usuario.nombre or usuario.email,
-        "email": usuario.email,
-        "tenant_name": row.name if row else "Mi Empresa",
+        "nombre": getattr(usuario, "name", None) or getattr(usuario, "sub", "Admin"),
+        "email": getattr(usuario, "sub", ""),
+        "tenant_name": tenant_name,
         "tenant_id": tid,
         "plan": getattr(usuario, "plan", "enterprise"),
     }
