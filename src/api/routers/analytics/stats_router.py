@@ -165,26 +165,36 @@ async def get_me(
     usuario: PayloadToken = Depends(get_usuario_actual),
 ):
     tid = str(usuario.tenant_id)
+    uid = str(usuario.sub)
+    tenant_name = "Mi Empresa"
+    user_email = ""
     try:
         await db.execute(
             text("SELECT set_config('app.current_tenant_id',:t,true)"),
             {"t": tid},
         )
         r = await db.execute(
-            text("SELECT company_name FROM tenants WHERE id=:t::uuid"),
-            {"t": tid},
+            text(
+                "SELECT t.company_name, u.email "
+                "FROM tenants t "
+                "LEFT JOIN users u ON u.id = CAST(:uid AS uuid) "
+                "WHERE t.id = CAST(:t AS uuid)"
+            ),
+            {"t": tid, "uid": uid},
         )
         row = r.fetchone()
-        tenant_name = row.company_name if row else "Mi Empresa"
+        if row:
+            tenant_name = row.company_name or tenant_name
+            user_email = row.email or ""
     except Exception as exc:
         import logging
         logging.getLogger(__name__).warning("get_me db error: %s", exc)
-        tenant_name = "Mi Empresa"
 
     return {
-        "nombre": getattr(usuario, "name", None) or getattr(usuario, "sub", "Admin"),
-        "email": getattr(usuario, "sub", ""),
+        "nombre": usuario.name or "Admin",
+        "email": user_email,
         "tenant_name": tenant_name,
         "tenant_id": tid,
         "plan": getattr(usuario, "plan", "enterprise"),
     }
+
