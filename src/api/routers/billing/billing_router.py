@@ -40,6 +40,8 @@ class SubscriptionResponse(BaseModel):
     max_agents: int
     max_messages_month: int
     price: float
+    tenant_id: str = ""
+    company_name: str = ""
 
 
 @router.post("/info")
@@ -105,8 +107,8 @@ async def get_subscription(usuario: PayloadToken = Depends(get_usuario_actual)):
         await db.execute(text(f"SET app.current_tenant_id = '{usuario.tenant_id}'"))
         
         result = await db.execute(text("""
-            SELECT plan, status, contract_start as contract_start, contract_end as contract_end, 
-                   max_agents, max_messages_month as max_messages_month, 0 as price
+            SELECT plan, status, contract_start, contract_end, 
+                   max_agents, max_messages_month, company_name
             FROM tenants
             WHERE id = :tid
         """), {"tid": usuario.tenant_id})
@@ -125,7 +127,9 @@ async def get_subscription(usuario: PayloadToken = Depends(get_usuario_actual)):
             current_period_end=str(row[3]) if row[3] else "",
             max_agents=int(row[4]) if row[4] else 1,
             max_messages_month=int(row[5]) if row[5] else 100,
-            price=plan_prices.get(str(row[0]), 0)
+            price=plan_prices.get(str(row[0]), 0),
+            tenant_id=str(usuario.tenant_id),
+            company_name=str(row[6]) if row[6] else "",
         )
 
 
