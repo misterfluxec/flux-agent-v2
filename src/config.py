@@ -138,7 +138,13 @@ class Configuracion(BaseSettings):
     # MercadoPago
     # -------------------------------------------------------------------------
     mp_access_token: str = ""
-    mp_webhook_secret: str = ""  # Vacío = validación desactivada (solo dev/local)
+    # mp_webhook_secret ya declarado en la sección de Seguridad de Webhooks (línea 101)
+
+    # -------------------------------------------------------------------------
+    # PayPhone (Ecuador)
+    # -------------------------------------------------------------------------
+    payphone_token: str = ""
+    payphone_store_id: str = ""
 
     # -------------------------------------------------------------------------
     # LLM Cloud Providers (desactivados por defecto)

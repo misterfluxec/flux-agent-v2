@@ -207,6 +207,30 @@ async def procesar_mensaje_entrante(
                         "cita_auto_registrada",
                         extra={"booking": booking}
                     )
+                    # ── Enviar selector de pago automático ────
+                    try:
+                        import asyncio
+                        from services.payments.payment_selector import PaymentSelector
+
+                        selector = PaymentSelector(
+                            evolution_url=config.evolution_api_url,
+                            evolution_key=config.evolution_api_key,
+                            instance_name=instancia_nombre or "default",
+                            country_code="EC",
+                        )
+                        await asyncio.sleep(4)  # pausa natural
+                        await selector.send_payment_selector(
+                            to=lead_externo_id,
+                            servicio=booking.get("servicio", "Cita"),
+                            monto=booking.get("precio", 0.0) or 0.0,
+                            booking_id=str(booking.get("id", "")),
+                        )
+                    except Exception as pay_exc:
+                        logger.warning(
+                            "payment_selector_skip",
+                            extra={"error": str(pay_exc)},
+                        )
+                    # ── fin selector de pago ───────────────────
         except Exception as exc:
             logger.warning("booking_extractor_skip",
                           extra={"error": str(exc)})
